@@ -5,13 +5,13 @@ let player = {
     gem: 0,
     inventory: {}, 
     
-    // 보유한 용 리스트 (초기값: 기본 알 1개)
+    // 보유한 용 리스트
     myDragons: [
         { id: "d_init", type: "fire", stage: 0, clicks: 0, name: "불꽃용" } 
     ],
-    currentDragonIndex: 0, // 현재 동굴 둥지에 꺼내둔 용의 인덱스
+    currentDragonIndex: 0,
     
-    // 장착 중인 장비
+    // 장착 장비
     equipment: {
         head: null,
         body: null,
@@ -19,13 +19,13 @@ let player = {
         leg: null
     },
 
-    stats: { explore: 0, maxRank: "C" }
+    stats: { explore: 0, atk: 10, def: 5 }
 };
 
-// 탐험 중 얻은 임시 아이템 보관함
+// 탐험 임시 보관함
 let tempLoot = []; 
 
-// 화면 상단 재화 업데이트
+// 재화 업데이트
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
@@ -33,71 +33,59 @@ function updateCurrency() {
     if(gemUI) gemUI.innerText = player.gem;
 }
 
-// 아이템 획득 (가방에 추가)
+// 아이템 획득
 function addItem(itemId, count = 1) {
-    if (!player.inventory[itemId]) {
-        player.inventory[itemId] = 0;
-    }
+    if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
 
-// [탐험용] 임시 전리품 추가
+// 탐험 전리품 처리
 function addTempLoot(itemId, count = 1) {
     tempLoot.push({ id: itemId, count: count });
 }
 
-// [탐험용] 임시 전리품 수령 (인벤토리로 이동)
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
-    
     let msg = "획득품:\n";
     tempLoot.forEach(item => {
-        // 아이템 DB에 존재하는지 확인 후 지급
         if(ITEM_DB[item.id]) {
             addItem(item.id, item.count);
             msg += `- ${ITEM_DB[item.id].name} x${item.count}\n`;
         }
     });
-    tempLoot = []; // 초기화
+    tempLoot = [];
     return msg;
 }
 
-// [탐험용] 전리품 폐기
 function clearTempLoot() { tempLoot = []; }
 
-// 아이템 사용 분기 처리
+// 아이템 사용
 function useItem(itemId) {
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
-
     const item = ITEM_DB[itemId];
     
-    // 1. 장비 아이템인 경우
+    // 1. 장비
     if (item.type === "equip") {
         if(confirm(`${item.name}을(를) 장착하시겠습니까?`)) {
             equipItem(itemId, item.slot);
         }
     } 
-    // 2. 알 아이템인 경우 (룰렛 실행)
+    // 2. 알 (룰렛)
     else if (item.type === "egg") {
         if(confirm("알을 부화시켜 새로운 용을 얻으시겠습니까?")) {
-            player.inventory[itemId]--; // 알 소모
-            
-            // hatchery.js의 룰렛 함수 호출
+            player.inventory[itemId]--;
             if(window.startEggRoulette) window.startEggRoulette();
-            
-            // 가방 화면 갱신
             if(typeof renderInventory === 'function') renderInventory();
         }
     }
-    // 3. 소비 아이템
+    // 3. 소비
     else {
         player.inventory[itemId]--;
         if(itemId === "potion_s") {
-            // 현재 키우는 용에게 경험치 지급
             const dragon = player.myDragons[player.currentDragonIndex];
             if(dragon) {
                 dragon.clicks += 10;
-                alert(`[${dragon.name}]에게 물약을 먹였습니다. (경험치+10)`);
+                alert(`[${dragon.name}]에게 물약을 먹였습니다.`);
                 if(window.updateUI) window.updateUI(); 
             }
         } else {
@@ -107,27 +95,24 @@ function useItem(itemId) {
     }
 }
 
-// 장비 장착 로직
+// 장비 장착
 function equipItem(itemId, slot) {
-    // 이미 착용 중인 장비가 있으면 벗어서 가방으로
-    if (player.equipment[slot]) {
-        addItem(player.equipment[slot], 1);
-    }
+    if (player.equipment[slot]) addItem(player.equipment[slot], 1); // 기존 장비 해제
     
     player.equipment[slot] = itemId;
-    player.inventory[itemId]--; // 가방에서 제거
+    player.inventory[itemId]--; 
     
     alert("장착 완료!");
     
-    // UI 갱신
+    // UI 갱신 (hatchery.js의 updateCaveUI에 통합됨)
     if(window.updateUI) window.updateUI();
     if(typeof renderInventory === 'function') renderInventory();
 }
 
-// 장비 해제 로직
+// 장비 해제
 function unequipItem(slot) {
     if (player.equipment[slot]) {
-        addItem(player.equipment[slot], 1); // 가방으로 복귀
+        addItem(player.equipment[slot], 1);
         player.equipment[slot] = null;
         alert("장비 해제!");
         
