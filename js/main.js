@@ -74,16 +74,17 @@ function switchTab(tabName) {
         selected.classList.add('active');
     }
 
-    // 탭별 로직
+    // 탭별 로직 연결
     if (tabName === 'inventory') renderInventory();
     if (tabName === 'shop') renderShop();
-    if (tabName === 'info') {
+    
+    // 내 정보 & 동굴 탭은 hatchery.js의 updateUI 사용
+    if (tabName === 'info' || tabName === 'dragon') {
         updateCurrency();
-        if(window.updateUI) window.updateUI(); // 장비창 갱신
+        if(window.updateUI) window.updateUI(); 
     }
-    if (tabName === 'dragon') {
-        if(window.updateUI) window.updateUI(); // 동굴 갱신
-    }
+    
+    // 탐험 탭은 explore.js의 initExploreTab 사용
     if (tabName === 'explore') {
         if(window.initExploreTab) window.initExploreTab();
     }
@@ -105,7 +106,7 @@ function renderInventory() {
             const item = ITEM_DB[id];
             const div = document.createElement('div');
             div.className = 'item-slot';
-            div.onclick = () => useItem(id);
+            div.onclick = () => useItem(id); // player.js의 useItem 호출
             div.innerHTML = `<div class="item-icon">${item.emoji}</div><div>${item.name}</div><div>x${player.inventory[id]}</div>`;
             grid.appendChild(div);
         }
