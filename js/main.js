@@ -55,11 +55,11 @@ function nextPrologueCut() {
 function startGame() {
     showScreen('screen-game');
     updateCurrency();
-    updateUI(); // hatchery 초기화
-    switchTab('dragon'); // 첫 화면은 용 관리
+    switchTab('dragon'); // 첫 화면은 동굴
+    if(window.updateUI) window.updateUI(); // 동굴 초기화
 }
 
-// 4. 탭 전환 시스템 (핵심 수정됨)
+// 4. 탭 전환 시스템
 function switchTab(tabName) {
     // 모든 탭 숨기기
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -74,12 +74,16 @@ function switchTab(tabName) {
         selected.classList.add('active');
     }
 
-    // 탭별 초기화 로직
+    // 탭별 로직
     if (tabName === 'inventory') renderInventory();
     if (tabName === 'shop') renderShop();
-    if (tabName === 'info') updateCurrency();
-    
-    // ★ 탐험 탭을 누르면 지도 화면 초기화 호출
+    if (tabName === 'info') {
+        updateCurrency();
+        if(window.updateUI) window.updateUI(); // 장비창 갱신
+    }
+    if (tabName === 'dragon') {
+        if(window.updateUI) window.updateUI(); // 동굴 갱신
+    }
     if (tabName === 'explore') {
         if(window.initExploreTab) window.initExploreTab();
     }
@@ -128,7 +132,6 @@ function renderShop() {
     });
 }
 
-// 구매 로직
 function buyItem(id) {
     const item = ITEM_DB[id];
     if (player.gold >= item.price) {
