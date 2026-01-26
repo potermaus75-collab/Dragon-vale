@@ -11,7 +11,10 @@ function updateCaveUI() {
     renderNest();        
     updateEquipmentUI(); 
 }
-
+function renderNest() {
+    const dragonData = player.myDragons[player.currentDragonIndex];
+    if (!dragonData) return;
+    
 // 2. 둥지 그리기
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
@@ -21,11 +24,17 @@ function renderNest() {
     const stageName = DRAGON_DATA.stages[dragonData.stage];
     dragonNameUI.innerText = `${dragonData.name} (${stageName})`;
 
-    // 게이지
-    const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
-    const percent = (dragonData.clicks / max) * 100;
-    progressBar.style.width = `${Math.min(percent, 100)}%`;
-
+   // ★ 게이지바 로직 수정 (핵심)
+    const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999; // 0으로 나누기 방지
+    let percent = 0;
+    
+    if (dragonData.stage >= DRAGON_DATA.stages.length - 1) {
+        percent = 100; // 마지막 단계면 꽉 채움
+    } else {
+        percent = (dragonData.clicks / max) * 100;
+    }
+    // CSS width 적용
+    progressBar.style.width = `${percent}%`;
     // 이미지/이모티콘
     let emoji = "🥚";
     if (dragonData.stage === 1) emoji = "🐣";
