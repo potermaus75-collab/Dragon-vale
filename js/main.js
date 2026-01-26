@@ -59,7 +59,7 @@ function startGame() {
     switchTab('dragon'); // 첫 화면은 용 관리
 }
 
-// 4. 탭 전환 시스템
+// 4. 탭 전환 시스템 (핵심 수정됨)
 function switchTab(tabName) {
     // 모든 탭 숨기기
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -74,10 +74,15 @@ function switchTab(tabName) {
         selected.classList.add('active');
     }
 
-    // 탭별 데이터 갱신
+    // 탭별 초기화 로직
     if (tabName === 'inventory') renderInventory();
     if (tabName === 'shop') renderShop();
     if (tabName === 'info') updateCurrency();
+    
+    // ★ 탐험 탭을 누르면 지도 화면 초기화 호출
+    if (tabName === 'explore') {
+        if(window.initExploreTab) window.initExploreTab();
+    }
 }
 
 // 인벤토리 그리기
