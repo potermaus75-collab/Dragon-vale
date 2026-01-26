@@ -71,11 +71,11 @@ function moveForward() {
     // 랜덤 이벤트
     processRandomEvent();
     
-    // ★ 이동 후 UI 갱신 (여기서 0회가 되면 버튼 바뀜)
+    // 이동 후 UI 갱신 (여기서 0회가 되면 버튼 바뀜)
     updateMoveUI();
 }
 
-// ★ UI 갱신 (버그 수정 핵심)
+// UI 갱신 (탐험 종료 처리 핵심)
 function updateMoveUI() {
     const counter = document.getElementById('move-counter');
     const moveBtn = document.getElementById('btn-move');
@@ -139,7 +139,6 @@ function encounterNest() {
         } else {
             isExploreActive = true;
             document.getElementById('event-msg').innerText = "둥지를 지나쳤습니다.";
-            // 이동 횟수가 남았는지 체크
             if(movesLeft <= 0) updateMoveUI();
         }
     }, 100);
@@ -206,7 +205,7 @@ function fightParent() {
     }
 }
 
-// 7. 종료 및 귀환
+// 7. 종료 및 귀환 (중요 수정)
 function finishExplore(success = true) {
     const lootMsg = claimTempLoot();
     
@@ -217,10 +216,13 @@ function finishExplore(success = true) {
     // UI 복구
     document.getElementById('btn-move').disabled = false;
     document.getElementById('btn-move').style.opacity = 1;
+    document.getElementById('btn-move').innerText = "👣 앞으로 이동";
     document.getElementById('explore-bg').style.backgroundColor = "#222";
     
     toggleExploreView('map');
     updateCurrency();
+    
+    // ★ 가방 화면 갱신 (이게 없어서 알이 안 보였음)
     if(typeof renderInventory === 'function') renderInventory();
 }
 
