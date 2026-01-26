@@ -1,1 +1,41 @@
 
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dragon Clicker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <header>
+            <span id="player-gold">골드: 0</span>
+            <span id="player-inventory">인벤토리: 비움</span>
+        </header>
+
+        <main id="main-screen">
+            <h2 id="dragon-name">알 (등급: C)</h2>
+            <div id="dragon-display" class="dragon-placeholder egg">
+                <p>알을 터치하세요!</p>
+            </div>
+            <div id="status-bar">
+                <div id="progress-fill" style="width: 0%;"></div>
+            </div>
+            <p id="status-text">터치: 0 / 10</p>
+        </main>
+
+        <nav>
+            <button onclick="switchTab('hatchery')">부화장</button>
+            <button onclick="startExploration()">탐험하기</button>
+        </nav>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/dragon.js"></script>
+    <script src="js/hatchery.js"></script>
+    <script src="js/explore.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
