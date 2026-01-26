@@ -138,3 +138,97 @@ body, html {
 .egg { background-color: #bdc3c7; color: #2c3e50; }
 #status-bar { width: 60%; height: 10px; background: #444; border-radius: 5px; margin-top: 10px; overflow: hidden; }
 #progress-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.2s; }
+/* ...기존 스타일 유지... */
+
+/* 탭 콘텐츠 공통 */
+.tab-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto; /* 내용 많으면 스크롤 */
+}
+
+/* 이미지 우선, 없으면 이모티콘 보여주는 클래스 */
+.img-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 4rem; /* 이모티콘 크기 */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* [탭3] 탐험 로그 영역 */
+.explore-log {
+    width: 90%;
+    height: 200px;
+    background: #333;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    overflow-y: scroll;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #ddd;
+    border: 1px solid #555;
+}
+.action-btn {
+    width: 80%;
+    padding: 15px;
+    background: #e67e22;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+.action-btn:active { background: #d35400; }
+
+/* [탭4] 인벤토리 그리드 */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* 한 줄에 4개 */
+    gap: 10px;
+    width: 100%;
+}
+.item-slot {
+    background: #444;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    font-size: 0.8rem;
+    aspect-ratio: 1/1; /* 정사각형 유지 */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.item-icon { font-size: 2rem; margin-bottom: 5px; }
+
+/* [탭5] 상점 리스트 */
+.list-container { width: 100%; }
+.shop-item {
+    background: #333;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.shop-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 5px;
+}
