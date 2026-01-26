@@ -1,237 +1,177 @@
-/* =========================================
-   기본 설정 (폰트 및 배경)
-   ========================================= */
+/* 기본 설정 */
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background-color: #0d0814; /* 이미지가 없을 때를 대비한 배경색 */
-    color: #fff;
+    background-color: #111; color: #fff;
     font-family: 'Nanum Gothic', sans-serif;
     overflow: hidden;
 }
 
 /* 유틸리티 */
-.full-screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; background: #0d0814; }
+.full-screen { 
+    width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    z-index: 10; background: #0d0814; 
+}
 .hidden { display: none !important; }
-h2, h3 { margin: 0; color: #f1c40f; text-shadow: 2px 2px 0 #000; font-weight: 800; }
 
-/* =========================================
-   [1] 시작 화면 & 설정
-   ========================================= */
-#screen-start {
-    background: linear-gradient(180deg, #2c0e3a, #000);
-}
-.title-area h1 {
-    font-size: 3.5rem; text-align: center; color: #e0d8c0;
-    text-shadow: 0 0 20px #8e44ad; margin-bottom: 20px;
-}
-.blink { animation: blinker 1.5s infinite; color: #aaa; font-size: 1.2rem; }
+/* [1] 시작 화면 */
+#screen-start { background: linear-gradient(180deg, #2c0e3a, #000); }
+.title-area h1 { font-size: 3rem; text-align: center; color: #f1c40f; text-shadow: 0 0 20px #8e44ad; }
+.blink { animation: blinker 1.5s infinite; color: #aaa; margin-top: 20px;}
 @keyframes blinker { 50% { opacity: 0.3; } }
 
+/* [2] 패널 박스 (이미지 적용 핵심) */
 .panel-box {
-    width: 85%; max-width: 400px; padding: 30px;
-    background-image: url('../assets/images/ui/panel_main.png'); /* 덩굴 패널 */
-    background-size: 100% 100%;
+    width: 90%; max-width: 400px; padding: 40px;
+    /* ★ 여기에 아까 자른 panel_main.png가 들어갑니다 */
+    background-image: url('../assets/images/ui/panel_main.png');
+    background-size: 100% 100%; background-repeat: no-repeat;
+    background-color: transparent; /* 배경색 제거 */
     text-align: center; color: #e0d8c0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
+
 #input-nickname {
-    width: 80%; height: 50px; margin: 20px 0;
-    background: rgba(0,0,0,0.5); border: 2px solid #6d5a7d;
-    color: white; font-size: 1.2rem; text-align: center; border-radius: 10px;
+    width: 80%; padding: 10px; margin: 20px 0;
+    background: rgba(0,0,0,0.5); border: 2px solid #aaa; color: white;
+    font-size: 1.2rem; text-align: center; border-radius: 5px;
 }
 
-/* 돌 버튼 공통 */
+/* [3] 버튼 스타일 (이미지 적용) */
 .btn-stone {
     width: 140px; height: 50px;
-    background-image: url('../assets/images/ui/btn_rect.png'); /* 직사각형 버튼 */
+    /* ★ 여기에 btn_rect.png가 들어갑니다 */
+    background-image: url('../assets/images/ui/btn_rect.png');
     background-size: 100% 100%; background-color: transparent;
     border: none; color: #f0e6fa; font-size: 1.1rem; font-weight: bold;
-    display: flex; justify-content: center; align-items: center;
     cursor: pointer; text-shadow: 1px 1px 2px #000;
+    display: flex; justify-content: center; align-items: center;
 }
 .btn-stone:active { transform: scale(0.95); }
 
-/* =========================================
-   [헤더 & 푸터] - 고정 위치
-   ========================================= */
+/* [4] 프롤로그 화면 (안보임 해결) */
+#screen-prologue {
+    background-color: #000; z-index: 20; /* 가장 위에 오도록 */
+}
+#prologue-text {
+    font-size: 1.2rem; line-height: 1.6; color: #fff; text-shadow: 1px 1px 2px #000;
+}
+
+/* [5] 메인 게임 레이아웃 */
 .game-header {
     position: absolute; top: 0; left: 0; width: 100%; height: 80px;
-    background-image: url('../assets/images/ui/banner_header.png'); /* 리본 배너 */
+    background-image: url('../assets/images/ui/banner_header.png'); /* 배너 이미지 */
     background-size: 100% 100%;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 25px 25px 25px; /* 배너 모양에 맞춰 패딩 조절 */
-    z-index: 100;
+    padding: 10px 20px 25px 20px; z-index: 5;
 }
 .profile-frame {
     width: 60px; height: 60px;
-    background-image: url('../assets/images/ui/frame_profile.png'); /* 원형 프레임 */
+    background-image: url('../assets/images/ui/frame_profile.png'); /* 프레임 이미지 */
     background-size: 100% 100%;
     display: flex; justify-content: center; align-items: center;
 }
 .profile-img { width: 45px; height: 45px; border-radius: 50%; background: #333; }
-.header-info { text-align: right; }
-.currency-area span { margin-left: 10px; color: #f1c40f; font-weight: bold; font-size: 0.9rem;}
 
-/* 하단 메뉴바 (고정) */
 .bottom-nav {
     position: absolute; bottom: 0; left: 0; width: 100%; height: 70px;
-    background: #110d14; border-top: 2px solid #3a2e4d;
-    display: flex; justify-content: space-around; align-items: center;
-    z-index: 100; /* ★ 다른 요소 위에 뜨도록 */
+    background: #111; border-top: 2px solid #333;
+    display: flex; justify-content: space-around; align-items: center; z-index: 100;
 }
 .nav-btn {
     width: 50px; height: 50px;
     background-image: url('../assets/images/ui/btn_square.png'); /* 정사각형 버튼 */
     background-size: 100% 100%; background-color: transparent; border: none;
-    font-size: 1.5rem; display: flex; justify-content: center; align-items: center;
+    font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
     filter: grayscale(0.8); cursor: pointer;
 }
 .nav-btn.active { filter: grayscale(0) brightness(1.2); }
 
-/* =========================================
-   [메인 콘텐츠 영역]
-   ========================================= */
-#game-view {
-    position: absolute; top: 80px; bottom: 70px; /* 헤더, 푸터 공간 제외 */
-    width: 100%; overflow: hidden;
+/* [6] 탭 콘텐츠 공통 */
+#game-view { position: absolute; top: 80px; bottom: 70px; width: 100%; overflow: hidden; }
+.tab-content { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+
+/* 패널 공통 스타일 */
+.panel-vertical {
+    background-image: url('../assets/images/ui/panel_vertical.png');
+    background-size: 100% 100%; padding: 20px;
 }
-.tab-content {
-    width: 100%; height: 100%;
-    padding: 10px; box-sizing: border-box;
-    display: flex; flex-direction: column; align-items: center;
-    overflow-y: auto; /* 내용 넘치면 스크롤 */
+.panel-main {
+    background-image: url('../assets/images/ui/panel_main.png');
+    background-size: 100% 100%; padding: 25px;
 }
 
-/* [탭1] 내 정보 (겹침 해결) */
-.profile-layout {
-    position: relative; width: 300px; height: 400px; margin-top: 10px;
-    background-image: url('../assets/images/ui/panel_vertical.png'); /* 세로 패널 */
-    background-size: 100% 100%;
-    display: flex; flex-direction: column; align-items: center;
-}
-/* 캐릭터 실루엣 */
-.char-silhouette {
-    width: 200px; height: 300px; margin-top: 20px;
-    background-image: url('../assets/images/ui/silhouette.png'); /* 실루엣 이미지 필요 */
-    background-size: contain; background-repeat: no-repeat; background-position: center;
-    opacity: 0.5;
-}
-/* 장비 슬롯 - 절대 좌표로 배치 */
+/* 내 정보 */
+.profile-layout { width: 300px; height: 400px; display: flex; flex-direction: column; align-items: center; position: relative; }
 .equip-slot {
-    position: absolute; width: 55px; height: 55px;
+    position: absolute; width: 50px; height: 50px;
     background-image: url('../assets/images/ui/btn_square.png');
     background-size: 100% 100%;
     display: flex; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: #aaa; font-weight: bold;
-    cursor: pointer; z-index: 5;
+    font-size: 0.7rem; color: #aaa; z-index: 5;
 }
-.equip-slot.head { top: 30px; left: 50%; transform: translateX(-50%); }
-.equip-slot.body { top: 110px; left: 50%; transform: translateX(-50%); }
-.equip-slot.arm { top: 110px; right: 40px; }
-.equip-slot.leg { top: 200px; left: 50%; transform: translateX(-50%); }
+.equip-slot.head { top: 20px; left: 50%; transform: translateX(-50%); }
+.equip-slot.body { top: 100px; left: 50%; transform: translateX(-50%); }
+.equip-slot.arm { top: 100px; right: 30px; }
+.equip-slot.leg { top: 180px; left: 50%; transform: translateX(-50%); }
 
-.stat-box {
-    margin-top: 10px; width: 90%;
-    background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;
-    display: flex; justify-content: space-around;
-}
-
-/* [탭2] 동굴 (게이지바 수정) */
-.cave-layout { display: flex; width: 100%; height: 100%; gap: 10px; }
-.egg-list-panel {
-    width: 100px; height: 90%;
-    background-image: url('../assets/images/ui/panel_vertical.png');
-    background-size: 100% 100%;
-    padding: 20px 10px; overflow-y: auto;
-}
+/* 동굴 */
+.cave-layout { display: flex; width: 100%; height: 100%; gap: 5px; }
+.egg-list-panel { width: 100px; height: 90%; overflow-y: auto; }
 .nest-panel { flex: 1; display: flex; flex-direction: column; align-items: center; }
-
-.dragon-display {
-    width: 180px; height: 180px; margin: 20px 0;
-    display: flex; justify-content: center; align-items: center;
-    font-size: 5rem;
-    /* 빛나는 배경 효과 */
-    background: radial-gradient(circle, rgba(142, 68, 173, 0.5), transparent 70%);
-}
-
-/* 룬 게이지바 */
 .rune-bar-container {
-    width: 90%; height: 25px;
-    background: #111; border: 2px solid #5d4a6d; border-radius: 12px;
-    position: relative; overflow: hidden; margin-bottom: 20px;
+    width: 90%; height: 20px; background: #000; border: 2px solid #555;
+    border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 20px;
 }
 #progress-fill {
-    height: 100%; width: 0%;
-    background-color: #2ecc71; /* 이미지 로딩 실패 시 초록색이라도 뜨게 */
-    background-image: url('../assets/images/ui/bar_rune.png'); /* 룬 바 이미지 */
+    height: 100%; width: 0%; background: #2ecc71;
+    background-image: url('../assets/images/ui/bar_rune.png'); /* 게이지바 이미지 */
     background-size: cover;
-    transition: width 0.2s;
 }
 
-/* [탭3] 탐험 (지도 보이게 수정) */
+/* 탐험 */
 .map-frame {
-    width: 100%; height: 350px; /* ★ 높이 강제 지정 */
+    width: 100%; height: 300px; 
     background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%;
-    padding: 25px; box-sizing: border-box; position: relative;
+    background-size: 100% 100%; padding: 20px;
     display: flex; justify-content: center; align-items: center;
 }
 .map-bg {
-    width: 95%; height: 90%;
-    background-color: #333; /* 이미지 없을 때 배경색 */
-    background-image: url('../assets/images/map_continent.jpg'); /* ★ 실제 지도 이미지 */
-    background-size: cover; background-position: center;
-    border-radius: 10px; border: 2px solid #000;
+    width: 100%; height: 100%; background: #333;
+    background-image: url('../assets/images/map_continent.jpg'); /* 지도 이미지 */
+    background-size: cover; border-radius: 5px;
 }
 .region-grid {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-    box-sizing: border-box; overflow-y: auto;
 }
 .region-card {
-    background: rgba(0,0,0,0.7); border: 1px solid #aaa; border-radius: 5px;
+    background: rgba(0,0,0,0.8); border: 1px solid #aaa; border-radius: 5px;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 10px; cursor: pointer; text-align: center;
+    cursor: pointer; padding: 10px;
 }
-.enter-btn { margin-top: -20px; z-index: 5; }
 
-/* [탭4, 5] 가방 & 상점 (레이아웃 붕괴 방지) */
+/* 가방 & 상점 */
 .inventory-panel, .shop-panel {
-    width: 95%; height: 90%;
-    background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%;
-    padding: 35px 20px; box-sizing: border-box;
-    display: flex; flex-direction: column; align-items: center;
+    width: 95%; height: 90%; display: flex; flex-direction: column; align-items: center;
 }
-.scroll-box {
-    width: 100%; height: 100%; overflow-y: auto; /* 스크롤 가능하게 */
-    padding-right: 5px;
-}
-
-.grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.scroll-box { width: 100%; height: 100%; overflow-y: auto; }
+.grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .item-slot {
     background-image: url('../assets/images/ui/btn_square.png');
     background-size: 100% 100%; aspect-ratio: 1/1;
     display: flex; flex-direction: column; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: #fff; padding: 2px;
+    font-size: 0.7rem; color: #fff;
 }
 .shop-item {
-    background: rgba(0,0,0,0.3); border: 1px solid #555; border-radius: 8px;
-    padding: 10px; display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 8px;
+    background: rgba(0,0,0,0.5); border: 1px solid #555; margin-bottom: 5px; padding: 10px;
+    display: flex; justify-content: space-between; align-items: center; border-radius: 5px;
 }
 
-/* 룰렛 모달 */
-.modal-content {
-    background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%; padding: 40px; width: 80%;
-}
-#roulette-display {
-    width: 100px; height: 100px; margin: 20px auto;
-    background: #000; border: 3px solid #f1c40f; border-radius: 50%;
-    font-size: 3rem; display: flex; justify-content: center; align-items: center;
-}
+/* 모달 */
+.modal-content { width: 80%; }
+
