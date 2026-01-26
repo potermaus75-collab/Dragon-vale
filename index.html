@@ -18,17 +18,17 @@
     <section id="screen-setup" class="full-screen hidden">
         <div class="panel-box">
             <h2>모험가의 이름</h2>
-            <input type="text" id="input-nickname" placeholder="이름을 입력하세요" maxlength="8">
+            <input type="text" id="input-nickname" placeholder="이름 입력" maxlength="8">
             <button class="btn-stone" onclick="submitName()">여정 시작</button>
         </div>
     </section>
 
     <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()">
-        <div class="comic-container">
-            <div id="comic-frame" class="panel-box">
-                <span id="prologue-text">...</span>
+        <div class="full-screen" style="background:black;">
+            <div class="panel-box" style="width:90%; height:50%;">
+                <span id="prologue-text" style="font-size:1.2rem; line-height:1.5;">...</span>
             </div>
-            <p class="skip-btn">터치하여 계속 >></p>
+            <p class="blink" style="margin-top:20px;">터치하여 계속 >></p>
         </div>
     </section>
 
@@ -39,7 +39,7 @@
                 <div class="profile-img" id="ui-profile-img"></div>
             </div>
             <div class="header-info">
-                <span class="profile-name" id="ui-nickname">플레이어</span>
+                <div class="profile-name" id="ui-nickname">플레이어</div>
                 <div class="currency-area">
                     <span>💎 <span id="ui-gem">0</span></span>
                     <span>💰 <span id="ui-gold">0</span></span>
@@ -50,72 +50,75 @@
         <main id="game-view">
             
             <div id="tab-info" class="tab-content hidden">
-                <div class="profile-card-container">
-                    <div class="character-portrait">
-                        <img src="assets/images/char_placeholder.png" alt="Character" id="char-img">
-                    </div>
-                    <div class="equip-slots-wrapper">
-                        <div class="equip-slot head" onclick="unequipItem('head')">HEAD</div>
-                        <div class="equip-slot body" onclick="unequipItem('body')">BODY</div>
-                        <div class="equip-slot arm" onclick="unequipItem('arm')">WEAPON</div>
-                        <div class="equip-slot leg" onclick="unequipItem('leg')">LEG</div>
-                    </div>
+                <div class="profile-layout">
+                    <div class="char-silhouette"></div>
+                    <div class="equip-slot head" onclick="unequipItem('head')">HEAD</div>
+                    <div class="equip-slot body" onclick="unequipItem('body')">BODY</div>
+                    <div class="equip-slot arm" onclick="unequipItem('arm')">WEAPON</div>
+                    <div class="equip-slot leg" onclick="unequipItem('leg')">LEG</div>
                 </div>
-                <div class="panel-box stat-box">
-                    <div class="stat-row"><span>공격력</span> <span id="stat-atk">10</span></div>
-                    <div class="stat-row"><span>방어력</span> <span id="stat-def">5</span></div>
+                <div class="stat-box">
+                    <div>⚔️ 공격력 <span id="stat-atk">10</span></div>
+                    <div>🛡️ 방어력 <span id="stat-def">5</span></div>
                 </div>
             </div>
 
             <div id="tab-dragon" class="tab-content hidden">
                 <div class="cave-layout">
-                    <div class="panel-vertical egg-list-panel">
-                        <div id="my-egg-list"></div>
-                    </div>
-                    <div class="panel-main nest-panel">
-                        <h3 id="dragon-name-ui">용 이름</h3>
-                        <div id="dragon-display" class="dragon-egg-wrapper">
-                            <div class="glowing-egg">🥚</div>
+                    <div class="egg-list-panel" id="my-egg-list">
                         </div>
-                        <div class="rune-progress-bar">
+                    <div class="nest-panel">
+                        <h3 id="dragon-name-ui">용 이름</h3>
+                        <div id="dragon-display" class="dragon-display">🥚</div>
+                        <div class="rune-bar-container">
                             <div id="progress-fill"></div>
                         </div>
-                        <p id="click-msg">터치하여 마력 주입!</p>
+                        <button id="click-msg" class="btn-stone" style="width:120px;">마력 주입</button>
                     </div>
                 </div>
             </div>
 
             <div id="tab-explore" class="tab-content hidden">
-                <div id="explore-map-view">
-                    <div class="rune-bar-deco"></div>
-                    <div class="panel-main map-frame">
-                        <div class="map-bg" id="main-map-bg"></div> </div>
-                    <button class="btn-long-stone" onclick="enterSelectedRegion()">입장하기</button>
-                </div>
-                
-                <div id="explore-run-view" class="hidden">
-                    <div id="explore-bg" class="scene-bg">
-                        <div class="overlay-ui"><h3 id="region-title">지역</h3><p id="move-counter">남은 이동: 10</p></div>
-                        <div id="event-display"><p id="event-msg">...</p></div>
+                <div id="explore-map-view" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
+                    <div class="map-frame">
+                        <div class="map-bg"></div>
+                        <div id="region-list" class="region-grid"></div>
                     </div>
-                    <div class="control-panel">
+                    <button class="btn-stone enter-btn" onclick="enterSelectedRegion()">입장하기</button>
+                </div>
+
+                <div id="explore-run-view" class="hidden" style="width:100%;">
+                    <div id="explore-bg" class="map-frame" style="background:#222;">
+                        <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.5); padding:5px;">
+                            <h3 id="region-title">지역</h3>
+                            <p id="move-counter">이동: 10</p>
+                        </div>
+                        <div id="event-display" style="text-align:center; font-size:1.2rem;">
+                            <p id="event-msg">...</p>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
                         <button id="btn-move" class="btn-stone" onclick="moveForward()">👣 이동</button>
-                        <button id="btn-return" class="btn-stone sub" onclick="finishExplore(false)">🏠 귀환</button>
+                        <button id="btn-return" class="btn-stone" style="filter:grayscale(1);" onclick="finishExplore(false)">🏠 귀환</button>
                     </div>
                 </div>
             </div>
 
             <div id="tab-inventory" class="tab-content hidden">
-                <div class="panel-main inventory-panel">
-                    <h2>🎒 모험가의 가방</h2>
-                    <div id="inventory-grid" class="grid-container"></div>
+                <div class="inventory-panel">
+                    <h3>🎒 가방</h3>
+                    <div class="scroll-box">
+                        <div id="inventory-grid" class="grid-container"></div>
+                    </div>
                 </div>
             </div>
 
             <div id="tab-shop" class="tab-content hidden">
-                <div class="panel-main shop-panel">
-                    <h2>🏪 신비한 상점</h2>
-                    <div id="shop-list" class="list-container"></div>
+                <div class="shop-panel">
+                    <h3>🏪 상점</h3>
+                    <div class="scroll-box">
+                        <div id="shop-list"></div>
+                    </div>
                 </div>
             </div>
 
@@ -130,17 +133,16 @@
         </nav>
     </section>
 
-    <div id="roulette-modal" class="modal hidden">
-        <div class="panel-box modal-content">
-            <h3>알의 기운을 감정 중...</h3>
+    <div id="roulette-modal" class="full-screen hidden" style="z-index:999; background:rgba(0,0,0,0.8);">
+        <div class="panel-box">
+            <h3>알 감정 중...</h3>
             <div id="roulette-display">❓</div>
-            <button class="btn-stone" onclick="stopRoulette()">멈추기!</button>
+            <button class="btn-stone" onclick="stopRoulette()">멈추기</button>
         </div>
     </div>
 
     <input type="file" id="file-input" style="display: none;" accept="image/*">
-    <img src="" alt="" style="display: none;" id="temp-char-img-loader">
-    
+
     <script src="js/data.js"></script>
     <script src="js/player.js"></script>
     <script src="js/dragon.js"></script>
@@ -149,3 +151,4 @@
     <script src="js/main.js"></script>
 </body>
 </html>
+
