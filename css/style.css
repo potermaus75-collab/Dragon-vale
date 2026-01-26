@@ -1,177 +1,198 @@
-/* 기본 설정 */
+/* 폰트 불러오기 */
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
+/* 초기화 */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background-color: #111; color: #fff;
+    background-color: #000; /* 기본 배경 검정 */
     font-family: 'Nanum Gothic', sans-serif;
     overflow: hidden;
 }
 
-/* 유틸리티 */
-.full-screen { 
-    width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
-    display: flex; flex-direction: column; align-items: center; justify-content: center; 
-    z-index: 10; background: #0d0814; 
+/* 화면 공통 */
+.full-screen {
+    width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: #000; z-index: 10;
 }
 .hidden { display: none !important; }
+.active { display: flex !important; }
 
-/* [1] 시작 화면 */
-#screen-start { background: linear-gradient(180deg, #2c0e3a, #000); }
-.title-area h1 { font-size: 3rem; text-align: center; color: #f1c40f; text-shadow: 0 0 20px #8e44ad; }
-.blink { animation: blinker 1.5s infinite; color: #aaa; margin-top: 20px;}
-@keyframes blinker { 50% { opacity: 0.3; } }
+/* 텍스트 스타일 */
+h1, h2, h3 { margin: 0; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 800; }
+p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 
-/* [2] 패널 박스 (이미지 적용 핵심) */
+/* =========================================
+   [UI 컴포넌트] - 이미지가 100% 적용되도록 수정
+   ========================================= */
+
+/* 1. 패널 박스 (panel_main.png) */
 .panel-box {
     width: 90%; max-width: 400px; padding: 40px;
-    /* ★ 여기에 아까 자른 panel_main.png가 들어갑니다 */
-    background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%; background-repeat: no-repeat;
-    background-color: transparent; /* 배경색 제거 */
-    text-align: center; color: #e0d8c0;
+    /* 배경색과 테두리를 없애고 이미지만 띄움 */
+    background: url('../assets/images/ui/panel_main.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    border: none !important;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 15px;
 }
 
-#input-nickname {
-    width: 80%; padding: 10px; margin: 20px 0;
-    background: rgba(0,0,0,0.5); border: 2px solid #aaa; color: white;
-    font-size: 1.2rem; text-align: center; border-radius: 5px;
-}
-
-/* [3] 버튼 스타일 (이미지 적용) */
+/* 2. 직사각형 버튼 (btn_rect.png) */
 .btn-stone {
     width: 140px; height: 50px;
-    /* ★ 여기에 btn_rect.png가 들어갑니다 */
-    background-image: url('../assets/images/ui/btn_rect.png');
-    background-size: 100% 100%; background-color: transparent;
-    border: none; color: #f0e6fa; font-size: 1.1rem; font-weight: bold;
-    cursor: pointer; text-shadow: 1px 1px 2px #000;
+    background: url('../assets/images/ui/btn_rect.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    border: none !important; outline: none;
+    color: #ffd700; font-size: 1.1rem; font-weight: bold;
     display: flex; justify-content: center; align-items: center;
+    cursor: pointer; text-shadow: 1px 1px 2px #000;
 }
-.btn-stone:active { transform: scale(0.95); }
+.btn-stone:active { transform: scale(0.95); filter: brightness(0.8); }
 
-/* [4] 프롤로그 화면 (안보임 해결) */
+/* 3. 정사각형 버튼 (btn_square.png) */
+.btn-square {
+    width: 60px; height: 60px;
+    background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    border: none !important;
+    display: flex; justify-content: center; align-items: center;
+    font-size: 1.5rem; cursor: pointer;
+}
+.btn-square.active { filter: brightness(1.3); transform: scale(1.1); }
+
+/* =========================================
+   [화면별 스타일]
+   ========================================= */
+
+/* 1. 시작 화면 */
+#screen-start { background: linear-gradient(180deg, #2c0e3a, #000); }
+.title-area h1 { font-size: 3rem; color: #f1c40f; text-shadow: 0 0 15px #8e44ad; }
+.blink { animation: blinker 1.5s infinite; color: #ccc; margin-top: 20px;}
+@keyframes blinker { 50% { opacity: 0.3; } }
+
+/* 2. 설정 화면 입력창 */
+#input-nickname {
+    width: 80%; height: 40px;
+    background: rgba(0,0,0,0.5); border: 2px solid #888; border-radius: 5px;
+    color: white; font-size: 1.2rem; text-align: center;
+}
+
+/* 3. 프롤로그 (버그 수정: z-index 최상위) */
 #screen-prologue {
-    background-color: #000; z-index: 20; /* 가장 위에 오도록 */
+    background: #000 !important;
+    z-index: 9999 !important; /* 무조건 맨 위에 */
 }
 #prologue-text {
-    font-size: 1.2rem; line-height: 1.6; color: #fff; text-shadow: 1px 1px 2px #000;
+    font-size: 1.3rem; line-height: 1.6; color: #fff;
+    white-space: pre-line; /* 줄바꿈 적용 */
 }
 
-/* [5] 메인 게임 레이아웃 */
+/* 4. 메인 게임 헤더 */
 .game-header {
-    position: absolute; top: 0; left: 0; width: 100%; height: 80px;
-    background-image: url('../assets/images/ui/banner_header.png'); /* 배너 이미지 */
-    background-size: 100% 100%;
+    position: absolute; top: 0; left: 0; width: 100%; height: 90px;
+    background: url('../assets/images/ui/banner_header.png') no-repeat center top !important;
+    background-size: 100% 100% !important;
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 20px 25px 20px; z-index: 5;
+    padding: 15px 30px 30px 30px;
+    z-index: 100;
 }
 .profile-frame {
-    width: 60px; height: 60px;
-    background-image: url('../assets/images/ui/frame_profile.png'); /* 프레임 이미지 */
-    background-size: 100% 100%;
+    width: 64px; height: 64px;
+    background: url('../assets/images/ui/frame_profile.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
     display: flex; justify-content: center; align-items: center;
 }
-.profile-img { width: 45px; height: 45px; border-radius: 50%; background: #333; }
+.profile-img { width: 48px; height: 48px; border-radius: 50%; background: #555; }
+.header-info { text-align: right; }
 
+/* 5. 메인 게임 하단 메뉴 */
 .bottom-nav {
-    position: absolute; bottom: 0; left: 0; width: 100%; height: 70px;
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
     background: #111; border-top: 2px solid #333;
-    display: flex; justify-content: space-around; align-items: center; z-index: 100;
-}
-.nav-btn {
-    width: 50px; height: 50px;
-    background-image: url('../assets/images/ui/btn_square.png'); /* 정사각형 버튼 */
-    background-size: 100% 100%; background-color: transparent; border: none;
-    font-size: 1.8rem; display: flex; justify-content: center; align-items: center;
-    filter: grayscale(0.8); cursor: pointer;
-}
-.nav-btn.active { filter: grayscale(0) brightness(1.2); }
-
-/* [6] 탭 콘텐츠 공통 */
-#game-view { position: absolute; top: 80px; bottom: 70px; width: 100%; overflow: hidden; }
-.tab-content { width: 100%; height: 100%; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
-
-/* 패널 공통 스타일 */
-.panel-vertical {
-    background-image: url('../assets/images/ui/panel_vertical.png');
-    background-size: 100% 100%; padding: 20px;
-}
-.panel-main {
-    background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%; padding: 25px;
+    display: flex; justify-content: space-around; align-items: center;
+    z-index: 100;
 }
 
-/* 내 정보 */
-.profile-layout { width: 300px; height: 400px; display: flex; flex-direction: column; align-items: center; position: relative; }
+/* 6. 메인 뷰 (탭 콘텐츠) */
+#game-view {
+    position: absolute; top: 90px; bottom: 80px; width: 100%;
+    overflow: hidden;
+}
+.tab-content { width: 100%; height: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
+
+/* [탭1] 내 정보 */
+.profile-card {
+    width: 300px; height: 400px; position: relative;
+    background: url('../assets/images/ui/panel_vertical.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    display: flex; flex-direction: column; align-items: center; padding: 20px;
+}
 .equip-slot {
-    position: absolute; width: 50px; height: 50px;
-    background-image: url('../assets/images/ui/btn_square.png');
-    background-size: 100% 100%;
+    position: absolute; width: 55px; height: 55px;
+    background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
     display: flex; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: #aaa; z-index: 5;
+    font-size: 0.7rem; color: #aaa; cursor: pointer;
 }
-.equip-slot.head { top: 20px; left: 50%; transform: translateX(-50%); }
+/* 장비 위치 지정 */
+.equip-slot.head { top: 30px; left: 50%; transform: translateX(-50%); }
 .equip-slot.body { top: 100px; left: 50%; transform: translateX(-50%); }
-.equip-slot.arm { top: 100px; right: 30px; }
+.equip-slot.arm { top: 100px; right: 40px; }
 .equip-slot.leg { top: 180px; left: 50%; transform: translateX(-50%); }
 
-/* 동굴 */
+/* [탭2] 동굴 */
 .cave-layout { display: flex; width: 100%; height: 100%; gap: 5px; }
-.egg-list-panel { width: 100px; height: 90%; overflow-y: auto; }
+.egg-panel {
+    width: 100px; height: 100%;
+    background: url('../assets/images/ui/panel_vertical.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    padding: 15px 5px; overflow-y: auto;
+}
 .nest-panel { flex: 1; display: flex; flex-direction: column; align-items: center; }
-.rune-bar-container {
-    width: 90%; height: 20px; background: #000; border: 2px solid #555;
-    border-radius: 10px; position: relative; overflow: hidden; margin-bottom: 20px;
+.rune-bar {
+    width: 90%; height: 25px; margin-bottom: 20px;
+    background: #000; border: 2px solid #555; border-radius: 12px;
+    position: relative; overflow: hidden;
 }
 #progress-fill {
-    height: 100%; width: 0%; background: #2ecc71;
-    background-image: url('../assets/images/ui/bar_rune.png'); /* 게이지바 이미지 */
-    background-size: cover;
+    height: 100%; width: 0%;
+    background: url('../assets/images/ui/bar_rune.png') repeat-x left center !important; /* 이미지 없으면 초록색이라도 나오게 */
+    background-color: #2ecc71; 
+    background-size: auto 100% !important;
+    transition: width 0.2s;
 }
 
-/* 탐험 */
+/* [탭3] 탐험 */
 .map-frame {
-    width: 100%; height: 300px; 
-    background-image: url('../assets/images/ui/panel_main.png');
-    background-size: 100% 100%; padding: 20px;
-    display: flex; justify-content: center; align-items: center;
+    width: 100%; height: 350px;
+    background: url('../assets/images/ui/panel_main.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    padding: 25px; display: flex; justify-content: center; align-items: center;
 }
-.map-bg {
-    width: 100%; height: 100%; background: #333;
-    background-image: url('../assets/images/map_continent.jpg'); /* 지도 이미지 */
-    background-size: cover; border-radius: 5px;
-}
-.region-grid {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    padding: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
-}
-.region-card {
-    background: rgba(0,0,0,0.8); border: 1px solid #aaa; border-radius: 5px;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    cursor: pointer; padding: 10px;
+.map-view {
+    width: 100%; height: 100%;
+    background: url('../assets/images/map_continent.jpg') no-repeat center center !important;
+    background-size: cover !important;
+    border-radius: 5px; border: 1px solid #000; position: relative;
 }
 
-/* 가방 & 상점 */
-.inventory-panel, .shop-panel {
-    width: 95%; height: 90%; display: flex; flex-direction: column; align-items: center;
+/* [탭4, 5] 가방/상점 */
+.inventory-bg, .shop-bg {
+    width: 95%; height: 95%;
+    background: url('../assets/images/ui/panel_main.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    padding: 30px 20px;
 }
-.scroll-box { width: 100%; height: 100%; overflow-y: auto; }
-.grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
-.item-slot {
-    background-image: url('../assets/images/ui/btn_square.png');
-    background-size: 100% 100%; aspect-ratio: 1/1;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: #fff;
-}
-.shop-item {
-    background: rgba(0,0,0,0.5); border: 1px solid #555; margin-bottom: 5px; padding: 10px;
-    display: flex; justify-content: space-between; align-items: center; border-radius: 5px;
-}
+.scroll-area { width: 100%; height: 100%; overflow-y: auto; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.list-row { display: flex; flex-direction: column; gap: 5px; }
 
-/* 모달 */
-.modal-content { width: 80%; }
+/* 아이템 슬롯 */
+.slot-item {
+    background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
+    background-size: 100% 100% !important;
+    aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center;
+    color: white; font-size: 0.8rem;
+}
 
