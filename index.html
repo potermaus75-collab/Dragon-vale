@@ -66,11 +66,33 @@
             </div>
 
             <div id="tab-explore" class="tab-content hidden">
-                <h2>🗺️ 미지의 숲</h2>
-                <div class="explore-log" id="explore-log-area">
-                    <p>탐험 버튼을 눌러 모험을 떠나세요.</p>
+                
+                <div id="explore-map-view">
+                    <h2>🗺️ 대륙 지도</h2>
+                    <div class="map-container">
+                        <div class="map-bg"></div> <div id="region-list" class="region-grid">
+                            </div>
+                    </div>
+                    <p style="font-size:0.9rem; color:#aaa;">지역을 선택하여 탐험을 떠나세요.</p>
                 </div>
-                <button class="action-btn" onclick="tryExplore()">🌲 탐험하기 (피로도 1)</button>
+
+                <div id="explore-run-view" class="hidden">
+                    <div id="explore-bg" class="scene-bg">
+                        <div class="overlay-ui">
+                            <h3 id="region-title" style="margin:0;">지역 이름</h3>
+                            <p id="move-counter" style="margin:0;">남은 이동: 10</p>
+                        </div>
+                        <div id="event-display">
+                            <p id="event-msg">탐험을 시작합니다.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="control-panel">
+                        <button id="btn-move" class="action-btn" onclick="moveForward()">👣 앞으로 이동</button>
+                        <button id="btn-return" class="action-btn sub" onclick="finishExplore(false)">🏠 중도 귀환</button>
+                    </div>
+                </div>
+
             </div>
 
             <div id="tab-inventory" class="tab-content hidden">
@@ -97,7 +119,8 @@
     <input type="file" id="file-input" style="display: none;" accept="image/*">
 
     <script src="js/data.js"></script>
-    <script src="js/player.js"></script> <script src="js/dragon.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/dragon.js"></script>
     <script src="js/hatchery.js"></script>
     <script src="js/explore.js"></script>
     <script src="js/main.js"></script>
