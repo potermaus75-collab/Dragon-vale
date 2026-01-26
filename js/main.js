@@ -9,6 +9,7 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
+// 화면 전환
 function showScreen(screenId) {
     document.querySelectorAll('.full-screen').forEach(el => {
         el.classList.remove('active');
@@ -18,17 +19,19 @@ function showScreen(screenId) {
     if(target) {
         target.classList.remove('hidden');
         target.classList.add('active');
+        target.style.display = "flex"; // 확실하게 보이게 설정
     }
 }
 
+// 1. 시작
 document.getElementById('screen-start').addEventListener('click', () => {
     showScreen('screen-setup');
 });
 
+// 2. 닉네임 -> 프롤로그
 function submitName() {
     const input = document.getElementById('input-nickname');
     if (input.value.trim() === "") return alert("이름을 입력해주세요!");
-    
     userNickname = input.value;
     document.getElementById('ui-nickname').innerText = userNickname;
     
@@ -36,12 +39,9 @@ function submitName() {
     renderPrologue();
 }
 
-// ★ 프롤로그 렌더링 수정
+// 프롤로그 렌더링
 function renderPrologue() {
     const textEl = document.getElementById('prologue-text');
-    // 텍스트가 보이도록 스타일 강제
-    textEl.style.color = "#fff"; 
-    textEl.style.zIndex = "100";
     textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
 }
 
@@ -54,23 +54,26 @@ function nextPrologueCut() {
     }
 }
 
+// 3. 게임 진입
 function startGame() {
     showScreen('screen-game');
     updateCurrency();
-    switchTab('dragon'); // 첫 화면은 동굴
+    switchTab('dragon'); 
     if(window.updateUI) window.updateUI();
 }
 
+// 탭 전환
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
     });
     const selected = document.getElementById(`tab-${tabName}`);
-    if (selected) selected.classList.remove('hidden');
+    if(selected) selected.classList.remove('hidden');
 
-    // 하단 아이콘 활성화
+    // 하단 버튼 활성화 효과
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => btn.classList.remove('active'));
+    
     const tabMap = {'info':0, 'dragon':1, 'explore':2, 'inventory':3, 'shop':4};
     if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
 
@@ -86,26 +89,28 @@ function switchTab(tabName) {
     }
 }
 
-// ... (renderInventory, renderShop 등 나머지 함수는 이전과 동일) ...
-// (아래 코드는 그대로 두거나 복사해서 넣으세요)
-
+// 가방 그리기
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
     grid.innerHTML = "";
+    
     const itemIds = Object.keys(player.inventory);
+    if(itemIds.length === 0) grid.innerHTML = "<p>비어있음</p>";
+
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
             const div = document.createElement('div');
-            div.className = 'item-slot';
+            div.className = 'slot-item';
             div.onclick = () => useItem(id);
-            div.innerHTML = `<div style="font-size:1.5rem">${item.emoji}</div><div>${item.name}</div><div>x${player.inventory[id]}</div>`;
+            div.innerHTML = `<span>${item.emoji}</span><span>x${player.inventory[id]}</span>`;
             grid.appendChild(div);
         }
     });
 }
 
+// 상점 그리기
 function renderShop() {
     const list = document.getElementById('shop-list');
     if(!list) return;
@@ -116,8 +121,8 @@ function renderShop() {
         div.className = 'shop-item';
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:2rem;">${item.emoji}</span>
-                <div><div style="font-weight:bold;">${item.name}</div><div style="font-size:0.8rem; color:#aaa;">${item.desc}</div></div>
+                <span style="font-size:1.5rem;">${item.emoji}</span>
+                <div><b>${item.name}</b><br><small style="color:#aaa;">${item.desc}</small></div>
             </div>
             <button class="btn-stone" style="width:80px; height:40px; font-size:0.9rem;" onclick="buyItem('${id}')">💰 ${item.price}</button>
         `;
@@ -125,6 +130,7 @@ function renderShop() {
     });
 }
 
+// 구매
 function buyItem(id) {
     const item = ITEM_DB[id];
     if (player.gold >= item.price) {
@@ -146,8 +152,9 @@ document.getElementById('file-input').addEventListener('change', function(e) {
         const reader = new FileReader();
         reader.onload = function(evt) {
             document.getElementById('ui-profile-img').style.backgroundImage = `url('${evt.target.result}')`;
-            document.getElementById('ui-profile-img').innerText = "";
+            document.getElementById('ui-profile-img').style.backgroundSize = "cover";
         }
         reader.readAsDataURL(file);
     }
 });
+
