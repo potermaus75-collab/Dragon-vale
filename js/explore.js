@@ -1,30 +1,38 @@
-function startExploration() {
-    const roll = Math.floor(Math.random() * 100); // 0 ~ 99 랜덤
+const logArea = document.getElementById('explore-log-area');
 
-    if (roll < EXPLORE_RATES.NOTHING) {
-        // 꽝
-        alert("탐험 결과: 아무것도 발견하지 못했습니다.");
-    } 
-    else if (roll < EXPLORE_RATES.NOTHING + EXPLORE_RATES.MATERIAL) {
-        // 재료 발견
-        alert("탐험 결과: '나뭇가지'를 주웠습니다!");
-        // TODO: 인벤토리에 추가 로직
-    } 
-    else {
-        // 용의 둥지 발견 (선택지 발생)
-        const choice = confirm("용의 둥지를 발견했습니다!\n\n[확인] 몰래 알 훔치기 (성공률 30%)\n[취소] 어미용과 싸우기 (위험!)");
-
-        if (choice) {
-            // 몰래 훔치기 시도
-            if (Math.random() < 0.3) {
-                alert("성공! '미지의 알'을 획득했습니다.");
-            } else {
-                alert("실패! 어미용에게 들켜서 도망쳤습니다.");
-            }
-        } else {
-            // 싸우기 (임시)
-            alert("전투 기능은 준비중입니다. 무사히 도망쳤습니다.");
-        }
+// 로그 한 줄 추가 함수
+function addLog(text, color = "#ddd") {
+    const p = document.createElement('p');
+    p.innerHTML = text;
+    p.style.color = color;
+    p.style.margin = "5px 0";
+    
+    if(logArea) {
+        logArea.appendChild(p);
+        logArea.scrollTop = logArea.scrollHeight;
     }
 }
 
+// 탐험 버튼 클릭 시 실행
+function tryExplore() {
+    const roll = Math.floor(Math.random() * 100);
+    
+    // 통계 증가
+    player.stats.explore++;
+    updateCurrency(); 
+
+    if (roll < 40) {
+        addLog("🍂 숲을 헤맸지만 아무것도 없었다...", "#888");
+    } else if (roll < 80) {
+        // 골드 획득
+        const goldFound = Math.floor(Math.random() * 50) + 10;
+        player.gold += goldFound;
+        updateCurrency();
+        addLog(`💰 떨어진 동전을 주웠다! (+${goldFound}G)`, "#f1c40f");
+    } else {
+        // 아이템 획득 (전투 대신 임시 구현)
+        addLog("🎁 보물상자를 발견했다!", "#2ecc71");
+        addItem("potion_s", 1);
+        addLog("└ 성장 물약을 획득함", "#2ecc71");
+    }
+}
