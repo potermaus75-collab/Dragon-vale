@@ -9,27 +9,15 @@
 <body>
 
     <section id="screen-start" class="full-screen active">
-        <div class="title-area">
-            <h1>DRAGON<br>MASTER</h1>
-            <p class="blink">화면을 터치하여 시작</p>
-        </div>
+        <div class="title-area"><h1>DRAGON<br>MASTER</h1><p class="blink">화면을 터치하여 시작</p></div>
     </section>
 
     <section id="screen-setup" class="full-screen hidden">
-        <div class="setup-box">
-            <h2>당신의 이름은?</h2>
-            <input type="text" id="input-nickname" placeholder="이름을 입력하세요" maxlength="8">
-            <button onclick="submitName()">모험 시작하기</button>
-        </div>
+        <div class="setup-box"><h2>당신의 이름은?</h2><input type="text" id="input-nickname" placeholder="이름 입력" maxlength="8"><button onclick="submitName()">모험 시작하기</button></div>
     </section>
 
     <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()">
-        <div class="comic-container">
-            <div id="comic-frame" class="comic-placeholder">
-                <span id="prologue-text">...</span>
-            </div>
-            <p class="skip-btn">터치하여 계속하기 >></p>
-        </div>
+        <div class="comic-container"><div id="comic-frame" class="comic-placeholder"><span id="prologue-text">...</span></div><p class="skip-btn">터치하여 계속 >></p></div>
     </section>
 
     <section id="screen-game" class="full-screen hidden">
@@ -39,60 +27,46 @@
                 <div class="profile-img" id="ui-profile-img">👤</div>
                 <span class="profile-name" id="ui-nickname">플레이어</span>
             </div>
-            <div class="currency-area">
-                <span>💎 <span id="ui-gem">0</span></span>
-                <span>💰 <span id="ui-gold">0</span></span>
-            </div>
+            <div class="currency-area"><span>💎 <span id="ui-gem">0</span></span><span>💰 <span id="ui-gold">0</span></span></div>
         </header>
 
         <main id="game-view">
             
             <div id="tab-info" class="tab-content hidden">
-                <h2>📜 모험가 정보</h2>
+                <h2>⚔️ 장비 착용</h2>
+                <div class="character-view">
+                    <div class="silhouette-bg"></div> 
+                    <div class="equip-slot head" onclick="unequipItem('head')">HEAD</div>
+                    <div class="equip-slot body" onclick="unequipItem('body')">BODY</div>
+                    <div class="equip-slot arm" onclick="unequipItem('arm')">ARM</div>
+                    <div class="equip-slot leg" onclick="unequipItem('leg')">LEG</div>
+                </div>
                 <div class="info-card">
-                    <p>탐험 횟수: <span id="stat-explore">0</span>회</p>
-                    <p>보유한 용: <span id="stat-dragons">1</span>마리</p>
-                    <p>최고 도달 등급: <span id="stat-max-rank">C</span></p>
+                    <p>공격력: <span id="stat-atk">10</span> / 방어력: <span id="stat-def">5</span></p>
+                    <p class="small-text">(슬롯을 터치하여 장비 해제)</p>
                 </div>
             </div>
 
-            <div id="tab-dragon" class="tab-content active">
-                <h2 id="dragon-name-ui">용 이름</h2>
-                <div id="dragon-display" class="dragon-placeholder">
-                    <div class="img-container" id="dragon-img-area">🥚</div>
+            <div id="tab-dragon" class="tab-content hidden">
+                <div class="cave-container">
+                    <div class="egg-list-area">
+                        <h3>보유 리스트</h3>
+                        <div id="my-egg-list"></div>
+                    </div>
+                    <div class="nest-area">
+                        <h3 id="dragon-name-ui">용 이름</h3>
+                        <div id="dragon-display" class="dragon-placeholder">
+                            <div class="img-container" id="dragon-img-area">🥚</div>
+                        </div>
+                        <div id="status-bar"><div id="progress-fill"></div></div>
+                        <p id="click-msg">터치하여 성장!</p>
+                    </div>
                 </div>
-                <div id="status-bar"><div id="progress-fill"></div></div>
-                <p id="click-msg" class="blink" style="margin-top:10px;">터치하여 성장시키세요!</p>
             </div>
 
             <div id="tab-explore" class="tab-content hidden">
-                
-                <div id="explore-map-view">
-                    <h2>🗺️ 대륙 지도</h2>
-                    <div class="map-container">
-                        <div class="map-bg"></div> <div id="region-list" class="region-grid">
-                            </div>
-                    </div>
-                    <p style="font-size:0.9rem; color:#aaa;">지역을 선택하여 탐험을 떠나세요.</p>
-                </div>
-
-                <div id="explore-run-view" class="hidden">
-                    <div id="explore-bg" class="scene-bg">
-                        <div class="overlay-ui">
-                            <h3 id="region-title" style="margin:0;">지역 이름</h3>
-                            <p id="move-counter" style="margin:0;">남은 이동: 10</p>
-                        </div>
-                        <div id="event-display">
-                            <p id="event-msg">탐험을 시작합니다.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="control-panel">
-                        <button id="btn-move" class="action-btn" onclick="moveForward()">👣 앞으로 이동</button>
-                        <button id="btn-return" class="action-btn sub" onclick="finishExplore(false)">🏠 중도 귀환</button>
-                    </div>
-                </div>
-
+                <div id="explore-map-view"><h2>🗺️ 대륙 지도</h2><div class="map-container"><div class="map-bg"></div><div id="region-list" class="region-grid"></div></div></div>
+                <div id="explore-run-view" class="hidden"><div id="explore-bg" class="scene-bg"><div class="overlay-ui"><h3 id="region-title">지역</h3><p id="move-counter">남은 이동: 10</p></div><div id="event-display"><p id="event-msg">...</p></div></div><div class="control-panel"><button id="btn-move" class="action-btn" onclick="moveForward()">👣 이동</button><button id="btn-return" class="action-btn sub" onclick="finishExplore(false)">🏠 귀환</button></div></div>
             </div>
 
             <div id="tab-inventory" class="tab-content hidden">
@@ -109,15 +83,23 @@
 
         <nav class="bottom-nav">
             <button onclick="switchTab('info')">👤<br>내정보</button>
-            <button onclick="switchTab('dragon')">🐲<br>용관리</button>
+            <button onclick="switchTab('dragon')">🐲<br>동굴</button>
             <button onclick="switchTab('explore')">🌲<br>탐험</button>
             <button onclick="switchTab('inventory')">🎒<br>가방</button>
             <button onclick="switchTab('shop')">🏪<br>상점</button>
         </nav>
     </section>
 
-    <input type="file" id="file-input" style="display: none;" accept="image/*">
+    <div id="roulette-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>미지의 알 감정 중...</h3>
+            <div id="roulette-display">❓</div>
+            <p>화면을 터치하여 멈추세요!</p>
+            <button id="roulette-stop-btn" onclick="stopRoulette()">STOP!</button>
+        </div>
+    </div>
 
+    <input type="file" id="file-input" style="display: none;" accept="image/*">
     <script src="js/data.js"></script>
     <script src="js/player.js"></script>
     <script src="js/dragon.js"></script>
