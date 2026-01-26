@@ -9,18 +9,18 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// 화면 전환 유틸
 function showScreen(screenId) {
     document.querySelectorAll('.full-screen').forEach(el => {
         el.classList.remove('active');
         el.classList.add('hidden');
     });
     const target = document.getElementById(screenId);
-    target.classList.remove('hidden');
-    target.classList.add('active');
+    if(target) {
+        target.classList.remove('hidden');
+        target.classList.add('active');
+    }
 }
 
-// 1. 시작 및 설정
 document.getElementById('screen-start').addEventListener('click', () => {
     showScreen('screen-setup');
 });
@@ -36,10 +36,13 @@ function submitName() {
     renderPrologue();
 }
 
-// 2. 프롤로그
+// ★ 프롤로그 렌더링 수정
 function renderPrologue() {
-    const text = document.getElementById('prologue-text');
-    text.innerText = PROLOGUE_DATA[prologueIndex].text;
+    const textEl = document.getElementById('prologue-text');
+    // 텍스트가 보이도록 스타일 강제
+    textEl.style.color = "#fff"; 
+    textEl.style.zIndex = "100";
+    textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
 }
 
 function nextPrologueCut() {
@@ -51,73 +54,62 @@ function nextPrologueCut() {
     }
 }
 
-// 3. 게임 시작
 function startGame() {
     showScreen('screen-game');
     updateCurrency();
     switchTab('dragon'); // 첫 화면은 동굴
-    if(window.updateUI) window.updateUI(); // 동굴 초기화
+    if(window.updateUI) window.updateUI();
 }
 
-// 4. 탭 전환 시스템
 function switchTab(tabName) {
-    // 모든 탭 숨기기
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
-        content.classList.remove('active');
     });
-
-    // 선택 탭 보이기
     const selected = document.getElementById(`tab-${tabName}`);
-    if (selected) {
-        selected.classList.remove('hidden');
-        selected.classList.add('active');
-    }
+    if (selected) selected.classList.remove('hidden');
 
-    // 탭별 로직 연결
+    // 하단 아이콘 활성화
+    const navBtns = document.querySelectorAll('.nav-btn');
+    navBtns.forEach(btn => btn.classList.remove('active'));
+    const tabMap = {'info':0, 'dragon':1, 'explore':2, 'inventory':3, 'shop':4};
+    if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
+
+    // 데이터 갱신
     if (tabName === 'inventory') renderInventory();
     if (tabName === 'shop') renderShop();
-    
-    // 내 정보 & 동굴 탭은 hatchery.js의 updateUI 사용
     if (tabName === 'info' || tabName === 'dragon') {
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
     }
-    
-    // 탐험 탭은 explore.js의 initExploreTab 사용
     if (tabName === 'explore') {
         if(window.initExploreTab) window.initExploreTab();
     }
 }
 
-// 인벤토리 그리기
+// ... (renderInventory, renderShop 등 나머지 함수는 이전과 동일) ...
+// (아래 코드는 그대로 두거나 복사해서 넣으세요)
+
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
+    if(!grid) return;
     grid.innerHTML = "";
-    
     const itemIds = Object.keys(player.inventory);
-    if (itemIds.length === 0) {
-        grid.innerHTML = "<p style='grid-column: span 4; color:#888;'>가방이 비어있습니다.</p>";
-        return;
-    }
-
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
             const div = document.createElement('div');
             div.className = 'item-slot';
-            div.onclick = () => useItem(id); // player.js의 useItem 호출
-            div.innerHTML = `<div class="item-icon">${item.emoji}</div><div>${item.name}</div><div>x${player.inventory[id]}</div>`;
+            div.onclick = () => useItem(id);
+            div.innerHTML = `<div style="font-size:1.5rem">${item.emoji}</div><div>${item.name}</div><div>x${player.inventory[id]}</div>`;
             grid.appendChild(div);
         }
     });
 }
 
-// 상점 그리기
 function renderShop() {
     const list = document.getElementById('shop-list');
+    if(!list) return;
     list.innerHTML = "";
-
     SHOP_LIST.forEach(id => {
         const item = ITEM_DB[id];
         const div = document.createElement('div');
@@ -127,7 +119,7 @@ function renderShop() {
                 <span style="font-size:2rem;">${item.emoji}</span>
                 <div><div style="font-weight:bold;">${item.name}</div><div style="font-size:0.8rem; color:#aaa;">${item.desc}</div></div>
             </div>
-            <button class="shop-btn" onclick="buyItem('${id}')">💰 ${item.price}</button>
+            <button class="btn-stone" style="width:80px; height:40px; font-size:0.9rem;" onclick="buyItem('${id}')">💰 ${item.price}</button>
         `;
         list.appendChild(div);
     });
@@ -145,7 +137,6 @@ function buyItem(id) {
     }
 }
 
-// 프로필 사진 변경
 function changeProfileImage() {
     document.getElementById('file-input').click();
 }
