@@ -1,26 +1,14 @@
 /* 기본 설정 */
-body, html {
-    margin: 0; padding: 0; width: 100%; height: 100%;
-    background-color: #1a1a1a; color: white;
-    font-family: 'Apple SD Gothic Neo', sans-serif;
-    overflow: hidden;
-}
-
-/* 유틸리티 */
-.full-screen {
-    width: 100%; height: 100%; position: absolute; top: 0; left: 0;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
+body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #1a1a1a; color: white; font-family: 'Apple SD Gothic Neo', sans-serif; overflow: hidden; }
+.full-screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .hidden { display: none !important; }
 .active { display: flex !important; }
 
-/* 시작화면 */
+/* 시작, 설정, 프롤로그 */
 #screen-start { background: linear-gradient(135deg, #2c3e50, #000000); cursor: pointer; }
-.title-area h1 { font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 10px #f1c40f; text-align: center;}
+.title-area h1 { font-size: 3rem; margin-bottom: 20px; text-shadow: 0 0 10px #f1c40f; text-align: center; }
 .blink { animation: blinker 1.5s linear infinite; color: #bbb; }
 @keyframes blinker { 50% { opacity: 0; } }
-
-/* 설정 & 프롤로그 */
 .setup-box { background: #333; padding: 30px; border-radius: 15px; text-align: center; width: 80%; }
 #input-nickname { width: 80%; padding: 10px; margin: 15px 0; font-size: 1.2rem; text-align: center; }
 .setup-box button { padding: 10px 20px; background: #e74c3c; border: none; color: white; border-radius: 5px; font-size: 1rem; }
@@ -42,39 +30,54 @@ body, html {
 .bottom-nav button { flex: 1; background: none; border: none; color: #888; font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .bottom-nav button:active { color: white; background: #333; }
 
-/* 용 & 인벤토리 & 상점 공통 */
-.dragon-placeholder { width: 220px; height: 220px; border-radius: 20px; margin: 20px; display: flex; align-items: center; justify-content: center; background: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+/* [탭1] 장비창 스타일 (New) */
+.character-view { width: 280px; height: 350px; position: relative; margin: 0 auto 20px auto; background: #222; border-radius: 20px; border: 2px solid #555; }
+.silhouette-bg { width: 100%; height: 100%; opacity: 0.3; background-image: url('../assets/images/ui/silhouette.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
+.equip-slot { position: absolute; width: 60px; height: 60px; background: rgba(0,0,0,0.8); border: 2px solid #888; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 0.7rem; color: #aaa; cursor: pointer; }
+.equip-slot.head { top: 20px; left: 50%; transform: translateX(-50%); }
+.equip-slot.body { top: 100px; left: 50%; transform: translateX(-50%); }
+.equip-slot.arm { top: 100px; left: 20px; }
+.equip-slot.leg { bottom: 50px; left: 50%; transform: translateX(-50%); }
+.small-text { font-size: 0.8rem; color: #888; margin-top: 5px; }
+
+/* [탭2] 동굴 스타일 (New) */
+.cave-container { display: flex; width: 100%; height: 100%; gap: 10px; }
+.egg-list-area { flex: 1; background: #2c2c2c; border-radius: 10px; padding: 10px; overflow-y: auto; border: 1px solid #444; }
+.nest-area { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.egg-item { background: #444; margin-bottom: 8px; padding: 10px; border-radius: 8px; text-align: center; font-size: 0.8rem; cursor: pointer; }
+.egg-item.active { border: 2px solid #f1c40f; background: #555; }
+.dragon-placeholder { width: 100%; max-width: 220px; aspect-ratio: 1/1; border-radius: 20px; margin: 20px; display: flex; align-items: center; justify-content: center; background: #2c3e50; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
 .img-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 5rem; background-size: cover; background-position: center; }
-#status-bar { width: 70%; height: 15px; background: #444; border-radius: 10px; overflow: hidden; }
+#status-bar { width: 80%; height: 15px; background: #444; border-radius: 10px; overflow: hidden; }
 #progress-fill { height: 100%; background: #2ecc71; width: 0%; transition: width 0.2s; }
+
+/* 룰렛 모달 (New) */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; justify-content: center; align-items: center; }
+.modal-content { background: #333; padding: 30px; border-radius: 20px; text-align: center; border: 2px solid #fff; width: 80%; }
+#roulette-display { width: 120px; height: 120px; margin: 20px auto; background: #222; border-radius: 50%; font-size: 4rem; display: flex; justify-content: center; align-items: center; border: 5px solid #e74c3c; }
+#roulette-stop-btn { padding: 15px 40px; font-size: 1.5rem; background: #c0392b; color: white; border: none; border-radius: 10px; cursor: pointer; }
+
+/* 탐험, 가방, 상점 공통 */
+.map-container { width: 100%; height: 350px; background-color: #222; border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 10px; border: 2px solid #555; }
+.map-bg { width: 100%; height: 100%; background-color: #34495e; opacity: 0.3; position: absolute; }
+.region-grid { position: absolute; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 15px; box-sizing: border-box; overflow-y: auto; }
+.region-card { background: rgba(0,0,0,0.7); border: 2px solid #888; border-radius: 10px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; padding: 10px; text-align: center; }
+.region-card.locked { opacity: 0.5; border-color: #e74c3c; cursor: not-allowed; }
+.scene-bg { width: 100%; height: 300px; background-color: #111; border-radius: 15px; position: relative; background-size: cover; background-position: center; margin-bottom: 15px; border: 2px solid #fff; display: flex; flex-direction: column; justify-content: space-between; }
+.overlay-ui { width: 100%; padding: 10px; background: rgba(0,0,0,0.6); display: flex; justify-content: space-between; box-sizing: border-box; align-self: flex-start; }
+#event-display { width: 100%; padding: 15px; background: rgba(0,0,0,0.8); text-align: center; box-sizing: border-box; min-height: 60px; display: flex; align-items: center; justify-content: center; }
+.control-panel { width: 100%; display: flex; gap: 10px; }
+.action-btn { flex: 2; padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+.action-btn.sub { flex: 1; background-color: #7f8c8d; font-size: 0.9rem; }
+.action-btn:disabled { opacity: 0.5; }
 .grid-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
 .item-slot { background: #444; border-radius: 10px; padding: 5px; text-align: center; font-size: 0.7rem; aspect-ratio: 1/1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .list-container { width: 100%; }
 .shop-item { background: #333; margin-bottom: 10px; padding: 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
 .shop-btn { background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
 
-/* ★ 탐험 시스템 전용 스타일 (New!) */
-.map-container { width: 100%; height: 350px; background-color: #222; border-radius: 15px; position: relative; overflow: hidden; margin-bottom: 10px; border: 2px solid #555; }
-.map-bg { width: 100%; height: 100%; background-color: #34495e; opacity: 0.3; position: absolute; }
-.region-grid { position: absolute; width: 100%; height: 100%; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 15px; box-sizing: border-box; overflow-y: auto; }
-.region-card { background: rgba(0,0,0,0.7); border: 2px solid #888; border-radius: 10px; color: white; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; padding: 10px; text-align: center; transition: background 0.2s; }
-.region-card:active { background: rgba(255,255,255,0.1); }
-.region-card.locked { opacity: 0.5; border-color: #e74c3c; cursor: not-allowed; }
-
-.scene-bg { width: 100%; height: 300px; background-color: #111; border-radius: 15px; position: relative; background-size: cover; background-position: center; margin-bottom: 15px; border: 2px solid #fff; transition: transform 0.2s; display: flex; flex-direction: column; justify-content: space-between; }
-.overlay-ui { width: 100%; padding: 10px; background: rgba(0,0,0,0.6); display: flex; justify-content: space-between; box-sizing: border-box; align-self: flex-start; }
-#event-display { width: 100%; padding: 15px; background: rgba(0,0,0,0.8); text-align: center; box-sizing: border-box; min-height: 60px; display: flex; align-items: center; justify-content: center; }
-.control-panel { width: 100%; display: flex; gap: 10px; }
-.action-btn { flex: 2; padding: 15px; background: #e67e22; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
-.action-btn.sub { flex: 1; background-color: #7f8c8d; font-size: 0.9rem; }
-.action-btn:disabled { opacity: 0.5; cursor: default; }
-
-/* 걷는 효과 애니메이션 */
+/* 애니메이션 */
 @keyframes shake-anim {
-    0% { transform: translateY(0px) scale(1); }
-    25% { transform: translateY(3px) scale(1.01); }
-    50% { transform: translateY(0px) scale(1); }
-    75% { transform: translateY(3px) scale(1.01); }
-    100% { transform: translateY(0px) scale(1); }
+    0% { transform: translateY(0px) scale(1); } 25% { transform: translateY(3px) scale(1.01); } 50% { transform: translateY(0px) scale(1); } 75% { transform: translateY(3px) scale(1.01); } 100% { transform: translateY(0px) scale(1); }
 }
 .walking { animation: shake-anim 0.5s ease-in-out; }
