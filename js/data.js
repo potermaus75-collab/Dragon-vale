@@ -21,14 +21,16 @@ const ENCOUNTER_RATES = {
     NEST: 10       // 둥지 발견 (희귀)
 };
 
-// 아이템 데이터베이스 (장비 추가됨)
+// 아이템 데이터베이스 (장비 및 알 추가됨)
 const ITEM_DB = {
     // 소비 아이템
     "potion_s": { name: "성장 물약", emoji: "🧪", price: 100, desc: "경험치 +10", type: "use" },
     "nest_wood": { name: "둥지 재료", emoji: "🪵", price: 500, desc: "둥지 강화용", type: "material" },
+    
+    // 알 아이템 (type: egg)
     "egg_random": { name: "미지의 알", emoji: "🥚", price: 1000, desc: "랜덤 용 부화", type: "egg" },
     
-    // 장비 아이템 (새로 추가)
+    // 장비 아이템 (type: equip)
     "sword_wood": { name: "목검", emoji: "🗡️", price: 200, desc: "초보자용 무기", type: "equip", slot: "arm" },
     "helm_leather": { name: "가죽 모자", emoji: "🧢", price: 150, desc: "가벼운 모자", type: "equip", slot: "head" },
     "armor_cloth": { name: "천 옷", emoji: "👕", price: 300, desc: "기본적인 옷", type: "equip", slot: "body" },
