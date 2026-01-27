@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (최대 성장 단계 저장 기능 추가)
+// js/player.js (초기 용 도감 등록 수정)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -10,14 +10,16 @@ const INITIAL_PLAYER_STATE = {
     gem: 10, 
     inventory: {}, 
     myDragons: [
-        // 초기 지급 용
         { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common" } 
     ],
     currentDragonIndex: 0,
     equipment: { head: null, body: null, arm: null, leg: null },
     stats: { explore: 0, atk: 10, def: 5 },
-    discovered: [], 
-    maxStages: {}, // [신규] 용 별 최대 도달 단계 저장 { "fire_c1": 2, ... }
+    
+    // [수정] 초기 용(불도마뱀 fire_c1)을 도감과 성장기록에 미리 등록
+    discovered: ["fire_c1"], 
+    maxStages: { "fire_c1": 0 }, 
+    
     nestLevel: 0,
     nickname: "Guest"
 };
@@ -226,19 +228,20 @@ function loadGame() {
             player = { ...INITIAL_PLAYER_STATE, ...savedPlayer };
 
             if(!player.inventory) player.inventory = {};
-            if(!player.discovered) player.discovered = [];
+            if(!player.discovered) player.discovered = ["fire_c1"]; // [안전장치]
             if(!player.myDragons) player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
             if(!player.equipment) player.equipment = { head: null, body: null, arm: null, leg: null };
             if(!player.stats) player.stats = { explore: 0, atk: 10, def: 5 };
             
-            // [신규] maxStages 초기화 (없으면 빈 객체)
-            if(!player.maxStages) player.maxStages = {};
+            if(!player.maxStages) player.maxStages = { "fire_c1": 0 };
 
-            // [호환성] 기존에 가지고 있던 용들의 현재 단계도 maxStages에 기록해줘야 함
+            // 기존 보유 용들의 스테이지를 maxStages에 반영 (버그 방지)
             player.myDragons.forEach(d => {
                 if(!player.maxStages[d.id] || player.maxStages[d.id] < d.stage) {
                     player.maxStages[d.id] = d.stage;
                 }
+                // 보유 중인 용은 도감에도 자동 등록
+                if(!player.discovered.includes(d.id)) player.discovered.push(d.id);
             });
 
             if(typeof player.exp === 'undefined') player.exp = 0;
