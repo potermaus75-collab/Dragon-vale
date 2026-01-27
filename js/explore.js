@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js
+// js/explore.js (완전한 코드)
 // ==========================================
 
 let currentRegionId = -1;
@@ -75,6 +75,7 @@ function toggleExploreView(viewName) {
     }
 }
 
+// [수정] 탐험 시작 (배경 이미지 적용)
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
@@ -85,7 +86,16 @@ function startExplore(regionId) {
     
     const region = REGION_DATA[regionId];
     const bgElem = document.getElementById('explore-bg');
-    bgElem.style.backgroundColor = "#222"; 
+    
+    // [연출] 배경 이미지 설정
+    if (region.bg) {
+        bgElem.style.backgroundImage = `url('${region.bg}')`;
+        bgElem.style.backgroundSize = "cover";
+        bgElem.style.backgroundPosition = "center";
+    } else {
+        bgElem.style.backgroundImage = "none";
+        bgElem.style.backgroundColor = "#222"; 
+    }
     
     document.getElementById('region-title').innerText = region.name;
     document.getElementById('event-msg').innerHTML = "탐험을 시작합니다. 이동하세요.";
@@ -93,13 +103,17 @@ function startExplore(regionId) {
     updateMoveUI();
 }
 
+// [수정] 이동하기 (흔들림 연출 추가)
 function moveForward() {
     if (movesLeft <= 0 || !isExploreActive) return;
 
     movesLeft--;
+    
+    // [연출] CSS 클래스로 흔들림 효과 주기
     const bg = document.getElementById('explore-bg');
-    bg.classList.add('walking');
-    setTimeout(() => bg.classList.remove('walking'), 500);
+    bg.classList.remove('walking-anim');
+    void bg.offsetWidth; // 리플로우 강제 (애니메이션 재시작)
+    bg.classList.add('walking-anim');
 
     processRandomEvent();
     updateMoveUI();
@@ -134,22 +148,35 @@ function updateMoveUI() {
     }
 }
 
+// [수정] 랜덤 이벤트 (보석/골드 수급처 추가)
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
 
     if (roll < ENCOUNTER_RATES.NOTHING) {
-        msgArea.innerHTML = "조용합니다... 아무것도 없습니다.";
+        msgArea.innerHTML = "조용합니다... 바람 소리만 들립니다.";
     } 
-    else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.MATERIAL) {
-        const amount = Math.floor(Math.random() * 3) + 1;
-        addTempLoot("nest_wood", amount);
+    else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
+        // 자원 발견 (골드, 보석, 나무 중 랜덤)
+        const typeRoll = Math.random();
         
-        const itemImg = ITEM_DB["nest_wood"].img;
-        msgArea.innerHTML = `<img src="assets/images/ui/icon_search.png" style="width:20px; vertical-align:middle"> <img src="${itemImg}" style="width:24px; vertical-align:middle"> 둥지 재료를 ${amount}개 발견했습니다!`;
+        if (typeRoll < 0.6) { // 60% 골드
+            const goldAmt = Math.floor(Math.random() * 50) + 10;
+            addTempLoot("gold", goldAmt);
+             msgArea.innerHTML = `<img src="assets/images/ui/icon_gold.png" style="width:20px; vertical-align:middle"> <b style="color:#f1c40f">${goldAmt} 골드</b>를 주웠습니다!`;
+        } else if (typeRoll < 0.9) { // 30% 나무
+             const woodAmt = Math.floor(Math.random() * 2) + 1;
+             addTempLoot("nest_wood", woodAmt);
+             msgArea.innerHTML = `🔍 둥지 재료를 ${woodAmt}개 발견했습니다!`;
+        } else { // 10% 보석 (희귀)
+             const gemAmt = 1;
+             addTempLoot("gem", gemAmt);
+             msgArea.innerHTML = `<img src="assets/images/ui/icon_gem.png" style="width:20px; vertical-align:middle"> <b style="color:#3498db">반짝이는 보석</b>을 발견했습니다!`;
+        }
     } 
     else {
-        msgArea.innerHTML = `<img src="assets/images/ui/icon_alert.png" style="width:24px; vertical-align:middle; animation: blinker 0.5s infinite;"> <b style="color:#e74c3c">용의 둥지를 발견했습니다!</b>`;
+        // 둥지 발견 (경고 연출)
+        msgArea.innerHTML = `<div style="color:red; font-weight:bold; animation: blinker 0.2s infinite;">⚠️ 경고: 용의 기운이 느껴집니다! ⚠️</div>`;
         encounterNest();
     }
 }
@@ -184,7 +211,6 @@ function tryStealLoop() {
     
     if (success) {
         showAlert("성공! 알을 손에 넣었습니다!", () => {
-            // [버그 수정 확인] data.js에 'egg_random'이 있으므로 정상 작동함
             addTempLoot("egg_random", 1);
             isExploreActive = true;
             document.getElementById('event-msg').innerText = "알을 챙겨서 도망쳤습니다.";
@@ -241,16 +267,15 @@ function tryFlee() {
 }
 
 function fightParent(winChance) {
-    // [시스템] 스탯 기반 전투 로직
     const roll = Math.random() * 100;
     const win = roll < winChance; 
 
     if (win) {
-        // 승리 보상: 알 + (낮은 확률로 보석)
+        // 승리 보상
         addTempLoot("egg_random", 1);
         
         let msg = "대단합니다! 부모 용을 물리쳤습니다!";
-        if (Math.random() < 0.3) { // 30% 확률로 보석 획득 (코드상 재화 직접 추가)
+        if (Math.random() < 0.3) { // 30% 확률로 보석
              player.gem += 1;
              msg += "<br><b style='color:#3498db'>(보너스: 보석 1개 획득!)</b>";
         }
@@ -277,6 +302,9 @@ function finishExplore(success = true) {
             moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         }
         document.getElementById('explore-bg').style.backgroundColor = "#222";
+        // 배경 이미지 초기화
+        document.getElementById('explore-bg').style.backgroundImage = "none";
+        
         toggleExploreView('map');
         updateCurrency();
         
@@ -296,3 +324,4 @@ function finishExplore(success = true) {
 
 window.initExploreTab = function() { renderMap(); }
 window.enterSelectedRegion = enterSelectedRegion;
+
