@@ -1,7 +1,3 @@
-/* =========================================
-   css/style.css
-   ========================================= */
-
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -73,10 +69,10 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 #screen-prologue { background: #000 !important; z-index: 9999 !important; }
 #prologue-text { font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-line; }
 
-/* [수정 1] 헤더 및 프로필 프레임 개선 */
+/* 헤더 및 프로필 */
 .game-header {
     position: absolute; top: 0; left: 0; width: 100%; height: 90px;
-    background: url('../assets/images/ui/panel_banner.png') no-repeat center top !important; /* 이미지명 확인 필요 */
+    background: url('../assets/images/ui/panel_banner.png') no-repeat center top !important;
     background-size: 100% 100% !important;
     display: flex; align-items: center; justify-content: space-between;
     padding: 15px 30px 30px 30px;
@@ -84,32 +80,23 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 }
 
 .profile-frame {
-    width: 70px; height: 70px;
-    position: relative;
+    width: 70px; height: 70px; position: relative;
     display: flex; justify-content: center; align-items: center;
 }
-
-/* 프레임 이미지는 가상요소로 띄워서 위로 올림 */
 .profile-frame::after {
-    content: '';
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
     background: url('../assets/images/ui/frame_profile.png') no-repeat center center;
-    background-size: 100% 100%;
-    pointer-events: none; /* 클릭 통과 */
-    z-index: 2; /* 이미지보다 위에 */
+    background-size: 100% 100%; pointer-events: none; z-index: 2;
 }
-
-/* 실제 이미지는 약간 작게 해서 프레임 안으로 쏙 들어오게 함 */
 .profile-img { 
-    width: 82%; height: 82%; 
-    border-radius: 50%; 
-    background: #555; 
-    z-index: 1;
-    background-position: center;
-    background-size: cover;
+    width: 82%; height: 82%; border-radius: 50%; 
+    background: #555; z-index: 1;
+    background-position: center; background-size: cover;
 }
-
 .header-info { text-align: right; margin-top: -10px;}
+
+/* 재화 아이콘 (텍스트 옆 작은 아이콘) */
+.currency-icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 2px; }
 
 .bottom-nav {
     position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
@@ -117,86 +104,49 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     display: flex; justify-content: space-around; align-items: center;
     z-index: 100;
 }
+/* 네비게이션 아이콘 이미지 */
+.nav-icon { width: 32px; height: 32px; object-fit: contain; }
 
 #game-view { position: absolute; top: 90px; bottom: 80px; width: 100%; overflow: hidden; }
 .tab-content { width: 100%; height: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
 
-/* [수정 3] 내 정보 탭 - 캐릭터 실루엣 및 슬롯 배치 */
-.info-layout {
-    width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center;
-    padding-bottom: 20px;
-}
-
+/* 내 정보 */
+.info-layout { width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center; padding-bottom: 20px; }
 .profile-card {
     width: 320px; height: 420px; position: relative; flex-shrink: 0;
     background: url('../assets/images/ui/panel_vertical.png') no-repeat center center !important;
     background-size: 100% 100% !important;
     display: flex; flex-direction: column; align-items: center; padding: 20px;
 }
-
-/* [신규] CSS 캐릭터 실루엣 */
 .silhouette-body {
     position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
-    width: 200px; height: 300px;
-    pointer-events: none; /* 클릭 방해 안 하게 */
-    opacity: 0.4; /* 은은하게 */
+    width: 200px; height: 300px; pointer-events: none; opacity: 0.4;
 }
+.sil-head { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 60px; height: 60px; border-radius: 50%; background: #000; }
+.sil-torso { position: absolute; top: 65px; left: 50%; transform: translateX(-50%); width: 70px; height: 100px; border-radius: 15px; background: #000; }
+.sil-arm-l { position: absolute; top: 70px; left: 10px; width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(10deg); }
+.sil-arm-r { position: absolute; top: 70px; right: 10px; width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(-10deg); }
+.sil-leg-l { position: absolute; top: 170px; left: 45px; width: 35px; height: 110px; border-radius: 10px; background: #000; }
+.sil-leg-r { position: absolute; top: 170px; right: 45px; width: 35px; height: 110px; border-radius: 10px; background: #000; }
 
-/* 머리 */
-.sil-head {
-    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
-    width: 60px; height: 60px; border-radius: 50%; background: #000;
-}
-/* 몸통 */
-.sil-torso {
-    position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
-    width: 70px; height: 100px; border-radius: 15px; background: #000;
-}
-/* 팔 */
-.sil-arm-l {
-    position: absolute; top: 70px; left: 10px;
-    width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(10deg);
-}
-.sil-arm-r {
-    position: absolute; top: 70px; right: 10px;
-    width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(-10deg);
-}
-/* 다리 */
-.sil-leg-l {
-    position: absolute; top: 170px; left: 45px;
-    width: 35px; height: 110px; border-radius: 10px; background: #000;
-}
-.sil-leg-r {
-    position: absolute; top: 170px; right: 45px;
-    width: 35px; height: 110px; border-radius: 10px; background: #000;
-}
-
-
-/* [수정 2] 장비 슬롯 스타일 개선 */
 .equip-slot {
     position: absolute; width: 55px; height: 55px;
     background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
     background-size: 100% 100% !important;
     display: flex; justify-content: center; align-items: center;
     font-size: 0.7rem; color: #ccc; cursor: pointer; text-align: center;
-    border: none !important; /* 테두리 제거 핵심 */
-    box-shadow: none !important;
-    z-index: 10; /* 실루엣보다 위에 */
+    border: none !important; box-shadow: none !important; z-index: 10;
 }
+.equip-slot.head { top: 60px; left: 50%; transform: translateX(-50%); }
+.equip-slot.body { top: 150px; left: 50%; transform: translateX(-50%); }
+.equip-slot.arm  { top: 150px; right: 50px; }
+.equip-slot.leg  { top: 260px; left: 50%; transform: translateX(-50%); }
+/* 장착된 장비 아이콘 */
+.equip-icon { width: 80%; height: 80%; object-fit: contain; }
 
-/* 장비 슬롯 위치 재조정 (실루엣에 맞춤) */
-.equip-slot.head { top: 60px; left: 50%; transform: translateX(-50%); } /* 머리 위 */
-.equip-slot.body { top: 150px; left: 50%; transform: translateX(-50%); } /* 몸통 중앙 */
-.equip-slot.arm  { top: 150px; right: 50px; } /* 오른쪽 팔 (무기) */
-.equip-slot.leg  { top: 260px; left: 50%; transform: translateX(-50%); } /* 다리 아래 */
+.inventory-section { width: 95%; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; border: 2px solid #5d4a6d; }
 
-
-.inventory-section {
-    width: 95%; background: rgba(0,0,0,0.4); 
-    border-radius: 10px; padding: 10px; border: 2px solid #5d4a6d;
-}
-
-/* 나머지 스타일 유지 */
+/* 동굴 및 탐험 */
 .cave-layout { display: flex; width: 100%; height: 100%; gap: 5px; }
 .egg-panel {
     width: 100px; height: 100%;
@@ -213,9 +163,12 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 #progress-fill {
     height: 100%; width: 0%;
     background: url('../assets/images/ui/bar_rune.png') repeat-x left center !important; 
-    background-color: #2ecc71; background-size: auto 100% !important;
-    transition: width 0.2s;
+    background-color: #2ecc71; background-size: auto 100% !important; transition: width 0.2s;
 }
+/* 메인 용 이미지 크기 */
+.main-dragon-img { width: 200px; height: 200px; object-fit: contain; margin: 20px; }
+/* 알 리스트 아이콘 */
+.list-egg-img { width: 40px; height: 40px; object-fit: contain; }
 
 .map-frame, .shop-bg, .book-bg {
     width: 95%; height: 95%;
@@ -234,12 +187,15 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .list-row { display: flex; flex-direction: column; gap: 5px; }
 
+/* 아이템/상점/도감 공통 이미지 클래스 */
+.item-img-lg { width: 48px; height: 48px; object-fit: contain; }
+.item-img-sm { width: 32px; height: 32px; object-fit: contain; }
+
 .slot-item {
     background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
     background-size: 100% 100% !important;
     aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center;
-    color: white; font-size: 0.8rem;
-    position: relative; border: none !important;
+    color: white; font-size: 0.8rem; position: relative; border: none !important;
 }
 .shop-item { margin-bottom: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
 
@@ -249,7 +205,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     color: #555; font-size: 0.8rem;
 }
 .book-slot.found { border: 2px solid #f1c40f; background: rgba(0,0,0,0.2); color: #fff; }
-.book-emoji { font-size: 2rem; margin-bottom: 5px; }
+.book-img { width: 50px; height: 50px; object-fit: contain; margin-bottom: 5px; }
 
 #common-modal, #roulette-modal { background: rgba(10, 5, 15, 0.85) !important; }
 
