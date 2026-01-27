@@ -1,28 +1,29 @@
+/* =========================================
+   css/style.css
+   ========================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
 body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    /* ★ 배경 수정: 검정이 아닌 보라색 그라데이션 적용 */
     background: radial-gradient(circle at center, #3a2e4d 0%, #1a1025 100%);
     font-family: 'Nanum Gothic', sans-serif;
     overflow: hidden;
     color: #fff;
 }
 
-/* ★ 중요: 전체 화면 섹션의 배경을 투명하게 해서 body 배경이 보이게 함 */
 .full-screen {
     width: 100%; height: 100%; position: absolute; top: 0; left: 0;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    background: transparent !important; /* 검정색 제거 */
+    background: transparent !important;
     z-index: 10;
 }
 
 .hidden { display: none !important; }
 .active { display: flex !important; }
 
-/* 텍스트 스타일 */
 h1, h2, h3 { margin: 0; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 800; }
 p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 
@@ -58,7 +59,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 .btn-square.active { filter: brightness(1.3); transform: scale(1.1); }
 
 /* 화면별 스타일 */
-#screen-start { background: linear-gradient(180deg, #2c0e3a, #000); } /* 시작화면만 어둡게 유지 */
+#screen-start { background: linear-gradient(180deg, #2c0e3a, #000); }
 .title-area h1 { font-size: 3rem; color: #f1c40f; text-shadow: 0 0 15px #8e44ad; }
 .blink { animation: blinker 1.5s infinite; color: #ccc; margin-top: 20px;}
 @keyframes blinker { 50% { opacity: 0.3; } }
@@ -72,22 +73,43 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 #screen-prologue { background: #000 !important; z-index: 9999 !important; }
 #prologue-text { font-size: 1.3rem; line-height: 1.6; color: #fff; white-space: pre-line; }
 
+/* [수정 1] 헤더 및 프로필 프레임 개선 */
 .game-header {
     position: absolute; top: 0; left: 0; width: 100%; height: 90px;
-    background: url('../assets/images/ui/banner_header.png') no-repeat center top !important;
+    background: url('../assets/images/ui/panel_banner.png') no-repeat center top !important; /* 이미지명 확인 필요 */
     background-size: 100% 100% !important;
     display: flex; align-items: center; justify-content: space-between;
     padding: 15px 30px 30px 30px;
     z-index: 100;
 }
+
 .profile-frame {
-    width: 64px; height: 64px;
-    background: url('../assets/images/ui/frame_profile.png') no-repeat center center !important;
-    background-size: 100% 100% !important;
+    width: 70px; height: 70px;
+    position: relative;
     display: flex; justify-content: center; align-items: center;
 }
-.profile-img { width: 48px; height: 48px; border-radius: 50%; background: #555; }
-.header-info { text-align: right; }
+
+/* 프레임 이미지는 가상요소로 띄워서 위로 올림 */
+.profile-frame::after {
+    content: '';
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: url('../assets/images/ui/frame_profile.png') no-repeat center center;
+    background-size: 100% 100%;
+    pointer-events: none; /* 클릭 통과 */
+    z-index: 2; /* 이미지보다 위에 */
+}
+
+/* 실제 이미지는 약간 작게 해서 프레임 안으로 쏙 들어오게 함 */
+.profile-img { 
+    width: 82%; height: 82%; 
+    border-radius: 50%; 
+    background: #555; 
+    z-index: 1;
+    background-position: center;
+    background-size: cover;
+}
+
+.header-info { text-align: right; margin-top: -10px;}
 
 .bottom-nav {
     position: absolute; bottom: 0; left: 0; width: 100%; height: 80px;
@@ -96,43 +118,85 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     z-index: 100;
 }
 
-#game-view {
-    position: absolute; top: 90px; bottom: 80px; width: 100%;
-    overflow: hidden; 
-}
+#game-view { position: absolute; top: 90px; bottom: 80px; width: 100%; overflow: hidden; }
 .tab-content { width: 100%; height: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
 
-/* [탭1 수정] 내 정보 + 인벤토리 통합 */
+/* [수정 3] 내 정보 탭 - 캐릭터 실루엣 및 슬롯 배치 */
 .info-layout {
     width: 100%; display: flex; flex-direction: column; gap: 15px; align-items: center;
     padding-bottom: 20px;
 }
 
 .profile-card {
-    width: 300px; height: 400px; position: relative; flex-shrink: 0;
+    width: 320px; height: 420px; position: relative; flex-shrink: 0;
     background: url('../assets/images/ui/panel_vertical.png') no-repeat center center !important;
     background-size: 100% 100% !important;
     display: flex; flex-direction: column; align-items: center; padding: 20px;
 }
+
+/* [신규] CSS 캐릭터 실루엣 */
+.silhouette-body {
+    position: absolute; top: 60px; left: 50%; transform: translateX(-50%);
+    width: 200px; height: 300px;
+    pointer-events: none; /* 클릭 방해 안 하게 */
+    opacity: 0.4; /* 은은하게 */
+}
+
+/* 머리 */
+.sil-head {
+    position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 60px; height: 60px; border-radius: 50%; background: #000;
+}
+/* 몸통 */
+.sil-torso {
+    position: absolute; top: 65px; left: 50%; transform: translateX(-50%);
+    width: 70px; height: 100px; border-radius: 15px; background: #000;
+}
+/* 팔 */
+.sil-arm-l {
+    position: absolute; top: 70px; left: 10px;
+    width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(10deg);
+}
+.sil-arm-r {
+    position: absolute; top: 70px; right: 10px;
+    width: 40px; height: 120px; border-radius: 10px; background: #000; transform: rotate(-10deg);
+}
+/* 다리 */
+.sil-leg-l {
+    position: absolute; top: 170px; left: 45px;
+    width: 35px; height: 110px; border-radius: 10px; background: #000;
+}
+.sil-leg-r {
+    position: absolute; top: 170px; right: 45px;
+    width: 35px; height: 110px; border-radius: 10px; background: #000;
+}
+
+
+/* [수정 2] 장비 슬롯 스타일 개선 */
 .equip-slot {
     position: absolute; width: 55px; height: 55px;
     background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
     background-size: 100% 100% !important;
     display: flex; justify-content: center; align-items: center;
-    font-size: 0.7rem; color: #aaa; cursor: pointer;
+    font-size: 0.7rem; color: #ccc; cursor: pointer; text-align: center;
+    border: none !important; /* 테두리 제거 핵심 */
+    box-shadow: none !important;
+    z-index: 10; /* 실루엣보다 위에 */
 }
-.equip-slot.head { top: 30px; left: 50%; transform: translateX(-50%); }
-.equip-slot.body { top: 100px; left: 50%; transform: translateX(-50%); }
-.equip-slot.arm { top: 100px; right: 40px; }
-.equip-slot.leg { top: 180px; left: 50%; transform: translateX(-50%); }
 
-/* 인벤토리 스타일 (이제 내 정보 하단에 위치) */
+/* 장비 슬롯 위치 재조정 (실루엣에 맞춤) */
+.equip-slot.head { top: 60px; left: 50%; transform: translateX(-50%); } /* 머리 위 */
+.equip-slot.body { top: 150px; left: 50%; transform: translateX(-50%); } /* 몸통 중앙 */
+.equip-slot.arm  { top: 150px; right: 50px; } /* 오른쪽 팔 (무기) */
+.equip-slot.leg  { top: 260px; left: 50%; transform: translateX(-50%); } /* 다리 아래 */
+
+
 .inventory-section {
     width: 95%; background: rgba(0,0,0,0.4); 
     border-radius: 10px; padding: 10px; border: 2px solid #5d4a6d;
 }
 
-/* [탭2,3] 동굴, 탐험 */
+/* 나머지 스타일 유지 */
 .cave-layout { display: flex; width: 100%; height: 100%; gap: 5px; }
 .egg-panel {
     width: 100px; height: 100%;
@@ -175,11 +239,10 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background-size: 100% 100% !important;
     aspect-ratio: 1/1; display: flex; justify-content: center; align-items: center;
     color: white; font-size: 0.8rem;
-    position: relative;
+    position: relative; border: none !important;
 }
 .shop-item { margin-bottom: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
 
-/* 도감 스타일 */
 .book-slot {
     aspect-ratio: 1/1; background: rgba(0,0,0,0.5); border: 2px solid #444;
     border-radius: 5px; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -188,6 +251,5 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 .book-slot.found { border: 2px solid #f1c40f; background: rgba(0,0,0,0.2); color: #fff; }
 .book-emoji { font-size: 2rem; margin-bottom: 5px; }
 
-/* 모달 */
 #common-modal, #roulette-modal { background: rgba(10, 5, 15, 0.85) !important; }
 
