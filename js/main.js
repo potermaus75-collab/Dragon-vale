@@ -1,8 +1,8 @@
 // ==========================================
-// js/main.js (CSS 드래곤 폴백 및 도감 수정)
+// js/main.js (최신 수정판: 도감 오류 수정 포함)
 // ==========================================
 
-// [신규] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
+// [시스템] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
 window.handleImgError = function(imgEl, dragonType, dragonStage) {
     imgEl.onerror = null; // 무한루프 방지
     imgEl.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 투명 이미지
@@ -215,7 +215,6 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// [수정] 도감에서 CSS 드래곤 대체 기능 적용
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
@@ -238,7 +237,6 @@ function renderBook() {
             let displayImg = "assets/images/dragon/stage_egg.png";
             if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
 
-            // onerror 추가
             div.innerHTML = `
                 <img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">
                 <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
@@ -254,21 +252,26 @@ function renderBook() {
     });
 }
 
-// [수정] 상세 보기 모달에서도 CSS 드래곤 대체 기능 적용
+// [수정] 도감 상세 보기: 고룡(Stage 4) 실루엣 제어
 function showDragonDetailModal(dragonId, info, color) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
-    let stagesHtml = `<div style="display:flex; justify-content:space-around; align-items:flex-end; margin:15px 0; gap:5px;">`;
+    // [핵심 로직] 전설/에픽만 5단계(고룡)까지 표시, 나머지는 4단계(성룡)까지만 표시
+    const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
+    const loopLimit = isHighTier ? 5 : 4;
     
-    for(let i=0; i<5; i++) {
+    let stagesHtml = `<div style="display:flex; justify-content:center; align-items:flex-end; margin:15px 0; gap:10px;">`;
+    
+    for(let i=0; i < loopLimit; i++) {
         const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
         const isUnknown = i > maxStage;
+        
+        // 미발견 시 흐리게 처리
         const style = isUnknown ? 
-            "filter: brightness(0); opacity: 0.5; width:40px; height:40px;" : 
+            "filter: brightness(0); opacity: 0.3; width:40px; height:40px;" : 
             "width:50px; height:50px; object-fit:contain;";
         
-        // onerror 추가
         stagesHtml += `
             <div style="text-align:center;">
                 <img src="${imgSrc}" style="${style}" onerror="handleImgError(this, '${info.type}', ${i})"><br>
