@@ -1,3 +1,7 @@
+// ==========================================
+// js/player.js (완전한 코드)
+// ==========================================
+
 // 플레이어 초기 상태
 let player = {
     level: 1, 
@@ -12,24 +16,24 @@ let player = {
     
     equipment: { head: null, body: null, arm: null, leg: null },
 
-    // [중요] 스탯은 장비에 따라 변하므로 기본값+장비값 합산 로직 필요
+    // 스탯은 장비에 따라 변하므로 기본값+장비값 합산 로직 사용
     stats: { explore: 0, atk: 10, def: 5 },
     
-    discovered: [],
+    discovered: [], // 도감용
     
-    // [신규] 둥지 레벨 (클릭 효율 증가)
-    nestLevel: 0 
+    nestLevel: 0 // 둥지 레벨 (클릭 효율 증가)
 };
 
 let tempLoot = []; 
 
+// 재화 및 스탯 UI 갱신
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
     if(goldUI) goldUI.innerText = player.gold;
     if(gemUI) gemUI.innerText = player.gem;
     
-    // 스탯 UI 갱신 (장비 반영)
+    // 스탯 UI 갱신
     recalcStats();
 }
 
@@ -56,7 +60,7 @@ function recalcStats() {
     if(defUI) defUI.innerText = player.stats.def;
 }
 
-// [수정] 아이템 획득 (안전장치 추가)
+// 아이템 획득 (안전장치 추가)
 function addItem(itemId, count = 1) {
     if (!ITEM_DB[itemId]) {
         console.error("존재하지 않는 아이템 추가 시도:", itemId);
@@ -66,6 +70,7 @@ function addItem(itemId, count = 1) {
     player.inventory[itemId] += count;
 }
 
+// 탐험 전리품 담기 (골드, 보석도 문자열 ID로 들어올 수 있음)
 function addTempLoot(itemId, count = 1) {
     tempLoot.push({ id: itemId, count: count });
 }
@@ -76,19 +81,35 @@ function claimTempLoot() {
     let html = "<div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; display:inline-block; text-align:left;'>";
     
     tempLoot.forEach(item => {
-        // ITEM_DB에 있는지 확인 후 추가
-        if(ITEM_DB[item.id]) {
+        // 1. 골드인 경우
+        if (item.id === 'gold') {
+            player.gold += item.count;
+            html += `
+                <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
+                    <img src="assets/images/ui/icon_gold.png" style="width:20px;">
+                    <span style="color:#f1c40f">${item.count} 골드</span>
+                </div>`;
+        } 
+        // 2. 보석인 경우
+        else if (item.id === 'gem') {
+            player.gem += item.count;
+            html += `
+                <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
+                    <img src="assets/images/ui/icon_gem.png" style="width:20px;">
+                    <span style="color:#3498db">${item.count} 보석</span>
+                </div>`;
+        } 
+        // 3. 일반 아이템인 경우
+        else if (ITEM_DB[item.id]) {
             addItem(item.id, item.count);
             html += `
                 <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
                     <img src="${ITEM_DB[item.id].img}" style="width:24px; height:24px;">
                     <span>${ITEM_DB[item.id].name} x${item.count}</span>
-                </div>
-            `;
-        } else {
-            console.error("알 수 없는 전리품:", item.id);
+                </div>`;
         }
     });
+    
     html += "</div>";
     tempLoot = [];
     return html;
@@ -122,7 +143,7 @@ function useItem(itemId) {
             </div>`, 
             () => {
                 player.inventory[itemId]--;
-                // 알 종류에 따라 다른 룰렛? (지금은 동일하게 처리)
+                // 신비한 알('egg_shiny')이면 true 전달
                 if(window.startEggRoulette) window.startEggRoulette(itemId === 'egg_shiny');
                 if(typeof renderInventory === 'function') renderInventory();
             }
@@ -144,7 +165,7 @@ function useItem(itemId) {
     }
 }
 
-// 둥지 강화 (신규)
+// 둥지 강화 함수 (신규)
 function upgradeNest() {
     const nextLevel = (player.nestLevel || 0) + 1;
     // 최대 레벨 체크
@@ -167,7 +188,7 @@ function upgradeNest() {
             () => {
                 player.inventory['nest_wood'] -= cost;
                 player.nestLevel = (player.nestLevel || 0) + 1;
-                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel + 1})</b><br>이제 용이 더 빨리 자랍니다!`);
+                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b><br>이제 용이 더 빨리 자랍니다!`);
                 if(window.updateUI) window.updateUI();
                 if(typeof saveGame === 'function') saveGame();
             }
