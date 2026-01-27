@@ -1,5 +1,5 @@
 /* =========================================
-   css/style.css (완전한 코드)
+   css/style.css (CSS 드래곤 기능 포함)
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
@@ -180,7 +180,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background: url('../assets/images/map_continent.jpg') no-repeat center center !important;
     background-size: cover !important;
     border-radius: 5px; border: 1px solid #000; position: relative;
-    overflow: hidden; /* 배경 애니메이션이 튀어나가지 않게 */
+    overflow: hidden; 
 }
 
 .scroll-area { width: 100%; height: 100%; overflow-y: auto; }
@@ -206,7 +206,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 
 #common-modal, #roulette-modal { background: rgba(10, 5, 15, 0.85) !important; }
 
-/* [신규] 걷기 애니메이션 (배경 흔들림 + 확대 효과) */
 @keyframes walkShake {
     0% { transform: scale(1) translateX(0); }
     25% { transform: scale(1.02) translateX(-5px) translateY(2px); }
@@ -215,25 +214,16 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     100% { transform: scale(1) translateX(0); }
 }
 
-.walking-anim {
-    animation: walkShake 0.5s ease-in-out;
-}
+.walking-anim { animation: walkShake 0.5s ease-in-out; }
 
-/* [신규] 둥지 발견 경고 애니메이션 */
 @keyframes warningFlash {
     0% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
     50% { box-shadow: inset 0 0 50px red; border: 2px solid red; }
     100% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
 }
+.warning-anim { animation: warningFlash 1s infinite; }
 
-.warning-anim {
-    animation: warningFlash 1s infinite;
-}
-/* 용 클릭 애니메이션 추가 */
-.click-anim {
-    animation: clickBounce 0.2s;
-}
-
+.click-anim { animation: clickBounce 0.2s; }
 @keyframes clickBounce {
     0% { transform: scale(1); }
     50% { transform: scale(0.9); filter: brightness(1.2); }
@@ -243,98 +233,41 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 /* =========================================
    [신규] CSS 드래곤 (이미지 없을 때 대체)
    ========================================= */
-
-/* 공통 베이스: 숨쉬는 애니메이션 및 중앙 정렬 */
 .css-dragon {
-    display: inline-block;
-    position: relative;
+    display: inline-block; position: relative;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
     animation: dragonBreath 2s infinite ease-in-out;
 }
-
 @keyframes dragonBreath {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.02); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); }
 }
-
-/* 1. 단계별 모양 (Shape) - clip-path로 실루엣 구현 */
-
-/* [0단계: 알] - 둥글고 아래가 묵직한 알 모양 */
 .css-dragon.stage-0 {
     width: 60px !important; height: 70px !important;
     border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    /* clip-path 불필요 (border-radius로 충분) */
     box-shadow: inset -5px -5px 10px rgba(0,0,0,0.5);
 }
-
-/* [1단계: 유아기] - 머리가 크고 꼬리가 짧은 귀여운 모양 */
 .css-dragon.stage-1 {
     width: 70px !important; height: 70px !important;
     clip-path: polygon(20% 20%, 50% 0%, 80% 20%, 90% 50%, 80% 90%, 20% 90%, 10% 50%);
     border-radius: 10px;
 }
-
-/* [2단계: 성장기] - 날개가 돋아나고 조금 날렵해짐 */
 .css-dragon.stage-2 {
     width: 90px !important; height: 90px !important;
     clip-path: polygon(50% 0%, 100% 20%, 80% 50%, 100% 80%, 50% 100%, 0% 80%, 20% 50%, 0% 20%);
 }
-
-/* [3단계: 성룡] - 거대한 날개와 뾰족한 머리 */
 .css-dragon.stage-3 {
     width: 120px !important; height: 120px !important;
     clip-path: polygon(50% 0%, 80% 10%, 100% 35%, 85% 55%, 100% 100%, 50% 85%, 0% 100%, 15% 55%, 0% 35%, 20% 10%);
 }
-
-/* [4단계: 고룡] - 복잡하고 웅장한 아우라 형상 */
 .css-dragon.stage-4 {
     width: 140px !important; height: 140px !important;
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
     filter: drop-shadow(0 0 10px currentColor);
 }
-
-/* 2. 속성별 색상 (Skin) - 그라데이션 적용 */
-
-/* 🔥 불: 붉은 용암 느낌 */
-.css-dragon.type-fire {
-    background: radial-gradient(circle at 30% 30%, #ff7e5f, #c0392b);
-    color: #e74c3c; /* 고룡 그림자용 */
-}
-
-/* 💧 물: 푸른 심해 느낌 */
-.css-dragon.type-water {
-    background: radial-gradient(circle at 30% 30%, #3498db, #2c3e50);
-    color: #3498db;
-}
-
-/* 🌿 풀: 싱그러운 숲 느낌 */
-.css-dragon.type-forest {
-    background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60);
-    color: #2ecc71;
-}
-
-/* ⚡ 번개: 찌릿한 노랑/보라 */
-.css-dragon.type-electric {
-    background: radial-gradient(circle at 30% 30%, #f1c40f, #8e44ad);
-    color: #f1c40f;
-}
-
-/* 💎 강철: 차가운 금속성 */
-.css-dragon.type-metal {
-    background: linear-gradient(135deg, #bdc3c7, #2c3e50);
-    color: #95a5a6;
-}
-
-/* ✨ 빛: 성스러운 금색/흰색 */
-.css-dragon.type-light {
-    background: radial-gradient(circle at 30% 30%, #ffffff, #f1c40f);
-    box-shadow: 0 0 15px #f1c40f;
-    color: #f1c40f;
-}
-
-/* 🌑 어둠: 깊은 보라/검정 */
-.css-dragon.type-dark {
-    background: radial-gradient(circle at 30% 30%, #9b59b6, #000000);
-    color: #8e44ad;
-}
+.css-dragon.type-fire { background: radial-gradient(circle at 30% 30%, #ff7e5f, #c0392b); color: #e74c3c; }
+.css-dragon.type-water { background: radial-gradient(circle at 30% 30%, #3498db, #2c3e50); color: #3498db; }
+.css-dragon.type-forest { background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60); color: #2ecc71; }
+.css-dragon.type-electric { background: radial-gradient(circle at 30% 30%, #f1c40f, #8e44ad); color: #f1c40f; }
+.css-dragon.type-metal { background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: #95a5a6; }
+.css-dragon.type-light { background: radial-gradient(circle at 30% 30%, #ffffff, #f1c40f); box-shadow: 0 0 15px #f1c40f; color: #f1c40f; }
+.css-dragon.type-dark { background: radial-gradient(circle at 30% 30%, #9b59b6, #000000); color: #8e44ad; }
