@@ -29,63 +29,66 @@
 
     <section id="screen-game" class="full-screen hidden">
         <header class="game-header">
-            <div class="profile-frame" onclick="changeProfileImage()"><div class="profile-img" id="ui-profile-img"></div></div>
+            <div class="profile-frame" onclick="changeProfileImage()">
+                <div class="profile-img" id="ui-profile-img"></div>
+            </div>
             <div class="header-info">
                 <span id="ui-nickname">플레이어</span><br>
-                <span>💎<span id="ui-gem">0</span> 💰<span id="ui-gold">0</span></span>
+                <span>
+                    <img src="assets/images/ui/icon_gem.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gem">0</span>
+                    &nbsp;
+                    <img src="assets/images/ui/icon_gold.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gold">0</span>
+                </span>
             </div>
         </header>
 
         <main id="game-view">
             <div id="tab-info" class="tab-content hidden">
-    <div class="info-layout">
-        <div class="profile-card">
-            
-            <div class="silhouette-body">
-                <div class="sil-head"></div>
-                <div class="sil-torso"></div>
-                <div class="sil-arm-l"></div> <div class="sil-arm-r"></div> <div class="sil-leg-l"></div>
-                <div class="sil-leg-r"></div>
-            </div>
+                <div class="info-layout">
+                    <div class="profile-card">
+                        <div class="silhouette-body">
+                            <div class="sil-head"></div>
+                            <div class="sil-torso"></div>
+                            <div class="sil-arm-l"></div>
+                            <div class="sil-arm-r"></div>
+                            <div class="sil-leg-l"></div>
+                            <div class="sil-leg-r"></div>
+                        </div>
 
-            <div class="equip-slot head" onclick="unequipItem('head')">
-                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">머리</span>
-            </div>
-            
-            <div class="equip-slot body" onclick="unequipItem('body')">
-                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">갑옷</span>
-            </div>
-            
-            <div class="equip-slot arm" onclick="unequipItem('arm')">
-                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">무기</span>
-            </div>
-            
-            <div class="equip-slot leg" onclick="unequipItem('leg')">
-                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">신발</span>
-            </div>
+                        <div class="equip-slot head" onclick="unequipItem('head')">
+                            <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">머리</span>
+                        </div>
+                        <div class="equip-slot body" onclick="unequipItem('body')">
+                            <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">갑옷</span>
+                        </div>
+                        <div class="equip-slot arm" onclick="unequipItem('arm')">
+                            <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">무기</span>
+                        </div>
+                        <div class="equip-slot leg" onclick="unequipItem('leg')">
+                            <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">신발</span>
+                        </div>
 
-            <div style="margin-top:auto; width:100%; text-align:center; z-index:10;">
-                <p style="background:rgba(0,0,0,0.5); border-radius:5px; padding:5px;">
-                    공격력 <span id="stat-atk" style="color:#e74c3c">10</span> / 
-                    방어력 <span id="stat-def" style="color:#3498db">5</span>
-                </p>
+                        <div style="margin-top:auto; width:100%; text-align:center; z-index:10;">
+                            <p style="background:rgba(0,0,0,0.5); border-radius:5px; padding:5px;">
+                                공격력 <span id="stat-atk" style="color:#e74c3c">10</span> / 
+                                방어력 <span id="stat-def" style="color:#3498db">5</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="inventory-section">
+                        <h3>🎒 소지품</h3>
+                        <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <div class="inventory-section">
-            <h3>🎒 소지품</h3>
-            <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
-        </div>
-    </div>
-</div>
-
 
             <div id="tab-dragon" class="tab-content hidden">
                 <div class="cave-layout">
                     <div class="egg-panel" id="my-egg-list"></div>
                     <div class="nest-panel">
                         <h3 id="dragon-name-ui">용 이름</h3>
-                        <div id="dragon-display" style="font-size:5rem; margin:20px;">🥚</div>
+                        <div id="dragon-display" style="margin:20px; display:flex; justify-content:center; align-items:center;"></div>
                         <div class="rune-bar"><div id="progress-fill"></div></div>
                         <button id="click-msg" class="btn-stone">마력 주입</button>
                     </div>
@@ -110,8 +113,8 @@
                         </div>
                     </div>
                     <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-                        <button id="btn-move" class="btn-stone" onclick="moveForward()">👣 이동</button>
-                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">🏠 귀환</button>
+                        <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
+                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
                     </div>
                 </div>
             </div>
@@ -134,18 +137,28 @@
         </main>
 
         <nav class="bottom-nav">
-            <button class="btn-square nav-btn" onclick="switchTab('info')">🧙‍♂️</button>
-            <button class="btn-square nav-btn" onclick="switchTab('dragon')">🐲</button>
-            <button class="btn-square nav-btn" onclick="switchTab('explore')">🗺️</button>
-            <button class="btn-square nav-btn" onclick="switchTab('book')">📖</button>
-            <button class="btn-square nav-btn" onclick="switchTab('shop')">⚖️</button>
+            <button class="btn-square nav-btn" onclick="switchTab('info')">
+                <img src="assets/images/ui/tab_info.png" class="nav-icon" onerror="this.style.display='none'; this.parentNode.innerText='정보'">
+            </button>
+            <button class="btn-square nav-btn" onclick="switchTab('dragon')">
+                <img src="assets/images/ui/tab_dragon.png" class="nav-icon" onerror="this.style.display='none'; this.parentNode.innerText='용'">
+            </button>
+            <button class="btn-square nav-btn" onclick="switchTab('explore')">
+                <img src="assets/images/ui/tab_explore.png" class="nav-icon" onerror="this.style.display='none'; this.parentNode.innerText='탐험'">
+            </button>
+            <button class="btn-square nav-btn" onclick="switchTab('book')">
+                <img src="assets/images/ui/tab_book.png" class="nav-icon" onerror="this.style.display='none'; this.parentNode.innerText='도감'">
+            </button>
+            <button class="btn-square nav-btn" onclick="switchTab('shop')">
+                <img src="assets/images/ui/tab_shop.png" class="nav-icon" onerror="this.style.display='none'; this.parentNode.innerText='상점'">
+            </button>
         </nav>
     </section>
 
     <div id="roulette-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:9999;">
         <div class="panel-box">
             <h3>알 감정 중</h3>
-            <div id="roulette-display" style="font-size:4rem; margin:20px;">❓</div>
+            <div id="roulette-display" style="margin:20px; display:flex; justify-content:center;"></div>
             <button class="btn-stone" onclick="stopRoulette()">멈추기</button>
         </div>
     </div>
@@ -153,7 +166,8 @@
     <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000;">
         <div class="panel-box">
             <h3 id="modal-title">알림</h3>
-            <p id="modal-text" style="text-align:center; white-space:pre-line; margin:20px 0;">내용</p>
+            <div id="modal-text" style="text-align:center; white-space:pre-line; margin:20px 0; width:100%;">내용</div>
+            
             <div id="modal-btn-alert" class="hidden">
                 <button class="btn-stone" onclick="closeModal()">확인</button>
             </div>
