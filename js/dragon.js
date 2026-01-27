@@ -1,8 +1,7 @@
 // ==========================================
-// js/dragon.js (알 이미지 통합 로직 적용)
+// js/dragon.js (빛/어둠 드래곤 10종씩 추가)
 // ==========================================
 
-// [시스템 2] 용 도감 데이터
 const DRAGON_DEX = {
     // 🔥 불 속성
     "fire_c1": { name: "불도마뱀", type: "fire", rarity: "common", desc: "작은 불꽃을 내뿜습니다." },
@@ -62,7 +61,31 @@ const DRAGON_DEX = {
     "metal_h2": { name: "골든 킹", type: "metal", rarity: "heroic", desc: "온몸이 순금으로 만들어졌습니다." },
     "metal_e1": { name: "티타늄", type: "metal", rarity: "epic", desc: "절대 부서지지 않는 강도를 자랑합니다." },
     "metal_e2": { name: "메카 드래곤", type: "metal", rarity: "epic", desc: "고대 과학 기술의 정점입니다." },
-    "metal_l1": { name: "오리하르콘", type: "metal", rarity: "legend", desc: "전설 속의 금속으로 태어났습니다." }
+    "metal_l1": { name: "오리하르콘", type: "metal", rarity: "legend", desc: "전설 속의 금속으로 태어났습니다." },
+
+    // ✨ 빛 속성 (신규)
+    "light_c1": { name: "반딧불 용", type: "light", rarity: "common", desc: "꼬리에서 희미한 빛이 납니다." },
+    "light_c2": { name: "양초 용", type: "light", rarity: "common", desc: "머리 위에 촛불이 켜져 있습니다." },
+    "light_c3": { name: "프리즘", type: "light", rarity: "common", desc: "몸이 투명해 무지개 빛을 냅니다." },
+    "light_r1": { name: "샤인 윙", type: "light", rarity: "rare", desc: "눈부신 날개를 가졌습니다." },
+    "light_r2": { name: "플래시", type: "light", rarity: "rare", desc: "빛의 속도로 움직입니다." },
+    "light_h1": { name: "천사 용", type: "light", rarity: "heroic", desc: "성스러운 기운이 느껴집니다." },
+    "light_h2": { name: "발키리", type: "light", rarity: "heroic", desc: "전장을 비추는 빛입니다." },
+    "light_e1": { name: "세라핌", type: "light", rarity: "epic", desc: "여섯 개의 날개를 가진 고위 천사입니다." },
+    "light_e2": { name: "솔라리스", type: "light", rarity: "epic", desc: "태양의 힘을 품고 있습니다." },
+    "light_l1": { name: "루시퍼", type: "light", rarity: "legend", desc: "가장 찬란하게 빛나는 새벽의 별입니다." },
+
+    // 🌑 어둠 속성 (신규)
+    "dark_c1": { name: "그림자 용", type: "dark", rarity: "common", desc: "그림자 속에 숨어 있습니다." },
+    "dark_c2": { name: "박쥐 용", type: "dark", rarity: "common", desc: "동굴 천장에 매달려 잡니다." },
+    "dark_c3": { name: "잉크 용", type: "dark", rarity: "common", desc: "검은 액체를 뱉습니다." },
+    "dark_r1": { name: "나이트 메어", type: "dark", rarity: "rare", desc: "악몽을 먹고 자랍니다." },
+    "dark_r2": { name: "팬텀", type: "dark", rarity: "rare", desc: "실체가 없어 공격이 통하지 않습니다." },
+    "dark_h1": { name: "뱀파이어", type: "dark", rarity: "heroic", desc: "피 대신 마력을 흡수합니다." },
+    "dark_h2": { name: "리퍼", type: "dark", rarity: "heroic", desc: "영혼을 인도하는 사신입니다." },
+    "dark_e1": { name: "어비스", type: "dark", rarity: "epic", desc: "심연 그 자체입니다." },
+    "dark_e2": { name: "이클립스", type: "dark", rarity: "epic", desc: "해와 달을 가리는 존재입니다." },
+    "dark_l1": { name: "디아블로", type: "dark", rarity: "legend", desc: "공포의 군주라 불립니다." }
 };
 
 // 이미지 파일명 매핑
@@ -96,21 +119,30 @@ const IMG_MAPPING = {
     "metal_r1": "metal_iron", "metal_r2": "metal_gear",
     "metal_h1": "metal_silver", "metal_h2": "metal_gold",
     "metal_e1": "metal_titan", "metal_e2": "metal_mecha",
-    "metal_l1": "metal_ori"
+    "metal_l1": "metal_ori",
+    // ✨ 빛
+    "light_c1": "light_firefly", "light_c2": "light_candle", "light_c3": "light_prism",
+    "light_r1": "light_wing", "light_r2": "light_flash",
+    "light_h1": "light_angel", "light_h2": "light_valkyrie",
+    "light_e1": "light_seraphim", "light_e2": "light_solaris",
+    "light_l1": "light_lucifer",
+    // 🌑 어둠
+    "dark_c1": "dark_shadow", "dark_c2": "dark_bat", "dark_c3": "dark_ink",
+    "dark_r1": "dark_nightmare", "dark_r2": "dark_phantom",
+    "dark_h1": "dark_vampire", "dark_h2": "dark_reaper",
+    "dark_e1": "dark_abyss", "dark_e2": "dark_eclipse",
+    "dark_l1": "dark_diablo"
 };
 
-// [핵심 수정] 0단계(알)는 속성별 공통 이미지 반환
+// 0단계(알)는 속성별 공통 이미지 반환
 function getDragonImage(dragonId, stageIndex) {
     const stageNames = ["egg", "baby", "teen", "adult", "elder"];
     
     // 1. 알 단계(0)라면 속성을 확인하여 공통 알 이미지 반환
     if (stageIndex === 0) {
         const info = DRAGON_DEX[dragonId];
-        // info가 없으면(오류 방지) 기본 불 알 반환
         const type = info ? info.type : "fire"; 
-        
-        // 파일명 규칙: egg_fire.png, egg_water.png 등
-        // (assets/images/dragon 폴더 안에 넣었다고 가정)
+        // 파일명 규칙: egg_fire.png, egg_light.png 등
         return `assets/images/dragon/egg_${type}.png`;
     }
 
@@ -119,7 +151,6 @@ function getDragonImage(dragonId, stageIndex) {
     return `assets/images/dragon/${baseName}_${stageNames[stageIndex]}.png`;
 }
 
-// 전역 할당
 window.getDragonImage = getDragonImage;
 window.IMG_MAPPING = IMG_MAPPING;
 window.DRAGON_DEX = DRAGON_DEX;
