@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (초기 용 도감 등록 수정)
+// js/player.js (초기화 및 아이템 사용 로직 수정)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -16,7 +16,6 @@ const INITIAL_PLAYER_STATE = {
     equipment: { head: null, body: null, arm: null, leg: null },
     stats: { explore: 0, atk: 10, def: 5 },
     
-    // [수정] 초기 용(불도마뱀 fire_c1)을 도감과 성장기록에 미리 등록
     discovered: ["fire_c1"], 
     maxStages: { "fire_c1": 0 }, 
     
@@ -101,30 +100,21 @@ function addTempLoot(itemId, count = 1) {
 }
 
 function claimTempLoot() {
+    // explore.js에서 오버라이드 되거나 단독 사용될 수 있음. 기본 로직.
     if (tempLoot.length === 0) return "";
-    let html = "<div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; display:inline-block; text-align:left;'>";
-    
+    let html = "";
     tempLoot.forEach(item => {
-        if (item.id === 'gold') {
-            player.gold += item.count;
-            html += `<div style="margin-bottom:5px;"><span style="color:#f1c40f">${item.count} 골드</span></div>`;
-        } else if (item.id === 'gem') {
-            player.gem += item.count;
-            html += `<div style="margin-bottom:5px;"><span style="color:#3498db">${item.count} 보석</span></div>`;
-        } else {
-            const itemName = ITEM_DB[item.id] ? ITEM_DB[item.id].name : "아이템";
-            addItem(item.id, item.count);
-            html += `<div style="margin-bottom:5px;"><span>${itemName} x${item.count}</span></div>`;
-        }
+        if (item.id === 'gold') player.gold += item.count;
+        else if (item.id === 'gem') player.gem += item.count;
+        else addItem(item.id, item.count);
     });
-    
-    html += "</div>";
     tempLoot = [];
-    return html;
+    return "보상을 수령했습니다.";
 }
 
 function clearTempLoot() { tempLoot = []; }
 
+// [수정] 알 사용 시 속성(targetType) 전달
 function useItem(itemId) {
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
     
@@ -144,7 +134,15 @@ function useItem(itemId) {
             `<div style="text-align:center"><img src="${item.img}" style="width:64px;"><br><b>${item.name}</b>을(를) 부화시키겠습니까?</div>`, 
             () => {
                 player.inventory[itemId]--;
-                if(window.startEggRoulette) window.startEggRoulette(itemId === 'egg_shiny');
+                
+                // 해당 알의 속성(dragonType) 확인 (fire, light, dark 등)
+                // 만약 없으면(random) null 전달
+                const targetType = item.dragonType || null; 
+                
+                // 신비한 알 체크
+                const isShiny = (itemId === 'egg_shiny');
+
+                if(window.startEggRoulette) window.startEggRoulette(isShiny, targetType);
                 if(typeof renderInventory === 'function') renderInventory();
             }
         );
@@ -155,6 +153,8 @@ function useItem(itemId) {
             if(dragon) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
+                // 성장 한계 체크는 handleDragonClick에서 하므로 여기선 단순 증가만
+                // 실제 UI 반영 시에는 hatchery.js 로직이 필요할 수 있음
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`);
                 if(window.updateUI) window.updateUI(); 
             }
@@ -228,19 +228,17 @@ function loadGame() {
             player = { ...INITIAL_PLAYER_STATE, ...savedPlayer };
 
             if(!player.inventory) player.inventory = {};
-            if(!player.discovered) player.discovered = ["fire_c1"]; // [안전장치]
+            if(!player.discovered) player.discovered = ["fire_c1"]; 
             if(!player.myDragons) player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
             if(!player.equipment) player.equipment = { head: null, body: null, arm: null, leg: null };
             if(!player.stats) player.stats = { explore: 0, atk: 10, def: 5 };
             
             if(!player.maxStages) player.maxStages = { "fire_c1": 0 };
-
-            // 기존 보유 용들의 스테이지를 maxStages에 반영 (버그 방지)
+            // 기존 데이터 호환성 체크
             player.myDragons.forEach(d => {
                 if(!player.maxStages[d.id] || player.maxStages[d.id] < d.stage) {
                     player.maxStages[d.id] = d.stage;
                 }
-                // 보유 중인 용은 도감에도 자동 등록
                 if(!player.discovered.includes(d.id)) player.discovered.push(d.id);
             });
 
