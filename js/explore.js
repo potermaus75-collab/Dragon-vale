@@ -1,11 +1,11 @@
 // ==========================================
-// js/explore.js (완전한 코드)
+// js/explore.js (수정된 완전한 코드)
 // ==========================================
 
 let currentRegionId = -1;
 let movesLeft = 0;
 let stealAttempts = 0; 
-let isExploreActive = false;
+let isExploreActive = false; // [핵심] 중복 실행 방지 플래그
 let selectedRegionId = null;
 
 function renderMap() {
@@ -56,6 +56,9 @@ function renderMap() {
 }
 
 function enterSelectedRegion() {
+    // 이미 탐험 중이라면 중복 진입 방지
+    if (isExploreActive) return;
+
     if (selectedRegionId === null) {
         showAlert("먼저 탐험할 지역을 선택해주세요.");
         return;
@@ -75,19 +78,18 @@ function toggleExploreView(viewName) {
     }
 }
 
-// [수정] 탐험 시작 (배경 이미지 적용)
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
     tempLoot = []; 
-    isExploreActive = true;
+    isExploreActive = true; // 탐험 시작 플래그 ON
 
     toggleExploreView('run');
     
     const region = REGION_DATA[regionId];
     const bgElem = document.getElementById('explore-bg');
     
-    // [연출] 배경 이미지 설정
+    // 배경 이미지 설정
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
@@ -103,16 +105,16 @@ function startExplore(regionId) {
     updateMoveUI();
 }
 
-// [수정] 이동하기 (흔들림 연출 추가)
 function moveForward() {
+    // [중요] 탐험 비활성화 상태거나 이동 횟수가 없으면 동작 안 함
     if (movesLeft <= 0 || !isExploreActive) return;
 
     movesLeft--;
     
-    // [연출] CSS 클래스로 흔들림 효과 주기
+    // 흔들림 효과
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
-    void bg.offsetWidth; // 리플로우 강제 (애니메이션 재시작)
+    void bg.offsetWidth; // 리플로우 강제
     bg.classList.add('walking-anim');
 
     processRandomEvent();
@@ -126,6 +128,7 @@ function updateMoveUI() {
 
     counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle"> 남은 이동: ${movesLeft}`;
     
+    // 이동 버튼 상태 제어
     if (movesLeft <= 0) {
         document.getElementById('event-msg').innerText = "날이 저물었습니다. 귀환하세요.";
         moveBtn.disabled = true;
@@ -135,20 +138,22 @@ function updateMoveUI() {
         returnBtn.innerHTML = "<img src='assets/images/ui/icon_gift.png' style='width:20px;vertical-align:middle'> 보상 받기";
         returnBtn.classList.remove('sub');
         returnBtn.style.color = "#2ecc71";
+        // 성공 귀환
         returnBtn.onclick = () => finishExplore(true);
     } else {
-        moveBtn.disabled = false;
-        moveBtn.style.opacity = 1;
+        // 이동 가능 상태일 때만 버튼 활성화 (이벤트 중이면 비활성화 처리 가능)
+        moveBtn.disabled = !isExploreActive;
+        moveBtn.style.opacity = isExploreActive ? 1 : 0.5;
         moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         
         returnBtn.innerHTML = "<img src='assets/images/ui/icon_home.png' style='width:20px;vertical-align:middle'> 중도 포기";
         returnBtn.classList.add('sub');
         returnBtn.style.color = "#aaa"; 
+        // 포기 귀환
         returnBtn.onclick = () => finishExplore(false);
     }
 }
 
-// [수정] 랜덤 이벤트 (보석/골드 수급처 추가)
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
@@ -157,32 +162,32 @@ function processRandomEvent() {
         msgArea.innerHTML = "조용합니다... 바람 소리만 들립니다.";
     } 
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
-        // 자원 발견 (골드, 보석, 나무 중 랜덤)
         const typeRoll = Math.random();
         
-        if (typeRoll < 0.6) { // 60% 골드
+        if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
             addTempLoot("gold", goldAmt);
              msgArea.innerHTML = `<img src="assets/images/ui/icon_gold.png" style="width:20px; vertical-align:middle"> <b style="color:#f1c40f">${goldAmt} 골드</b>를 주웠습니다!`;
-        } else if (typeRoll < 0.9) { // 30% 나무
+        } else if (typeRoll < 0.9) { 
              const woodAmt = Math.floor(Math.random() * 2) + 1;
              addTempLoot("nest_wood", woodAmt);
              msgArea.innerHTML = `🔍 둥지 재료를 ${woodAmt}개 발견했습니다!`;
-        } else { // 10% 보석 (희귀)
+        } else { 
              const gemAmt = 1;
              addTempLoot("gem", gemAmt);
              msgArea.innerHTML = `<img src="assets/images/ui/icon_gem.png" style="width:20px; vertical-align:middle"> <b style="color:#3498db">반짝이는 보석</b>을 발견했습니다!`;
         }
     } 
     else {
-        // 둥지 발견 (경고 연출)
         msgArea.innerHTML = `<div style="color:red; font-weight:bold; animation: blinker 0.2s infinite;">⚠️ 경고: 용의 기운이 느껴집니다! ⚠️</div>`;
         encounterNest();
     }
 }
 
 function encounterNest() {
-    isExploreActive = false; 
+    isExploreActive = false; // [중요] 이벤트 중 이동 차단
+    updateMoveUI(); // 버튼 비활성화 적용
+
     stealAttempts = 3; 
 
     setTimeout(() => {
@@ -194,9 +199,9 @@ function encounterNest() {
             </div>`, 
             () => { tryStealLoop(); },
             () => { 
-                isExploreActive = true;
+                isExploreActive = true; // [중요] 거절 시 다시 이동 가능
                 document.getElementById('event-msg').innerText = "둥지를 조용히 지나쳤습니다.";
-                if(movesLeft <= 0) updateMoveUI();
+                updateMoveUI();
             }
         );
     }, 100);
@@ -212,9 +217,9 @@ function tryStealLoop() {
     if (success) {
         showAlert("성공! 알을 손에 넣었습니다!", () => {
             addTempLoot("egg_random", 1);
-            isExploreActive = true;
+            isExploreActive = true; // 성공 후 이동 재개
             document.getElementById('event-msg').innerText = "알을 챙겨서 도망쳤습니다.";
-            if(movesLeft <= 0) updateMoveUI();
+            updateMoveUI();
         });
     } else {
         stealAttempts--;
@@ -222,9 +227,9 @@ function tryStealLoop() {
             showConfirm(`실패... 알이 너무 무겁습니다.\n(남은 기회: ${stealAttempts})\n다시 시도하시겠습니까?`,
                 () => { tryStealLoop(); }, 
                 () => {
-                    isExploreActive = true;
+                    isExploreActive = true; // 포기 후 이동 재개
                     document.getElementById('event-msg').innerText = "위험을 느끼고 물러났습니다.";
-                    if(movesLeft <= 0) updateMoveUI();
+                    updateMoveUI();
                 }
             );
         } else {
@@ -238,9 +243,8 @@ function wakeParentDragon() {
     document.getElementById('event-msg').innerText = "크아앙! 부모 용 출현!";
     
     setTimeout(() => {
-        // 전투 예상 승률 보여주기
         const atk = player.stats ? player.stats.atk : 10;
-        const winChance = Math.min(90, 30 + atk); // 기본 30% + 공격력1당 1%
+        const winChance = Math.min(90, 30 + atk); 
 
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
@@ -271,11 +275,9 @@ function fightParent(winChance) {
     const win = roll < winChance; 
 
     if (win) {
-        // 승리 보상
         addTempLoot("egg_random", 1);
-        
         let msg = "대단합니다! 부모 용을 물리쳤습니다!";
-        if (Math.random() < 0.3) { // 30% 확률로 보석
+        if (Math.random() < 0.3) { 
              player.gem += 1;
              msg += "<br><b style='color:#3498db'>(보너스: 보석 1개 획득!)</b>";
         }
@@ -291,7 +293,14 @@ function fightParent(winChance) {
     }
 }
 
+// [핵심] 탐험 종료 로직 (중복 실행 방지 적용)
 function finishExplore(success = true) {
+    // 1. 이미 탐험이 끝난 상태라면 즉시 리턴 (중복 호출 방지)
+    if (!isExploreActive) return;
+
+    // 2. 상태 닫음
+    isExploreActive = false; 
+
     const lootMsg = claimTempLoot();
     
     const onComplete = () => {
@@ -302,7 +311,6 @@ function finishExplore(success = true) {
             moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         }
         document.getElementById('explore-bg').style.backgroundColor = "#222";
-        // 배경 이미지 초기화
         document.getElementById('explore-bg').style.backgroundImage = "none";
         
         toggleExploreView('map');
@@ -322,6 +330,6 @@ function finishExplore(success = true) {
     }
 }
 
+// 전역 할당
 window.initExploreTab = function() { renderMap(); }
 window.enterSelectedRegion = enterSelectedRegion;
-
