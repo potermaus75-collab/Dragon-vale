@@ -2,64 +2,91 @@
 let player = {
     level: 1, 
     gold: 500,
-    gem: 0,
+    gem: 10, // 시작 보석 조금 지급
     inventory: {}, 
     
-    // 보유한 용 리스트
     myDragons: [
         { id: "d_init", type: "fire", stage: 0, clicks: 0, name: "불꽃용" } 
     ],
     currentDragonIndex: 0,
     
-    // 장착 장비
-    equipment: {
-        head: null,
-        body: null,
-        arm: null,
-        leg: null
-    },
+    equipment: { head: null, body: null, arm: null, leg: null },
 
+    // [중요] 스탯은 장비에 따라 변하므로 기본값+장비값 합산 로직 필요
     stats: { explore: 0, atk: 10, def: 5 },
-    discovered: [] // 도감용
+    
+    discovered: [],
+    
+    // [신규] 둥지 레벨 (클릭 효율 증가)
+    nestLevel: 0 
 };
 
-// 탐험 임시 보관함
 let tempLoot = []; 
 
-// 재화 업데이트
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
     if(goldUI) goldUI.innerText = player.gold;
     if(gemUI) gemUI.innerText = player.gem;
+    
+    // 스탯 UI 갱신 (장비 반영)
+    recalcStats();
 }
 
-// 아이템 획득
+// 스탯 재계산 함수
+function recalcStats() {
+    let baseAtk = 10;
+    let baseDef = 5;
+    
+    // 장비 스탯 합산
+    ['head', 'body', 'arm', 'leg'].forEach(slot => {
+        const itemId = player.equipment[slot];
+        if(itemId && ITEM_DB[itemId] && ITEM_DB[itemId].stat) {
+            if(slot === 'arm') baseAtk += ITEM_DB[itemId].stat;
+            else baseDef += ITEM_DB[itemId].stat;
+        }
+    });
+    
+    player.stats.atk = baseAtk;
+    player.stats.def = baseDef;
+
+    const atkUI = document.getElementById('stat-atk');
+    const defUI = document.getElementById('stat-def');
+    if(atkUI) atkUI.innerText = player.stats.atk;
+    if(defUI) defUI.innerText = player.stats.def;
+}
+
+// [수정] 아이템 획득 (안전장치 추가)
 function addItem(itemId, count = 1) {
+    if (!ITEM_DB[itemId]) {
+        console.error("존재하지 않는 아이템 추가 시도:", itemId);
+        return;
+    }
     if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
 
-// 탐험 전리품 처리
 function addTempLoot(itemId, count = 1) {
     tempLoot.push({ id: itemId, count: count });
 }
 
-// [수정] 전리품 정산 메시지를 HTML로 생성
+// [수정] 전리품 정산 (버그 해결 핵심)
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
-    let html = "<div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; display:inline-block;'>";
+    let html = "<div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; display:inline-block; text-align:left;'>";
     
     tempLoot.forEach(item => {
+        // ITEM_DB에 있는지 확인 후 추가
         if(ITEM_DB[item.id]) {
             addItem(item.id, item.count);
-            // 이미지와 텍스트 한 줄로
             html += `
                 <div style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
                     <img src="${ITEM_DB[item.id].img}" style="width:24px; height:24px;">
                     <span>${ITEM_DB[item.id].name} x${item.count}</span>
                 </div>
             `;
+        } else {
+            console.error("알 수 없는 전리품:", item.id);
         }
     });
     html += "</div>";
@@ -79,7 +106,9 @@ function useItem(itemId) {
         showConfirm(
             `<div style="text-align:center">
                 <img src="${item.img}" style="width:64px;"><br>
-                <b>${item.name}</b>을(를) 장착하시겠습니까?
+                <b>${item.name}</b><br>
+                (효과: 스탯 +${item.stat})<br>
+                장착하시겠습니까?
             </div>`, 
             () => equipItem(itemId, item.slot)
         );
@@ -87,55 +116,86 @@ function useItem(itemId) {
     // 2. 알 (룰렛)
     else if (item.type === "egg") {
         showConfirm(
-            "알을 부화시켜 새로운 용을 얻으시겠습니까?", 
+            `<div style="text-align:center">
+                <img src="${item.img}" style="width:64px;"><br>
+                <b>${item.name}</b>을(를) 부화시키겠습니까?
+            </div>`, 
             () => {
                 player.inventory[itemId]--;
-                if(window.startEggRoulette) window.startEggRoulette();
+                // 알 종류에 따라 다른 룰렛? (지금은 동일하게 처리)
+                if(window.startEggRoulette) window.startEggRoulette(itemId === 'egg_shiny');
                 if(typeof renderInventory === 'function') renderInventory();
             }
         );
     }
-    // 3. 소비
-    else {
+    // 3. 소비 (물약 등)
+    else if (item.type === "use") {
         player.inventory[itemId]--;
         if(itemId === "potion_s") {
             const dragon = player.myDragons[player.currentDragonIndex];
             if(dragon) {
-                dragon.clicks += 10;
-                showAlert(`[${dragon.name}]에게 물약을 먹였습니다.\n(성장치 +10)`);
+                const effect = item.effect || 10;
+                dragon.clicks += effect;
+                showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`);
                 if(window.updateUI) window.updateUI(); 
             }
-        } else {
-            showAlert(`${item.name}을(를) 사용했습니다.`);
         }
         if(typeof renderInventory === 'function') renderInventory();
     }
 }
 
-// 장비 장착
-function equipItem(itemId, slot) {
-    if (player.equipment[slot]) addItem(player.equipment[slot], 1); // 기존 장비 해제
+// 둥지 강화 (신규)
+function upgradeNest() {
+    const nextLevel = (player.nestLevel || 0) + 1;
+    // 최대 레벨 체크
+    if (nextLevel > NEST_UPGRADE_COST.length) {
+        showAlert("이미 최고 레벨입니다!");
+        return;
+    }
     
+    const cost = NEST_UPGRADE_COST[player.nestLevel || 0];
+    const userWood = player.inventory['nest_wood'] || 0;
+    
+    if (userWood >= cost) {
+        showConfirm(
+            `<div style="text-align:center">
+                <img src="assets/images/item/material_wood.png" style="width:40px;"><br>
+                <b>둥지를 강화하시겠습니까?</b><br>
+                소모: 둥지 재료 ${cost}개<br>
+                효과: 터치 당 경험치 +1
+            </div>`,
+            () => {
+                player.inventory['nest_wood'] -= cost;
+                player.nestLevel = (player.nestLevel || 0) + 1;
+                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel + 1})</b><br>이제 용이 더 빨리 자랍니다!`);
+                if(window.updateUI) window.updateUI();
+                if(typeof saveGame === 'function') saveGame();
+            }
+        );
+    } else {
+        showAlert(`둥지 재료가 부족합니다.<br>(보유: ${userWood} / 필요: ${cost})<br><small>탐험에서 '둥지 재료'를 모으세요.</small>`);
+    }
+}
+
+function equipItem(itemId, slot) {
+    if (player.equipment[slot]) addItem(player.equipment[slot], 1); 
     player.equipment[slot] = itemId;
     player.inventory[itemId]--; 
-    
     showAlert("장착 완료!");
-    
+    updateCurrency(); // 스탯 갱신
     if(window.updateUI) window.updateUI();
     if(typeof renderInventory === 'function') renderInventory();
     if(window.saveGame) window.saveGame();
 }
 
-// 장비 해제
 function unequipItem(slot) {
     if (player.equipment[slot]) {
         addItem(player.equipment[slot], 1);
         player.equipment[slot] = null;
         showAlert("장비를 해제했습니다.");
-        
+        updateCurrency(); // 스탯 갱신
         if(window.updateUI) window.updateUI();
         if(typeof renderInventory === 'function') renderInventory();
         if(window.saveGame) window.saveGame();
     }
 }
-
