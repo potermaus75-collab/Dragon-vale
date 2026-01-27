@@ -20,7 +20,7 @@
         </div>
     </section>
 
-    <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()" style="background:black; z-index:9999;">
+    <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()">
         <div class="panel-box" style="height: 50%;">
             <p id="prologue-text">...</p>
         </div>
@@ -29,7 +29,7 @@
 
     <section id="screen-game" class="full-screen hidden">
         <header class="game-header">
-            <div class="profile-frame"><div class="profile-img" id="ui-profile-img"></div></div>
+            <div class="profile-frame" onclick="changeProfileImage()"><div class="profile-img" id="ui-profile-img"></div></div>
             <div class="header-info">
                 <span id="ui-nickname">플레이어</span><br>
                 <span>💎<span id="ui-gem">0</span> 💰<span id="ui-gold">0</span></span>
@@ -38,14 +38,21 @@
 
         <main id="game-view">
             <div id="tab-info" class="tab-content hidden">
-                <div class="profile-card">
-                    <div style="margin-top:20px; opacity:0.5;">(캐릭터 실루엣)</div>
-                    <div class="equip-slot head" onclick="unequipItem('head')">머리</div>
-                    <div class="equip-slot body" onclick="unequipItem('body')">몸</div>
-                    <div class="equip-slot arm" onclick="unequipItem('arm')">무기</div>
-                    <div class="equip-slot leg" onclick="unequipItem('leg')">다리</div>
-                    <div style="margin-top:auto; width:100%; text-align:center;">
-                        <p>공격력 <span id="stat-atk">10</span> / 방어력 <span id="stat-def">5</span></p>
+                <div class="info-layout">
+                    <div class="profile-card">
+                        <div style="margin-top:20px; opacity:0.5;">(캐릭터 실루엣)</div>
+                        <div class="equip-slot head" onclick="unequipItem('head')">머리</div>
+                        <div class="equip-slot body" onclick="unequipItem('body')">몸</div>
+                        <div class="equip-slot arm" onclick="unequipItem('arm')">무기</div>
+                        <div class="equip-slot leg" onclick="unequipItem('leg')">다리</div>
+                        <div style="margin-top:auto; width:100%; text-align:center;">
+                            <p>공격력 <span id="stat-atk">10</span> / 방어력 <span id="stat-def">5</span></p>
+                        </div>
+                    </div>
+                    
+                    <div class="inventory-section">
+                        <h3>🎒 소지품</h3>
+                        <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
                     </div>
                 </div>
             </div>
@@ -86,10 +93,12 @@
                 </div>
             </div>
 
-            <div id="tab-inventory" class="tab-content hidden">
-                <div class="inventory-bg">
-                    <h3>가방</h3>
-                    <div class="scroll-area"><div id="inventory-grid" class="grid-4"></div></div>
+            <div id="tab-book" class="tab-content hidden">
+                <div class="book-bg">
+                    <h3>📜 용 도감</h3>
+                    <div class="scroll-area">
+                        <div id="book-grid" class="grid-4" style="margin-top:10px;"></div>
+                    </div>
                 </div>
             </div>
 
@@ -105,7 +114,7 @@
             <button class="btn-square nav-btn" onclick="switchTab('info')">🧙‍♂️</button>
             <button class="btn-square nav-btn" onclick="switchTab('dragon')">🐲</button>
             <button class="btn-square nav-btn" onclick="switchTab('explore')">🗺️</button>
-            <button class="btn-square nav-btn" onclick="switchTab('inventory')">🎒</button>
+            <button class="btn-square nav-btn" onclick="switchTab('book')">📖</button>
             <button class="btn-square nav-btn" onclick="switchTab('shop')">⚖️</button>
         </nav>
     </section>
@@ -122,11 +131,9 @@
         <div class="panel-box">
             <h3 id="modal-title">알림</h3>
             <p id="modal-text" style="text-align:center; white-space:pre-line; margin:20px 0;">내용</p>
-            
             <div id="modal-btn-alert" class="hidden">
                 <button class="btn-stone" onclick="closeModal()">확인</button>
             </div>
-            
             <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px;">
                 <button class="btn-stone" id="btn-confirm-yes">예</button>
                 <button class="btn-stone" id="btn-confirm-no" onclick="closeModal()">아니오</button>
