@@ -229,3 +229,13 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 .warning-anim {
     animation: warningFlash 1s infinite;
 }
+/* 용 클릭 애니메이션 추가 */
+.click-anim {
+    animation: clickBounce 0.2s;
+}
+
+@keyframes clickBounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(0.9); filter: brightness(1.2); }
+    100% { transform: scale(1); }
+}
