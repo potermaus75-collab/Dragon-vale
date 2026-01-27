@@ -38,24 +38,47 @@
 
         <main id="game-view">
             <div id="tab-info" class="tab-content hidden">
-                <div class="info-layout">
-                    <div class="profile-card">
-                        <div style="margin-top:20px; opacity:0.5;">(캐릭터 실루엣)</div>
-                        <div class="equip-slot head" onclick="unequipItem('head')">머리</div>
-                        <div class="equip-slot body" onclick="unequipItem('body')">몸</div>
-                        <div class="equip-slot arm" onclick="unequipItem('arm')">무기</div>
-                        <div class="equip-slot leg" onclick="unequipItem('leg')">다리</div>
-                        <div style="margin-top:auto; width:100%; text-align:center;">
-                            <p>공격력 <span id="stat-atk">10</span> / 방어력 <span id="stat-def">5</span></p>
-                        </div>
-                    </div>
-                    
-                    <div class="inventory-section">
-                        <h3>🎒 소지품</h3>
-                        <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
-                    </div>
-                </div>
+    <div class="info-layout">
+        <div class="profile-card">
+            
+            <div class="silhouette-body">
+                <div class="sil-head"></div>
+                <div class="sil-torso"></div>
+                <div class="sil-arm-l"></div> <div class="sil-arm-r"></div> <div class="sil-leg-l"></div>
+                <div class="sil-leg-r"></div>
             </div>
+
+            <div class="equip-slot head" onclick="unequipItem('head')">
+                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">머리</span>
+            </div>
+            
+            <div class="equip-slot body" onclick="unequipItem('body')">
+                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">갑옷</span>
+            </div>
+            
+            <div class="equip-slot arm" onclick="unequipItem('arm')">
+                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">무기</span>
+            </div>
+            
+            <div class="equip-slot leg" onclick="unequipItem('leg')">
+                <span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">신발</span>
+            </div>
+
+            <div style="margin-top:auto; width:100%; text-align:center; z-index:10;">
+                <p style="background:rgba(0,0,0,0.5); border-radius:5px; padding:5px;">
+                    공격력 <span id="stat-atk" style="color:#e74c3c">10</span> / 
+                    방어력 <span id="stat-def" style="color:#3498db">5</span>
+                </p>
+            </div>
+        </div>
+        
+        <div class="inventory-section">
+            <h3>🎒 소지품</h3>
+            <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
+        </div>
+    </div>
+</div>
+
 
             <div id="tab-dragon" class="tab-content hidden">
                 <div class="cave-layout">
