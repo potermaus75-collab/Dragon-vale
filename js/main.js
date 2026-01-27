@@ -23,17 +23,34 @@ function showScreen(screenId) {
     }
 }
 
-// 1. 시작
+// 1. 시작화면 클릭
 document.getElementById('screen-start').addEventListener('click', () => {
+    // 시작할 때 저장된 데이터가 있는지 먼저 확인
+    if (localStorage.getItem('dragonSaveData')) {
+        // 데이터가 있으면 로드 후 바로 게임 진입도 가능하나,
+        // 여기서는 닉네임 확인 단계로 넘깁니다. (이미 닉네임이 있으면 자동 처리)
+        loadGame();
+        
+        if (userNickname && userNickname !== "Guest") {
+             // 닉네임이 이미 있으면 바로 게임 시작
+            document.getElementById('ui-nickname').innerText = userNickname;
+            startGame();
+            return;
+        }
+    }
     showScreen('screen-setup');
 });
 
-// 2. 닉네임 -> 프롤로그
+// 2. 닉네임 입력 -> 프롤로그
 function submitName() {
     const input = document.getElementById('input-nickname');
-    if (input.value.trim() === "") return alert("이름을 입력해주세요!");
+    if (input.value.trim() === "") return showAlert("이름을 입력해주세요!");
+    
     userNickname = input.value;
     document.getElementById('ui-nickname').innerText = userNickname;
+    
+    // 닉네임 설정 시점에서도 저장 한 번 수행
+    saveGame();
     
     showScreen('screen-prologue');
     renderPrologue();
@@ -60,6 +77,9 @@ function startGame() {
     updateCurrency();
     switchTab('dragon'); 
     if(window.updateUI) window.updateUI();
+    
+    // 게임 시작 시 자동 저장 인터벌 시작
+    saveGame(); 
 }
 
 // 탭 전환
@@ -103,7 +123,7 @@ function renderInventory() {
             const item = ITEM_DB[id];
             const div = document.createElement('div');
             div.className = 'slot-item';
-            div.onclick = () => useItem(id);
+            div.onclick = () => useItem(id); // player.js의 useItem
             div.innerHTML = `<span>${item.emoji}</span><span>x${player.inventory[id]}</span>`;
             grid.appendChild(div);
         }
@@ -130,19 +150,24 @@ function renderShop() {
     });
 }
 
-// 구매
+// 구매 로직 (Alert -> ShowAlert 변경)
 function buyItem(id) {
     const item = ITEM_DB[id];
     if (player.gold >= item.price) {
-        player.gold -= item.price;
-        addItem(id, 1);
-        updateCurrency();
-        alert("구매 완료!");
+        showConfirm(`${item.name}을(를) 구매하시겠습니까?\n(가격: ${item.price} 골드)`, () => {
+            player.gold -= item.price;
+            addItem(id, 1);
+            updateCurrency();
+            showAlert("구매 완료!", () => {
+                 saveGame(); // 구매 후 저장
+            });
+        });
     } else {
-        alert("골드가 부족합니다.");
+        showAlert("골드가 부족합니다.");
     }
 }
 
+// 프로필 이미지 변경
 function changeProfileImage() {
     document.getElementById('file-input').click();
 }
@@ -153,8 +178,101 @@ document.getElementById('file-input').addEventListener('change', function(e) {
         reader.onload = function(evt) {
             document.getElementById('ui-profile-img').style.backgroundImage = `url('${evt.target.result}')`;
             document.getElementById('ui-profile-img').style.backgroundSize = "cover";
+            // 이미지 데이터는 용량이 커서 로컬스토리지 저장은 생략하거나 별도 처리 필요
         }
         reader.readAsDataURL(file);
     }
 });
 
+
+// ==========================================
+// [신규] 저장 시스템 및 모달 유틸리티
+// ==========================================
+
+// 1. 저장 기능
+function saveGame() {
+    // 닉네임도 저장 데이터에 포함
+    player.nickname = userNickname; 
+    
+    const data = {
+        player: player,
+        timestamp: Date.now()
+    };
+    localStorage.setItem('dragonSaveData', JSON.stringify(data));
+    console.log("게임 저장 완료");
+}
+
+// 2. 불러오기 기능
+function loadGame() {
+    const saved = localStorage.getItem('dragonSaveData');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            // player 객체 덮어쓰기 (참조 유지)
+            Object.assign(player, data.player);
+            
+            // 닉네임 복구
+            if(player.nickname) userNickname = player.nickname;
+            
+            console.log("게임 불러오기 성공");
+        } catch(e) {
+            console.error("세이브 파일 로드 실패", e);
+        }
+    }
+}
+
+// 3. 자동 저장 (1분마다)
+setInterval(saveGame, 60000);
+
+// 4. 모달 시스템 (alert 대체)
+window.showAlert = function(msg, callback) {
+    const modal = document.getElementById('common-modal');
+    document.getElementById('modal-title').innerText = "알림";
+    document.getElementById('modal-text').innerText = msg;
+    
+    // 버튼 설정
+    document.getElementById('modal-btn-alert').classList.remove('hidden');
+    document.getElementById('modal-btn-confirm').classList.add('hidden');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+
+    // 확인 버튼 클릭 시 동작 재정의
+    // 기존 이벤트 제거를 위해 cloneNode 사용 또는 onclick 덮어쓰기
+    const okBtn = document.querySelector('#modal-btn-alert button');
+    okBtn.onclick = function() {
+        closeModal();
+        if(callback) callback();
+    };
+};
+
+// 5. 모달 시스템 (confirm 대체)
+window.showConfirm = function(msg, yesCallback, noCallback) {
+    const modal = document.getElementById('common-modal');
+    document.getElementById('modal-title').innerText = "확인";
+    document.getElementById('modal-text').innerText = msg;
+    
+    // 버튼 설정
+    document.getElementById('modal-btn-alert').classList.add('hidden');
+    const confirmGroup = document.getElementById('modal-btn-confirm');
+    confirmGroup.classList.remove('hidden');
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+
+    // 예/아니오 이벤트 연결
+    document.getElementById('btn-confirm-yes').onclick = function() {
+        closeModal();
+        if(yesCallback) yesCallback();
+    };
+    document.getElementById('btn-confirm-no').onclick = function() {
+        closeModal();
+        if(noCallback) noCallback();
+    };
+};
+
+window.closeModal = function() {
+    const modal = document.getElementById('common-modal');
+    modal.classList.remove('active');
+    modal.classList.add('hidden');
+};
