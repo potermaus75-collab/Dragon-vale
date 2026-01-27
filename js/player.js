@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (팝업창 이미지 폴백 적용 - 최종)
+// js/player.js (룰렛 삭제, 중복 터치 방지)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -25,6 +25,7 @@ const INITIAL_PLAYER_STATE = {
 
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
 let tempLoot = []; 
+let isProcessing = false; // [중요] 중복 실행 방지 플래그
 
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
@@ -113,55 +114,66 @@ function claimTempLoot() {
 
 function clearTempLoot() { tempLoot = []; }
 
+// [수정] 아이템 사용 로직 (룰렛 UI 제거, 중복 방지)
 function useItem(itemId) {
+    if (isProcessing) return; // 중복 실행 방지
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
     
     const item = ITEM_DB[itemId];
-    if (!item) {
-        delete player.inventory[itemId];
-        return;
-    }
+    if (!item) return;
     
     if (item.type === "equip") {
+        isProcessing = true;
         showConfirm(
             `<div style="text-align:center">
                 <img src="${item.img}" style="width:64px;" onerror="this.src='assets/images/ui/icon_question.png'">
                 <br><b>${item.name}</b><br>(효과: 스탯 +${item.stat})<br>장착하시겠습니까?
             </div>`, 
-            () => equipItem(itemId, item.slot)
+            () => { 
+                equipItem(itemId, item.slot); 
+                isProcessing = false; 
+            },
+            () => { isProcessing = false; }
         );
     } else if (item.type === "egg") {
-        // [수정] 알 팝업창에서 이미지가 없으면 CSS 알로 대체
         const targetType = item.dragonType || 'fire';
+        isProcessing = true;
+        
         showConfirm(
             `<div style="text-align:center">
                 <img src="${item.img}" style="width:64px;" onerror="handleImgError(this, '${targetType}', 0)">
-                <br><b>${item.name}</b>을(를) 부화시키겠습니까?
+                <br><b>${item.name}</b>을(를) 둥지에 놓겠습니까?
             </div>`, 
             () => {
-                player.inventory[itemId]--;
+                player.inventory[itemId]--; // 재고 차감
                 
+                // [변경] 룰렛 없이 바로 둥지에 배치 (정체 숨김 상태)
                 const isShiny = (itemId === 'egg_shiny');
-                if(window.startEggRoulette) window.startEggRoulette(isShiny, item.dragonType || null);
+                if(window.hatchEggInternal) window.hatchEggInternal(isShiny, item.dragonType || null);
+                
                 if(typeof renderInventory === 'function') renderInventory();
-            }
+                showAlert("둥지에 알을 놓았습니다.<br>탭해서 깨워보세요!", () => { isProcessing = false; });
+            },
+            () => { isProcessing = false; }
         );
     } else if (item.type === "use") {
+        isProcessing = true;
         player.inventory[itemId]--;
         if(itemId === "potion_s") {
             const dragon = player.myDragons[player.currentDragonIndex];
             if(dragon) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
-                showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`);
+                showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
                 if(window.updateUI) window.updateUI(); 
-            }
+            } else { isProcessing = false; }
         }
         if(typeof renderInventory === 'function') renderInventory();
     }
 }
 
 function upgradeNest() {
+    if (isProcessing) return;
     const nextLevel = (player.nestLevel || 0) + 1;
     if (nextLevel > NEST_UPGRADE_COST.length) {
         showAlert("이미 최고 레벨입니다!");
@@ -170,6 +182,7 @@ function upgradeNest() {
     const cost = NEST_UPGRADE_COST[player.nestLevel || 0];
     const userWood = player.inventory['nest_wood'] || 0;
     
+    isProcessing = true;
     if (userWood >= cost) {
         showConfirm(
             `<div style="text-align:center">
@@ -179,13 +192,14 @@ function upgradeNest() {
             () => {
                 player.inventory['nest_wood'] -= cost;
                 player.nestLevel = (player.nestLevel || 0) + 1;
-                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b>`);
+                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b>`, () => { isProcessing = false; });
                 if(window.updateUI) window.updateUI();
                 saveGame();
-            }
+            },
+            () => { isProcessing = false; }
         );
     } else {
-        showAlert(`재료가 부족합니다. (보유: ${userWood}/${cost})`);
+        showAlert(`재료가 부족합니다. (보유: ${userWood}/${cost})`, () => { isProcessing = false; });
     }
 }
 
@@ -248,7 +262,6 @@ function loadGame() {
             if(player.nickname && typeof userNickname !== 'undefined') {
                 userNickname = player.nickname;
             }
-            console.log("게임 불러오기 성공");
         } catch(e) {
             console.error("로드 실패", e);
             player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
