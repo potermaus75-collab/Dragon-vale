@@ -1,8 +1,21 @@
 // ==========================================
-// js/main.js (도감 이미지 수정 및 가방 분리 적용)
+// js/main.js (CSS 드래곤 폴백 및 도감 수정)
 // ==========================================
 
-// 전역 변수
+// [신규] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
+window.handleImgError = function(imgEl, dragonType, dragonStage) {
+    imgEl.onerror = null; // 무한루프 방지
+    imgEl.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 투명 이미지
+    
+    if (typeof dragonStage === 'undefined') dragonStage = 0;
+    
+    imgEl.classList.add('css-dragon');
+    imgEl.classList.add(`type-${dragonType}`);
+    imgEl.classList.add(`stage-${dragonStage}`);
+    
+    imgEl.style.objectFit = "contain";
+};
+
 let userNickname = "Guest";
 let prologueIndex = 0;
 
@@ -13,7 +26,6 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// 스마트 프리로딩
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
     "assets/images/ui/panel_banner.png",
@@ -42,23 +54,6 @@ function preloadAssets() {
     }
     if (typeof REGION_DATA !== 'undefined') {
         REGION_DATA.forEach(region => { if (region.bg) imagesToLoad.push(region.bg); });
-    }
-    if (typeof DRAGON_DATA !== 'undefined' && DRAGON_DATA.stageImages) {
-        imagesToLoad = imagesToLoad.concat(DRAGON_DATA.stageImages);
-    }
-    if (typeof IMG_MAPPING !== 'undefined') {
-        const stageSuffixes = ["_egg.png", "_baby.png", "_teen.png", "_adult.png", "_elder.png"];
-        for(let key in IMG_MAPPING) {
-            const baseName = IMG_MAPPING[key];
-            stageSuffixes.forEach(suffix => {
-                imagesToLoad.push(`assets/images/dragon/${baseName}${suffix}`);
-            });
-            imagesToLoad.push(`assets/images/dragon/egg_fire.png`);
-            imagesToLoad.push(`assets/images/dragon/egg_water.png`);
-            imagesToLoad.push(`assets/images/dragon/egg_forest.png`);
-            imagesToLoad.push(`assets/images/dragon/egg_electric.png`);
-            imagesToLoad.push(`assets/images/dragon/egg_metal.png`);
-        }
     }
     imagesToLoad = [...new Set(imagesToLoad)];
 
@@ -194,7 +189,6 @@ function switchTab(tabName) {
     }
 }
 
-// [수정] 내 정보 탭에서는 '장비(equip)'만 보여줌
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -207,7 +201,6 @@ function renderInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            // 장비(equip)만 필터링
             if(item && item.type === 'equip') {
                 hasItem = true;
                 const div = document.createElement('div');
@@ -222,7 +215,7 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// [수정] 도감에 현재 성장 단계(maxStage) 반영
+// [수정] 도감에서 CSS 드래곤 대체 기능 적용
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
@@ -241,23 +234,16 @@ function renderBook() {
         if(isFound) div.style.borderColor = rarityColor;
 
         if (isFound) {
-            // 도달한 최고 단계 확인
             const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
-            
             let displayImg = "assets/images/dragon/stage_egg.png";
-            if(window.getDragonImage) {
-                // 현재 상태(최고 단계)의 이미지 가져오기
-                displayImg = window.getDragonImage(dragonId, maxStage); 
-            }
+            if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
 
+            // onerror 추가
             div.innerHTML = `
-                <img src="${displayImg}" class="book-img">
+                <img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">
                 <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
             `;
-            
-            div.onclick = () => {
-                showDragonDetailModal(dragonId, dragonInfo, rarityColor);
-            };
+            div.onclick = () => { showDragonDetailModal(dragonId, dragonInfo, rarityColor); };
         } else {
             div.innerHTML = `
                 <img src="assets/images/ui/icon_question.png" class="book-img" style="opacity:0.3; filter:grayscale(1);">
@@ -268,6 +254,7 @@ function renderBook() {
     });
 }
 
+// [수정] 상세 보기 모달에서도 CSS 드래곤 대체 기능 적용
 function showDragonDetailModal(dragonId, info, color) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
@@ -281,9 +268,10 @@ function showDragonDetailModal(dragonId, info, color) {
             "filter: brightness(0); opacity: 0.5; width:40px; height:40px;" : 
             "width:50px; height:50px; object-fit:contain;";
         
+        // onerror 추가
         stagesHtml += `
             <div style="text-align:center;">
-                <img src="${imgSrc}" style="${style}"><br>
+                <img src="${imgSrc}" style="${style}" onerror="handleImgError(this, '${info.type}', ${i})"><br>
                 <span style="font-size:0.6rem; color:#888;">${stageNames[i]}</span>
             </div>
         `;
@@ -320,7 +308,7 @@ function renderShop() {
         div.className = 'shop-item';
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px;">
-                <img src="${item.img}" class="item-img-lg">
+                <img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'">
                 <div><b>${item.name}</b><br><small style="color:#aaa;">${item.desc}</small></div>
             </div>
             <button class="btn-stone" style="width:90px; height:45px; font-size:0.9rem;" onclick="buyItem('${id}')">
