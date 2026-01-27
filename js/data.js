@@ -1,12 +1,13 @@
 // ==========================================
-// js/data.js (탐험 확률 조정)
+// js/data.js (색상 수정 반영)
 // ==========================================
 
-// [시스템 1] 등급 데이터
+// [시스템 1] 등급 데이터 (서사 색상 변경)
 const RARITY_DATA = {
     "common": { name: "일반", color: "#b0b0b0", prob: 50 },
     "rare": { name: "희귀", color: "#3498db", prob: 30 },
-    "heroic": { name: "서사", color: "#9b59b6", prob: 15 }, 
+    // [수정] 보라색 -> 연두색(라임) 변경
+    "heroic": { name: "서사", color: "#B5E61D", prob: 15 }, 
     "epic": { name: "에픽", color: "#e67e22", prob: 4 },
     "legend": { name: "전설", color: "#f1c40f", prob: 1 }
 };
@@ -35,11 +36,10 @@ const REGION_DATA = [
     { id: 6, name: "지하 심연", levelReq: 30, type: "dark", desc: "어둠 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/abyss.jpg" }
 ];
 
-// [수정] 둥지 발견 확률 하향 (30 -> 15)
 const ENCOUNTER_RATES = {
     NOTHING: 20,
-    RESOURCE: 65, // 나머지 확률을 여기로 배분
-    NEST: 15     // 절반으로 감소
+    RESOURCE: 65, 
+    NEST: 15     
 };
 
 const NEST_UPGRADE_COST = [10, 30, 60, 100, 200]; 
