@@ -1,11 +1,13 @@
 // ==========================================
-// js/explore.js (수정된 완전한 코드)
+// js/explore.js (흐름 수정 및 잠금 기능)
 // ==========================================
+
+// 전역 변수 window에 할당 (main.js에서 체크하기 위함)
+window.isExploreActive = false; 
 
 let currentRegionId = -1;
 let movesLeft = 0;
 let stealAttempts = 0; 
-let isExploreActive = false; // [핵심] 중복 실행 방지 플래그
 let selectedRegionId = null;
 
 function renderMap() {
@@ -56,8 +58,7 @@ function renderMap() {
 }
 
 function enterSelectedRegion() {
-    // 이미 탐험 중이라면 중복 진입 방지
-    if (isExploreActive) return;
+    if (window.isExploreActive) return; // 중복 진입 방지
 
     if (selectedRegionId === null) {
         showAlert("먼저 탐험할 지역을 선택해주세요.");
@@ -82,14 +83,13 @@ function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
     tempLoot = []; 
-    isExploreActive = true; // 탐험 시작 플래그 ON
+    window.isExploreActive = true; // [중요] 탐험 시작 플래그 ON
 
     toggleExploreView('run');
     
     const region = REGION_DATA[regionId];
     const bgElem = document.getElementById('explore-bg');
     
-    // 배경 이미지 설정
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
@@ -106,15 +106,13 @@ function startExplore(regionId) {
 }
 
 function moveForward() {
-    // [중요] 탐험 비활성화 상태거나 이동 횟수가 없으면 동작 안 함
-    if (movesLeft <= 0 || !isExploreActive) return;
+    if (movesLeft <= 0 || !window.isExploreActive) return;
 
     movesLeft--;
     
-    // 흔들림 효과
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
-    void bg.offsetWidth; // 리플로우 강제
+    void bg.offsetWidth; 
     bg.classList.add('walking-anim');
 
     processRandomEvent();
@@ -128,7 +126,6 @@ function updateMoveUI() {
 
     counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle"> 남은 이동: ${movesLeft}`;
     
-    // 이동 버튼 상태 제어
     if (movesLeft <= 0) {
         document.getElementById('event-msg').innerText = "날이 저물었습니다. 귀환하세요.";
         moveBtn.disabled = true;
@@ -138,18 +135,15 @@ function updateMoveUI() {
         returnBtn.innerHTML = "<img src='assets/images/ui/icon_gift.png' style='width:20px;vertical-align:middle'> 보상 받기";
         returnBtn.classList.remove('sub');
         returnBtn.style.color = "#2ecc71";
-        // 성공 귀환
         returnBtn.onclick = () => finishExplore(true);
     } else {
-        // 이동 가능 상태일 때만 버튼 활성화 (이벤트 중이면 비활성화 처리 가능)
-        moveBtn.disabled = !isExploreActive;
-        moveBtn.style.opacity = isExploreActive ? 1 : 0.5;
+        moveBtn.disabled = !window.isExploreActive;
+        moveBtn.style.opacity = window.isExploreActive ? 1 : 0.5;
         moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         
         returnBtn.innerHTML = "<img src='assets/images/ui/icon_home.png' style='width:20px;vertical-align:middle'> 중도 포기";
         returnBtn.classList.add('sub');
         returnBtn.style.color = "#aaa"; 
-        // 포기 귀환
         returnBtn.onclick = () => finishExplore(false);
     }
 }
@@ -185,8 +179,9 @@ function processRandomEvent() {
 }
 
 function encounterNest() {
-    isExploreActive = false; // [중요] 이벤트 중 이동 차단
-    updateMoveUI(); // 버튼 비활성화 적용
+    // 이벤트 중 이동 버튼 비활성화
+    const moveBtn = document.getElementById('btn-move');
+    if(moveBtn) moveBtn.disabled = true;
 
     stealAttempts = 3; 
 
@@ -199,9 +194,9 @@ function encounterNest() {
             </div>`, 
             () => { tryStealLoop(); },
             () => { 
-                isExploreActive = true; // [중요] 거절 시 다시 이동 가능
                 document.getElementById('event-msg').innerText = "둥지를 조용히 지나쳤습니다.";
-                updateMoveUI();
+                if(moveBtn) moveBtn.disabled = false;
+                if(movesLeft <= 0) updateMoveUI();
             }
         );
     }, 100);
@@ -215,11 +210,10 @@ function tryStealLoop() {
     const success = Math.random() < 0.5; 
     
     if (success) {
-        showAlert("성공! 알을 손에 넣었습니다!", () => {
+        showAlert("성공! 알을 손에 넣었습니다!<br>(탐험을 성공적으로 마칩니다)", () => {
             addTempLoot("egg_random", 1);
-            isExploreActive = true; // 성공 후 이동 재개
-            document.getElementById('event-msg').innerText = "알을 챙겨서 도망쳤습니다.";
-            updateMoveUI();
+            // [수정] 성공 시 즉시 귀환
+            finishExplore(true);
         });
     } else {
         stealAttempts--;
@@ -227,9 +221,10 @@ function tryStealLoop() {
             showConfirm(`실패... 알이 너무 무겁습니다.\n(남은 기회: ${stealAttempts})\n다시 시도하시겠습니까?`,
                 () => { tryStealLoop(); }, 
                 () => {
-                    isExploreActive = true; // 포기 후 이동 재개
                     document.getElementById('event-msg').innerText = "위험을 느끼고 물러났습니다.";
-                    updateMoveUI();
+                    const moveBtn = document.getElementById('btn-move');
+                    if(moveBtn) moveBtn.disabled = false;
+                    if(movesLeft <= 0) updateMoveUI();
                 }
             );
         } else {
@@ -281,8 +276,7 @@ function fightParent(winChance) {
              player.gem += 1;
              msg += "<br><b style='color:#3498db'>(보너스: 보석 1개 획득!)</b>";
         }
-
-        showAlert(msg, () => {
+        showAlert(msg + "<br>(탐험을 성공적으로 마칩니다)", () => {
             finishExplore(true);
         });
     } else {
@@ -293,13 +287,10 @@ function fightParent(winChance) {
     }
 }
 
-// [핵심] 탐험 종료 로직 (중복 실행 방지 적용)
 function finishExplore(success = true) {
-    // 1. 이미 탐험이 끝난 상태라면 즉시 리턴 (중복 호출 방지)
-    if (!isExploreActive) return;
+    if (!window.isExploreActive) return;
 
-    // 2. 상태 닫음
-    isExploreActive = false; 
+    window.isExploreActive = false; // [중요] 상태 해제
 
     const lootMsg = claimTempLoot();
     
@@ -314,8 +305,14 @@ function finishExplore(success = true) {
         document.getElementById('explore-bg').style.backgroundImage = "none";
         
         toggleExploreView('map');
-        updateCurrency();
         
+        // [신규] 탐험 성공 시 플레이어 경험치 획득 (지역 레벨 * 5 + 5)
+        if(success) {
+            const xpGain = (currentRegionId * 5) + 5;
+            if(window.gainExp) window.gainExp(xpGain);
+        }
+
+        updateCurrency();
         if(typeof renderInventory === 'function') renderInventory();
         if(typeof saveGame === 'function') saveGame();
     };
@@ -330,6 +327,5 @@ function finishExplore(success = true) {
     }
 }
 
-// 전역 할당
 window.initExploreTab = function() { renderMap(); }
 window.enterSelectedRegion = enterSelectedRegion;
