@@ -1,3 +1,7 @@
+/* =========================================
+   css/style.css (완전한 코드)
+   ========================================= */
+
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
@@ -95,7 +99,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 }
 .header-info { text-align: right; margin-top: -10px;}
 
-/* 재화 아이콘 (텍스트 옆 작은 아이콘) */
 .currency-icon { width: 20px; height: 20px; vertical-align: middle; margin-right: 2px; }
 
 .bottom-nav {
@@ -104,7 +107,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     display: flex; justify-content: space-around; align-items: center;
     z-index: 100;
 }
-/* 네비게이션 아이콘 이미지 */
 .nav-icon { width: 32px; height: 32px; object-fit: contain; }
 
 #game-view { position: absolute; top: 90px; bottom: 80px; width: 100%; overflow: hidden; }
@@ -141,7 +143,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 .equip-slot.body { top: 150px; left: 50%; transform: translateX(-50%); }
 .equip-slot.arm  { top: 150px; right: 50px; }
 .equip-slot.leg  { top: 260px; left: 50%; transform: translateX(-50%); }
-/* 장착된 장비 아이콘 */
 .equip-icon { width: 80%; height: 80%; object-fit: contain; }
 
 .inventory-section { width: 95%; background: rgba(0,0,0,0.4); border-radius: 10px; padding: 10px; border: 2px solid #5d4a6d; }
@@ -165,9 +166,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background: url('../assets/images/ui/bar_rune.png') repeat-x left center !important; 
     background-color: #2ecc71; background-size: auto 100% !important; transition: width 0.2s;
 }
-/* 메인 용 이미지 크기 */
 .main-dragon-img { width: 200px; height: 200px; object-fit: contain; margin: 20px; }
-/* 알 리스트 아이콘 */
 .list-egg-img { width: 40px; height: 40px; object-fit: contain; }
 
 .map-frame, .shop-bg, .book-bg {
@@ -181,16 +180,14 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background: url('../assets/images/map_continent.jpg') no-repeat center center !important;
     background-size: cover !important;
     border-radius: 5px; border: 1px solid #000; position: relative;
+    overflow: hidden; /* 배경 애니메이션이 튀어나가지 않게 */
 }
 
 .scroll-area { width: 100%; height: 100%; overflow-y: auto; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .list-row { display: flex; flex-direction: column; gap: 5px; }
 
-/* 아이템/상점/도감 공통 이미지 클래스 */
 .item-img-lg { width: 48px; height: 48px; object-fit: contain; }
-.item-img-sm { width: 32px; height: 32px; object-fit: contain; }
-
 .slot-item {
     background: url('../assets/images/ui/btn_square.png') no-repeat center center !important;
     background-size: 100% 100% !important;
@@ -209,3 +206,26 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 
 #common-modal, #roulette-modal { background: rgba(10, 5, 15, 0.85) !important; }
 
+/* [신규] 걷기 애니메이션 (배경 흔들림 + 확대 효과) */
+@keyframes walkShake {
+    0% { transform: scale(1) translateX(0); }
+    25% { transform: scale(1.02) translateX(-5px) translateY(2px); }
+    50% { transform: scale(1.04) translateX(0) translateY(-2px); }
+    75% { transform: scale(1.02) translateX(5px) translateY(2px); }
+    100% { transform: scale(1) translateX(0); }
+}
+
+.walking-anim {
+    animation: walkShake 0.5s ease-in-out;
+}
+
+/* [신규] 둥지 발견 경고 애니메이션 */
+@keyframes warningFlash {
+    0% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
+    50% { box-shadow: inset 0 0 50px red; border: 2px solid red; }
+    100% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
+}
+
+.warning-anim {
+    animation: warningFlash 1s infinite;
+}
