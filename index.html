@@ -43,9 +43,16 @@
             <div class="profile-frame" onclick="changeProfileImage()">
                 <div class="profile-img" id="ui-profile-img"></div>
             </div>
+            
             <div class="header-info">
+                <span style="font-size:1.1rem; font-weight:bold; color:#f1c40f;" id="ui-level">Lv.1</span> 
                 <span id="ui-nickname">플레이어</span><br>
-                <span>
+                
+                <div style="width:120px; height:8px; background:#333; border:1px solid #555; border-radius:4px; margin: 3px 0 3px auto; position:relative;">
+                    <div id="ui-exp-fill" style="width:0%; height:100%; background:#2ecc71; transition: width 0.3s;"></div>
+                </div>
+                
+                <span style="display:block; margin-top:2px;">
                     <img src="assets/images/ui/icon_gem.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gem">0</span>
                     &nbsp;
                     <img src="assets/images/ui/icon_gold.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gold">0</span>
@@ -191,9 +198,11 @@
 
     <input type="file" id="file-input" style="display: none;" accept="image/*">
     <script src="js/data.js"></script>
-    <script src="js/dragon.js"></script> <script src="js/player.js"></script>
+    <script src="js/dragon.js"></script>
+    <script src="js/player.js"></script>
     <script src="js/hatchery.js"></script>
     <script src="js/explore.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
+
