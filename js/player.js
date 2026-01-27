@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (초기화 및 아이템 사용 로직 수정)
+// js/player.js (팝업창 이미지 폴백 적용 - 최종)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -100,7 +100,6 @@ function addTempLoot(itemId, count = 1) {
 }
 
 function claimTempLoot() {
-    // explore.js에서 오버라이드 되거나 단독 사용될 수 있음. 기본 로직.
     if (tempLoot.length === 0) return "";
     let html = "";
     tempLoot.forEach(item => {
@@ -114,7 +113,6 @@ function claimTempLoot() {
 
 function clearTempLoot() { tempLoot = []; }
 
-// [수정] 알 사용 시 속성(targetType) 전달
 function useItem(itemId) {
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
     
@@ -126,23 +124,25 @@ function useItem(itemId) {
     
     if (item.type === "equip") {
         showConfirm(
-            `<div style="text-align:center"><img src="${item.img}" style="width:64px;"><br><b>${item.name}</b><br>(효과: 스탯 +${item.stat})<br>장착하시겠습니까?</div>`, 
+            `<div style="text-align:center">
+                <img src="${item.img}" style="width:64px;" onerror="this.src='assets/images/ui/icon_question.png'">
+                <br><b>${item.name}</b><br>(효과: 스탯 +${item.stat})<br>장착하시겠습니까?
+            </div>`, 
             () => equipItem(itemId, item.slot)
         );
     } else if (item.type === "egg") {
+        // [수정] 알 팝업창에서 이미지가 없으면 CSS 알로 대체
+        const targetType = item.dragonType || 'fire';
         showConfirm(
-            `<div style="text-align:center"><img src="${item.img}" style="width:64px;"><br><b>${item.name}</b>을(를) 부화시키겠습니까?</div>`, 
+            `<div style="text-align:center">
+                <img src="${item.img}" style="width:64px;" onerror="handleImgError(this, '${targetType}', 0)">
+                <br><b>${item.name}</b>을(를) 부화시키겠습니까?
+            </div>`, 
             () => {
                 player.inventory[itemId]--;
                 
-                // 해당 알의 속성(dragonType) 확인 (fire, light, dark 등)
-                // 만약 없으면(random) null 전달
-                const targetType = item.dragonType || null; 
-                
-                // 신비한 알 체크
                 const isShiny = (itemId === 'egg_shiny');
-
-                if(window.startEggRoulette) window.startEggRoulette(isShiny, targetType);
+                if(window.startEggRoulette) window.startEggRoulette(isShiny, item.dragonType || null);
                 if(typeof renderInventory === 'function') renderInventory();
             }
         );
@@ -153,8 +153,6 @@ function useItem(itemId) {
             if(dragon) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
-                // 성장 한계 체크는 handleDragonClick에서 하므로 여기선 단순 증가만
-                // 실제 UI 반영 시에는 hatchery.js 로직이 필요할 수 있음
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`);
                 if(window.updateUI) window.updateUI(); 
             }
@@ -174,7 +172,10 @@ function upgradeNest() {
     
     if (userWood >= cost) {
         showConfirm(
-            `<div style="text-align:center"><img src="assets/images/item/material_wood.png" style="width:40px;"><br><b>둥지 강화?</b><br>소모: ${cost} 재료</div>`,
+            `<div style="text-align:center">
+                <img src="assets/images/item/material_wood.png" style="width:40px;" onerror="this.src='assets/images/ui/icon_question.png'">
+                <br><b>둥지 강화?</b><br>소모: ${cost} 재료
+            </div>`,
             () => {
                 player.inventory['nest_wood'] -= cost;
                 player.nestLevel = (player.nestLevel || 0) + 1;
@@ -234,7 +235,6 @@ function loadGame() {
             if(!player.stats) player.stats = { explore: 0, atk: 10, def: 5 };
             
             if(!player.maxStages) player.maxStages = { "fire_c1": 0 };
-            // 기존 데이터 호환성 체크
             player.myDragons.forEach(d => {
                 if(!player.maxStages[d.id] || player.maxStages[d.id] < d.stage) {
                     player.maxStages[d.id] = d.stage;
