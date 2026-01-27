@@ -13,7 +13,6 @@ function renderMap() {
     if(!list) return; 
     list.innerHTML = "";
     
-    // 버튼 찾기 (main.js가 생성한 구조에 맞춤)
     const enterBtn = document.querySelector('.enter-btn') || document.querySelector('#tab-explore button');
     
     if(enterBtn) {
@@ -27,7 +26,6 @@ function renderMap() {
         const isLocked = player.level < region.levelReq;
         
         div.className = `region-card ${isLocked ? 'locked' : ''}`;
-        // 텍스트 위주지만 필요시 이미지 추가 가능
         div.innerHTML = `
             <h3>${region.name}</h3>
             <p style="font-size:0.8rem; color:#aaa;">${isLocked ? `Lv.${region.levelReq} 필요` : region.desc}</p>
@@ -112,7 +110,6 @@ function updateMoveUI() {
     const moveBtn = document.getElementById('btn-move');
     const returnBtn = document.getElementById('btn-return');
 
-    // 이동 아이콘 추가
     counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle"> 남은 이동: ${movesLeft}`;
     
     if (movesLeft <= 0) {
@@ -148,7 +145,6 @@ function processRandomEvent() {
         const amount = Math.floor(Math.random() * 3) + 1;
         addTempLoot("nest_wood", amount);
         
-        // [수정] 아이콘과 함께 메시지 출력
         const itemImg = ITEM_DB["nest_wood"].img;
         msgArea.innerHTML = `<img src="assets/images/ui/icon_search.png" style="width:20px; vertical-align:middle"> <img src="${itemImg}" style="width:24px; vertical-align:middle"> 둥지 재료를 ${amount}개 발견했습니다!`;
     } 
@@ -188,6 +184,7 @@ function tryStealLoop() {
     
     if (success) {
         showAlert("성공! 알을 손에 넣었습니다!", () => {
+            // [버그 수정 확인] data.js에 'egg_random'이 있으므로 정상 작동함
             addTempLoot("egg_random", 1);
             isExploreActive = true;
             document.getElementById('event-msg').innerText = "알을 챙겨서 도망쳤습니다.";
@@ -215,13 +212,18 @@ function wakeParentDragon() {
     document.getElementById('event-msg').innerText = "크아앙! 부모 용 출현!";
     
     setTimeout(() => {
+        // 전투 예상 승률 보여주기
+        const atk = player.stats ? player.stats.atk : 10;
+        const winChance = Math.min(90, 30 + atk); // 기본 30% + 공격력1당 1%
+
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
                 <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"><br>
                 <b>부모 용에게 들켰습니다!</b><br>
+                (승률: 약 ${winChance}%)<br>
                 싸우시겠습니까?
             </div>`,
-            () => fightParent(),
+            () => fightParent(winChance),
             () => tryFlee()
         );
     }, 500);
@@ -238,11 +240,22 @@ function tryFlee() {
     }
 }
 
-function fightParent() {
-    const win = Math.random() < 0.4; 
+function fightParent(winChance) {
+    // [시스템] 스탯 기반 전투 로직
+    const roll = Math.random() * 100;
+    const win = roll < winChance; 
+
     if (win) {
-        showAlert("대단합니다! 부모 용을 물리쳤습니다!", () => {
-            addTempLoot("egg_random", 1);
+        // 승리 보상: 알 + (낮은 확률로 보석)
+        addTempLoot("egg_random", 1);
+        
+        let msg = "대단합니다! 부모 용을 물리쳤습니다!";
+        if (Math.random() < 0.3) { // 30% 확률로 보석 획득 (코드상 재화 직접 추가)
+             player.gem += 1;
+             msg += "<br><b style='color:#3498db'>(보너스: 보석 1개 획득!)</b>";
+        }
+
+        showAlert(msg, () => {
             finishExplore(true);
         });
     } else {
@@ -272,7 +285,6 @@ function finishExplore(success = true) {
     };
 
     if (success && lootMsg) {
-        // [수정] HTML 결과 메시지 출력
         showAlert(`<div style="text-align:center"><b>[탐험 완료]</b><br>마을에 무사히 도착했습니다.<br><br>${lootMsg}</div>`, onComplete);
     } else if (!success) {
         showAlert("[탐험 실패]\n빈손으로 돌아왔습니다.", onComplete);
@@ -284,4 +296,3 @@ function finishExplore(success = true) {
 
 window.initExploreTab = function() { renderMap(); }
 window.enterSelectedRegion = enterSelectedRegion;
-
