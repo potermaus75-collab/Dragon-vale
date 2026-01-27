@@ -1,3 +1,7 @@
+// ==========================================
+// js/main.js (완전한 코드)
+// ==========================================
+
 // 전역 변수
 let userNickname = "Guest";
 let prologueIndex = 0;
@@ -9,7 +13,7 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// 화면 전환
+// 화면 전환 함수
 function showScreen(screenId) {
     document.querySelectorAll('.full-screen').forEach(el => {
         el.classList.remove('active');
@@ -25,8 +29,10 @@ function showScreen(screenId) {
 
 // 1. 시작화면 클릭
 document.getElementById('screen-start').addEventListener('click', () => {
+    // 저장된 데이터가 있는지 확인
     if (localStorage.getItem('dragonSaveData')) {
         loadGame();
+        // 닉네임이 있으면 바로 게임 시작
         if (userNickname && userNickname !== "Guest") {
             document.getElementById('ui-nickname').innerText = userNickname;
             startGame();
@@ -43,6 +49,7 @@ function submitName() {
     
     userNickname = input.value;
     document.getElementById('ui-nickname').innerText = userNickname;
+    
     saveGame();
     showScreen('screen-prologue');
     renderPrologue();
@@ -68,10 +75,10 @@ function startGame() {
     updateCurrency();
     switchTab('dragon'); 
     if(window.updateUI) window.updateUI();
-    saveGame(); 
+    saveGame(); // 시작 시 자동 저장 시작
 }
 
-// 탭 전환
+// 탭 전환 시스템
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -85,10 +92,7 @@ function switchTab(tabName) {
     const tabMap = {'info':0, 'dragon':1, 'explore':2, 'book':3, 'shop':4};
     if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
 
-    // 하단 탭 아이콘 이미지 교체 (초기화 때 한 번만 해도 되지만 여기서도 보장)
-    // (HTML에 img 태그를 미리 넣어두는 것이 좋음. 여기서는 생략하고 CSS/HTML 구조 따름)
-
-    // 데이터 갱신
+    // 탭별 데이터 갱신
     if (tabName === 'info') { 
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
@@ -105,7 +109,7 @@ function switchTab(tabName) {
     }
 }
 
-// [수정] 가방 그리기 (이미지 적용)
+// [공통] 가방 그리기 (이미지 적용)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -127,7 +131,7 @@ function renderInventory() {
     });
 }
 
-// [수정] 도감 그리기 (이미지 적용)
+// [공통] 도감 그리기 (이미지 적용)
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
@@ -135,43 +139,57 @@ function renderBook() {
 
     if(!player.discovered) player.discovered = [];
 
-    Object.keys(DRAGON_TYPES).forEach(typeKey => {
-        const dragonInfo = DRAGON_TYPES[typeKey];
-        const isFound = player.discovered.includes(typeKey);
+    // DRAGON_TYPES는 5속성 대표만 있으므로, DRAGON_DEX(50마리)를 기준으로 도감 표시
+    // data.js에 있는 DRAGON_DEX를 순회
+    Object.keys(DRAGON_DEX).forEach(dragonId => {
+        const dragonInfo = DRAGON_DEX[dragonId];
+        const isFound = player.discovered.includes(dragonId); // ID로 체크
 
         const div = document.createElement('div');
         div.className = `book-slot ${isFound ? 'found' : ''}`;
         
+        // 희귀도 색상 (테두리 등)
+        const rarityColor = RARITY_DATA[dragonInfo.rarity].color;
+        if(isFound) div.style.borderColor = rarityColor;
+
         if (isFound) {
+            // 성체 이미지(임시) 사용
             div.innerHTML = `
-                <img src="${dragonInfo.img}" class="book-img">
-                <div style="font-weight:bold;">${dragonInfo.name}</div>
+                <img src="assets/images/dragon/stage_adult.png" class="book-img">
+                <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
             `;
             // 클릭 시 설명
             div.onclick = () => showAlert(`
                 <div style="text-align:center;">
-                    <img src="${dragonInfo.img}" style="width:100px;height:100px;"><br>
-                    <b style="font-size:1.2rem; color:#f1c40f;">${dragonInfo.name}</b><br><br>
+                    <img src="assets/images/dragon/stage_adult.png" style="width:100px; height:100px;"><br>
+                    <b style="font-size:1.2rem; color:${rarityColor};">${dragonInfo.name}</b>
+                    <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[dragonInfo.rarity].name}]</span><br><br>
                     ${dragonInfo.desc}
                 </div>
             `);
         } else {
             div.innerHTML = `
                 <img src="assets/images/ui/icon_question.png" class="book-img" style="opacity:0.3; filter:grayscale(1);">
-                <div>???</div>
+                <div style="font-size:0.7rem;">???</div>
             `;
         }
         grid.appendChild(div);
     });
 }
 
-// [수정] 상점 그리기 (이미지 적용)
+// [수정] 상점 그리기 (보석/골드 구분 표시)
 function renderShop() {
     const list = document.getElementById('shop-list');
     if(!list) return;
     list.innerHTML = "";
+    
     SHOP_LIST.forEach(id => {
         const item = ITEM_DB[id];
+        // 비용 타입에 따라 아이콘 결정
+        const costType = item.costType || 'gold';
+        const currencyIcon = costType === 'gem' ? 'assets/images/ui/icon_gem.png' : 'assets/images/ui/icon_gold.png';
+        const priceColor = costType === 'gem' ? '#3498db' : '#f1c40f'; // 보석:파랑, 골드:노랑
+
         const div = document.createElement('div');
         div.className = 'shop-item';
         div.innerHTML = `
@@ -179,26 +197,39 @@ function renderShop() {
                 <img src="${item.img}" class="item-img-lg">
                 <div><b>${item.name}</b><br><small style="color:#aaa;">${item.desc}</small></div>
             </div>
-            <button class="btn-stone" style="width:80px; height:40px; font-size:0.9rem;" onclick="buyItem('${id}')">
-                <img src="assets/images/ui/icon_gold.png" class="currency-icon"> ${item.price}
+            <button class="btn-stone" style="width:90px; height:45px; font-size:0.9rem;" onclick="buyItem('${id}')">
+                <img src="${currencyIcon}" class="currency-icon"> <span style="color:${priceColor}">${item.price}</span>
             </button>
         `;
         list.appendChild(div);
     });
 }
 
-// 구매 로직
+// [수정] 구매 로직 (버그 수정: 재화 타입 구분)
 function buyItem(id) {
     const item = ITEM_DB[id];
-    if (player.gold >= item.price) {
-        showConfirm(`${item.name}을(를) 구매하시겠습니까?\n(가격: ${item.price} 골드)`, () => {
-            player.gold -= item.price;
+    // costType이 없으면 기본값 gold
+    const costType = item.costType || 'gold'; 
+    const currencyName = costType === 'gem' ? '보석' : '골드';
+    
+    // 플레이어의 현재 재화 확인
+    const playerMoney = player[costType];
+
+    if (playerMoney >= item.price) {
+        showConfirm(`${item.name}을(를) 구매하시겠습니까?\n(가격: ${item.price} ${currencyName})`, () => {
+            // 다시 한 번 체크 (안전장치)
+            if (player[costType] < item.price) {
+                showAlert(`${currencyName}이 부족합니다.`);
+                return;
+            }
+
+            player[costType] -= item.price; // 해당 재화 차감
             addItem(id, 1);
             updateCurrency();
             showAlert("구매 완료!", () => { saveGame(); });
         });
     } else {
-        showAlert("골드가 부족합니다.");
+        showAlert(`${currencyName}이 부족합니다.`);
     }
 }
 
@@ -226,6 +257,7 @@ function saveGame() {
     console.log("게임 저장 완료");
 }
 
+// 불러오기 시스템
 function loadGame() {
     const saved = localStorage.getItem('dragonSaveData');
     if (saved) {
@@ -234,6 +266,11 @@ function loadGame() {
             Object.assign(player, data.player);
             if(player.nickname) userNickname = player.nickname;
             if(!player.discovered) player.discovered = [];
+            
+            // [호환성] 혹시 gem이 없는 구버전 데이터라면 0으로 초기화
+            if(player.gem === undefined) player.gem = 0;
+            if(player.nestLevel === undefined) player.nestLevel = 0;
+
             console.log("게임 불러오기 성공");
         } catch(e) {
             console.error("세이브 파일 로드 실패", e);
@@ -241,14 +278,13 @@ function loadGame() {
     }
 }
 
+// 자동 저장
 setInterval(saveGame, 60000);
 
-// [수정] 모달 시스템 (HTML 지원)
+// 모달 시스템
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
-    
-    // innerText -> innerHTML 로 변경하여 이미지 태그 지원
     document.getElementById('modal-text').innerHTML = msg; 
     
     document.getElementById('modal-btn-alert').classList.remove('hidden');
@@ -267,7 +303,7 @@ window.showAlert = function(msg, callback) {
 window.showConfirm = function(msg, yesCallback, noCallback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "확인";
-    document.getElementById('modal-text').innerHTML = msg; // HTML 지원
+    document.getElementById('modal-text').innerHTML = msg; 
     
     document.getElementById('modal-btn-alert').classList.add('hidden');
     const confirmGroup = document.getElementById('modal-btn-confirm');
@@ -291,4 +327,3 @@ window.closeModal = function() {
     modal.classList.remove('active');
     modal.classList.add('hidden');
 };
-
