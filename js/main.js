@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (탭 잠금 & 프리로딩 포함)
+// js/main.js (도감 상세 보기 & 검은 실루엣)
 // ==========================================
 
 // 전역 변수
@@ -13,9 +13,7 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// ----------------------------------------------------
-// 스마트 이미지 프리로딩 시스템
-// ----------------------------------------------------
+// 스마트 프리로딩 (생략 - 기존 코드와 동일하지만 전체 포함)
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
     "assets/images/ui/panel_banner.png",
@@ -39,24 +37,15 @@ const UI_ASSETS = [
 
 function preloadAssets() {
     let imagesToLoad = [...UI_ASSETS];
-
     if (typeof ITEM_DB !== 'undefined') {
-        for (let key in ITEM_DB) {
-            if (ITEM_DB[key].img) imagesToLoad.push(ITEM_DB[key].img);
-        }
+        for (let key in ITEM_DB) { if (ITEM_DB[key].img) imagesToLoad.push(ITEM_DB[key].img); }
     }
-
     if (typeof REGION_DATA !== 'undefined') {
-        REGION_DATA.forEach(region => {
-            if (region.bg) imagesToLoad.push(region.bg);
-        });
+        REGION_DATA.forEach(region => { if (region.bg) imagesToLoad.push(region.bg); });
     }
-
     if (typeof DRAGON_DATA !== 'undefined' && DRAGON_DATA.stageImages) {
         imagesToLoad = imagesToLoad.concat(DRAGON_DATA.stageImages);
     }
-    
-    // [추가] 용 개별 이미지 매핑이 있다면 로딩 (dragon.js 참조)
     if (typeof IMG_MAPPING !== 'undefined') {
         const stageSuffixes = ["_egg.png", "_baby.png", "_teen.png", "_adult.png", "_elder.png"];
         for(let key in IMG_MAPPING) {
@@ -64,9 +53,14 @@ function preloadAssets() {
             stageSuffixes.forEach(suffix => {
                 imagesToLoad.push(`assets/images/dragon/${baseName}${suffix}`);
             });
+            // 공통 알 이미지 추가 로드
+            imagesToLoad.push(`assets/images/dragon/egg_fire.png`);
+            imagesToLoad.push(`assets/images/dragon/egg_water.png`);
+            imagesToLoad.push(`assets/images/dragon/egg_forest.png`);
+            imagesToLoad.push(`assets/images/dragon/egg_electric.png`);
+            imagesToLoad.push(`assets/images/dragon/egg_metal.png`);
         }
     }
-
     imagesToLoad = [...new Set(imagesToLoad)];
 
     let loadedCount = 0;
@@ -77,10 +71,7 @@ function preloadAssets() {
     const containerEl = document.getElementById('loading-container');
     const startMsgEl = document.getElementById('start-msg');
 
-    if (totalCount === 0) {
-        completeLoading();
-        return;
-    }
+    if (totalCount === 0) { completeLoading(); return; }
 
     imagesToLoad.forEach(src => {
         const img = new Image();
@@ -93,10 +84,7 @@ function preloadAssets() {
         const percent = Math.floor((loadedCount / totalCount) * 100);
         if(textEl) textEl.innerText = `로딩 중... ${percent}%`;
         if(barEl) barEl.style.width = `${percent}%`;
-
-        if (loadedCount >= totalCount) {
-            setTimeout(completeLoading, 300);
-        }
+        if (loadedCount >= totalCount) { setTimeout(completeLoading, 300); }
     }
 
     function completeLoading() {
@@ -111,11 +99,8 @@ function preloadAssets() {
     }
 }
 
-window.onload = function() {
-    preloadAssets();
-};
+window.onload = function() { preloadAssets(); };
 
-// 화면 전환 함수
 function showScreen(screenId) {
     document.querySelectorAll('.full-screen').forEach(el => {
         el.classList.remove('active');
@@ -147,10 +132,8 @@ document.getElementById('screen-start').addEventListener('click', () => {
 function submitName() {
     const input = document.getElementById('input-nickname');
     if (input.value.trim() === "") return showAlert("이름을 입력해주세요!");
-    
     userNickname = input.value;
     document.getElementById('ui-nickname').innerText = userNickname;
-    
     saveGame();
     showScreen('screen-prologue');
     renderPrologue();
@@ -178,11 +161,7 @@ function startGame() {
     saveGame(); 
 }
 
-// ----------------------------------------------------
-// [핵심 수정] 탭 전환 시스템 (탐험 중 잠금)
-// ----------------------------------------------------
 function switchTab(tabName) {
-    // explore.js의 window.isExploreActive 변수를 체크
     if (window.isExploreActive && tabName !== 'explore') {
         showAlert("탐험 중에는 다른 메뉴로 이동할 수 없습니다!\n탐험을 먼저 완료하거나 포기해주세요.");
         return;
@@ -216,7 +195,6 @@ function switchTab(tabName) {
     }
 }
 
-// 공통 UI 함수들
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -239,6 +217,7 @@ function renderInventory() {
     });
 }
 
+// [핵심] 도감 상세 보기 기능 강화 (5단계 표시 + 실루엣)
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
@@ -257,23 +236,20 @@ function renderBook() {
         if(isFound) div.style.borderColor = rarityColor;
 
         if (isFound) {
-            // [수정] 성체 이미지 사용 (dragon.js의 getDragonImage 활용 가능하면 사용)
+            // 성체 이미지(3단계)를 대표 아이콘으로
             let displayImg = "assets/images/dragon/stage_adult.png";
             if(window.getDragonImage) {
-                displayImg = window.getDragonImage(dragonId, 3); // 3=adult
+                displayImg = window.getDragonImage(dragonId, 3); 
             }
             div.innerHTML = `
                 <img src="${displayImg}" class="book-img">
                 <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
             `;
-            div.onclick = () => showAlert(`
-                <div style="text-align:center;">
-                    <img src="${displayImg}" style="width:100px; height:100px;"><br>
-                    <b style="font-size:1.2rem; color:${rarityColor};">${dragonInfo.name}</b>
-                    <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[dragonInfo.rarity].name}]</span><br><br>
-                    ${dragonInfo.desc}
-                </div>
-            `);
+            
+            // [클릭 이벤트] 상세 정보 모달
+            div.onclick = () => {
+                showDragonDetailModal(dragonId, dragonInfo, rarityColor);
+            };
         } else {
             div.innerHTML = `
                 <img src="assets/images/ui/icon_question.png" class="book-img" style="opacity:0.3; filter:grayscale(1);">
@@ -282,6 +258,47 @@ function renderBook() {
         }
         grid.appendChild(div);
     });
+}
+
+// [신규] 도감 상세 모달 생성 함수
+function showDragonDetailModal(dragonId, info, color) {
+    // 플레이어가 도달한 최대 단계 확인
+    const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
+    const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
+    
+    // 5단계 이미지 HTML 생성
+    let stagesHtml = `<div style="display:flex; justify-content:space-around; align-items:flex-end; margin:15px 0; gap:5px;">`;
+    
+    for(let i=0; i<5; i++) {
+        const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
+        // 도달하지 못한 단계는 검은 실루엣 처리 (brightness 0)
+        // 단, 0단계(알)는 공통 이미지이므로 항상 보여줘도 됨(스포일러 방지 이미 되어있음)
+        // 하지만 요청대로 "성장하지 않은 단계는 검은 실루엣" 처리
+        const isUnknown = i > maxStage;
+        const style = isUnknown ? 
+            "filter: brightness(0); opacity: 0.5; width:40px; height:40px;" : 
+            "width:50px; height:50px; object-fit:contain;";
+        
+        stagesHtml += `
+            <div style="text-align:center;">
+                <img src="${imgSrc}" style="${style}"><br>
+                <span style="font-size:0.6rem; color:#888;">${stageNames[i]}</span>
+            </div>
+        `;
+    }
+    stagesHtml += `</div>`;
+
+    showAlert(`
+        <div style="text-align:center;">
+            <b style="font-size:1.2rem; color:${color};">${info.name}</b>
+            <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[info.rarity].name}]</span>
+            <hr style="border:0.5px solid #444; margin:10px 0;">
+            ${stagesHtml}
+            <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem;">
+                ${info.desc}
+            </div>
+        </div>
+    `);
 }
 
 function renderShop() {
@@ -349,7 +366,6 @@ document.getElementById('file-input').addEventListener('change', function(e) {
     }
 });
 
-// 모달 시스템
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
