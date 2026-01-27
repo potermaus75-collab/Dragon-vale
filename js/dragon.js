@@ -1,8 +1,8 @@
 // ==========================================
-// js/dragon.js (이미지 매핑 기능 추가됨)
+// js/dragon.js (알 이미지 통합 로직 적용)
 // ==========================================
 
-// [시스템 2] 용 도감 데이터 (5속성 x 10마리 = 50마리)
+// [시스템 2] 용 도감 데이터
 const DRAGON_DEX = {
     // 🔥 불 속성
     "fire_c1": { name: "불도마뱀", type: "fire", rarity: "common", desc: "작은 불꽃을 내뿜습니다." },
@@ -65,10 +65,7 @@ const DRAGON_DEX = {
     "metal_l1": { name: "오리하르콘", type: "metal", rarity: "legend", desc: "전설 속의 금속으로 태어났습니다." }
 };
 
-// -------------------------------------------------------------------
-// [신규] 이미지 경로 자동 생성기
-// DRAGON_DEX의 ID(예: fire_c1)를 실제 이미지 파일명(예: fire_lizard)으로 연결합니다.
-// -------------------------------------------------------------------
+// 이미지 파일명 매핑
 const IMG_MAPPING = {
     // 🔥 불
     "fire_c1": "fire_lizard", "fire_c2": "fire_ash", "fire_c3": "fire_spark",
@@ -76,28 +73,24 @@ const IMG_MAPPING = {
     "fire_h1": "fire_ifrit", "fire_h2": "fire_blaze",
     "fire_e1": "fire_phoenix", "fire_e2": "fire_volcano",
     "fire_l1": "fire_ignis",
-
     // 💧 물
     "water_c1": "water_tadpole", "water_c2": "water_drop", "water_c3": "water_coral",
     "water_r1": "water_aqua", "water_r2": "water_frost",
     "water_h1": "water_tidal", "water_h2": "water_kraken",
     "water_e1": "water_poseidon", "water_e2": "water_ice",
     "water_l1": "water_leviathan",
-
     // 🌿 풀
     "forest_c1": "forest_sprout", "forest_c2": "forest_leaf", "forest_c3": "forest_mushroom",
     "forest_r1": "forest_vine", "forest_r2": "forest_flower",
     "forest_h1": "forest_ent", "forest_h2": "forest_poison",
     "forest_e1": "forest_gaia", "forest_e2": "forest_root",
     "forest_l1": "forest_yggdrasil",
-
     // ⚡ 번개
     "electric_c1": "elec_zzirit", "electric_c2": "elec_battery", "electric_c3": "elec_bulb",
     "electric_r1": "elec_wing", "electric_r2": "elec_tesla",
     "electric_h1": "elec_thunder", "electric_h2": "elec_plasma",
     "electric_e1": "elec_rod", "electric_e2": "elec_kaiser",
     "electric_l1": "elec_zeus",
-
     // 💎 강철
     "metal_c1": "metal_scrap", "metal_c2": "metal_screw", "metal_c3": "metal_coin",
     "metal_r1": "metal_iron", "metal_r2": "metal_gear",
@@ -106,20 +99,27 @@ const IMG_MAPPING = {
     "metal_l1": "metal_ori"
 };
 
-// [함수] 용 이미지 경로 가져오기 (전역 함수)
-// dragonId: 도감 ID (예: fire_c1)
-// stageIndex: 0(알) ~ 4(고룡)
+// [핵심 수정] 0단계(알)는 속성별 공통 이미지 반환
 function getDragonImage(dragonId, stageIndex) {
     const stageNames = ["egg", "baby", "teen", "adult", "elder"];
     
-    // 매핑된 이름이 없으면 기본값 사용 (불도마뱀)
+    // 1. 알 단계(0)라면 속성을 확인하여 공통 알 이미지 반환
+    if (stageIndex === 0) {
+        const info = DRAGON_DEX[dragonId];
+        // info가 없으면(오류 방지) 기본 불 알 반환
+        const type = info ? info.type : "fire"; 
+        
+        // 파일명 규칙: egg_fire.png, egg_water.png 등
+        // (assets/images/dragon 폴더 안에 넣었다고 가정)
+        return `assets/images/dragon/egg_${type}.png`;
+    }
+
+    // 2. 그 외 단계는 고유 이미지 반환
     const baseName = IMG_MAPPING[dragonId] || "fire_lizard";
-    
-    // 파일명 조합: assets/images/dragon/fire_lizard_baby.png
     return `assets/images/dragon/${baseName}_${stageNames[stageIndex]}.png`;
 }
 
-// 전역 할당 (main.js, hatchery.js 등에서 사용)
+// 전역 할당
 window.getDragonImage = getDragonImage;
 window.IMG_MAPPING = IMG_MAPPING;
 window.DRAGON_DEX = DRAGON_DEX;
