@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (속성별 알 획득 로직 적용)
+// js/explore.js (CSS 드래곤 폴백 적용)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -26,7 +26,6 @@ function renderMap() {
         const div = document.createElement('div');
         const isLocked = player.level < region.levelReq;
         
-        // 지역 속성별 테두리 색상 힌트
         const typeColor = {
             fire:'#e74c3c', water:'#3498db', forest:'#2ecc71', 
             electric:'#f1c40f', metal:'#95a5a6', light:'#fffacd', dark:'#8e44ad'
@@ -34,7 +33,7 @@ function renderMap() {
         const borderColor = typeColor[region.type] || '#fff';
         
         div.className = `region-card ${isLocked ? 'locked' : ''}`;
-        div.style.borderColor = borderColor; // 테두리 색상 적용
+        div.style.borderColor = borderColor; 
 
         div.innerHTML = `
             <h3>${region.name}</h3>
@@ -49,12 +48,10 @@ function renderMap() {
             document.querySelectorAll('.region-card').forEach(c => {
                 c.style.borderWidth = "1px";
                 c.style.borderStyle = "solid";
-                // 원래 색상 유지하되 선택 안된건 회색조 등 처리 가능하나, 여기선 보더만 조절
                 c.style.borderColor = "#aaa"; 
                 c.style.background = "rgba(0,0,0,0.7)";
             });
             
-            // 선택된 카드 강조
             div.style.border = `2px solid ${borderColor}`; 
             div.style.background = "rgba(100, 80, 120, 0.8)";
             
@@ -191,29 +188,26 @@ function processRandomEvent() {
     }
 }
 
-// [수정] 현재 지역에 맞는 알을 발견하도록 수정
 function encounterNest() {
     const moveBtn = document.getElementById('btn-move');
     if(moveBtn) moveBtn.disabled = true;
 
     stealAttempts = 3; 
 
-    // 현재 지역의 속성 확인 (fire, water, light 등)
     const regionType = REGION_DATA[currentRegionId].type;
-    // 아이템 DB 키 생성 (예: egg_fire)
     const eggId = `egg_${regionType}`; 
     
-    // 알 이미지 가져오기 (DB에 없으면 기본 알 이미지)
     const nestImg = (typeof ITEM_DB !== 'undefined' && ITEM_DB[eggId]) ? ITEM_DB[eggId].img : "assets/images/dragon/stage_egg.png";
 
+    // [수정] 둥지 알 이미지에 onerror 적용 (stage 0)
     setTimeout(() => {
         showConfirm(
             `<div style="text-align:center;">
-                <img src="${nestImg}" style="width:80px;"><br>
+                <img src="${nestImg}" style="width:80px;" onerror="handleImgError(this, '${regionType}', 0)"><br>
                 <b>[${REGION_DATA[currentRegionId].name}] 둥지 발견!</b><br>
                 알을 훔치시겠습니까?
             </div>`, 
-            () => { tryStealLoop(eggId); }, // 발견한 알 ID 전달
+            () => { tryStealLoop(eggId); }, 
             () => { 
                 document.getElementById('event-msg').innerText = "둥지를 조용히 지나쳤습니다.";
                 if(moveBtn) moveBtn.disabled = false;
@@ -232,7 +226,7 @@ function tryStealLoop(eggId) {
     
     if (success) {
         showAlert("성공! 알을 손에 넣었습니다!<br>(탐험을 성공적으로 마칩니다)", () => {
-            addTempLoot(eggId, 1); // 획득한 알 추가
+            addTempLoot(eggId, 1); 
             finishExplore(true);
         });
     } else {
@@ -257,13 +251,17 @@ function wakeParentDragon(eggId) {
     document.getElementById('explore-bg').style.backgroundColor = "#500"; 
     document.getElementById('event-msg').innerText = "크아앙! 부모 용 출현!";
     
+    const regionType = REGION_DATA[currentRegionId].type; // 부모 용의 속성 확인
+
     setTimeout(() => {
         const atk = player.stats ? player.stats.atk : 10;
         const winChance = Math.min(90, 30 + atk); 
 
+        // [수정] 부모 용 이미지에 onerror 적용 (stage 3: 성룡)
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
-                <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"><br>
+                <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"
+                 onerror="handleImgError(this, '${regionType}', 3)"><br>
                 <b>부모 용에게 들켰습니다!</b><br>
                 (승률: 약 ${winChance}%)<br>
                 싸우시겠습니까?
@@ -290,7 +288,7 @@ function fightParent(winChance, eggId) {
     const win = roll < winChance; 
 
     if (win) {
-        addTempLoot(eggId, 1); // 승리 시에도 해당 알 획득
+        addTempLoot(eggId, 1); 
         let msg = "대단합니다! 부모 용을 물리쳤습니다!";
         if (Math.random() < 0.3) { 
              player.gem += 1;
@@ -346,7 +344,6 @@ function finishExplore(success = true) {
     }
 }
 
-// 결과창에 아이콘 이미지 표시
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
     
