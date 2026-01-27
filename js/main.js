@@ -19,20 +19,15 @@ function showScreen(screenId) {
     if(target) {
         target.classList.remove('hidden');
         target.classList.add('active');
-        target.style.display = "flex"; // 확실하게 보이게 설정
+        target.style.display = "flex"; 
     }
 }
 
 // 1. 시작화면 클릭
 document.getElementById('screen-start').addEventListener('click', () => {
-    // 시작할 때 저장된 데이터가 있는지 먼저 확인
     if (localStorage.getItem('dragonSaveData')) {
-        // 데이터가 있으면 로드 후 바로 게임 진입도 가능하나,
-        // 여기서는 닉네임 확인 단계로 넘깁니다. (이미 닉네임이 있으면 자동 처리)
         loadGame();
-        
         if (userNickname && userNickname !== "Guest") {
-             // 닉네임이 이미 있으면 바로 게임 시작
             document.getElementById('ui-nickname').innerText = userNickname;
             startGame();
             return;
@@ -48,15 +43,11 @@ function submitName() {
     
     userNickname = input.value;
     document.getElementById('ui-nickname').innerText = userNickname;
-    
-    // 닉네임 설정 시점에서도 저장 한 번 수행
     saveGame();
-    
     showScreen('screen-prologue');
     renderPrologue();
 }
 
-// 프롤로그 렌더링
 function renderPrologue() {
     const textEl = document.getElementById('prologue-text');
     textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
@@ -77,12 +68,10 @@ function startGame() {
     updateCurrency();
     switchTab('dragon'); 
     if(window.updateUI) window.updateUI();
-    
-    // 게임 시작 시 자동 저장 인터벌 시작
     saveGame(); 
 }
 
-// 탭 전환
+// 탭 전환 (수정됨: info에서 인벤토리도 갱신, book 추가)
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -90,17 +79,22 @@ function switchTab(tabName) {
     const selected = document.getElementById(`tab-${tabName}`);
     if(selected) selected.classList.remove('hidden');
 
-    // 하단 버튼 활성화 효과
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => btn.classList.remove('active'));
     
-    const tabMap = {'info':0, 'dragon':1, 'explore':2, 'inventory':3, 'shop':4};
+    // 버튼 인덱스 매핑 수정 (0:Info, 1:Dragon, 2:Explore, 3:Book, 4:Shop)
+    const tabMap = {'info':0, 'dragon':1, 'explore':2, 'book':3, 'shop':4};
     if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
 
     // 데이터 갱신
-    if (tabName === 'inventory') renderInventory();
+    if (tabName === 'info') { // 내 정보 탭에서 인벤토리도 그림
+        updateCurrency();
+        if(window.updateUI) window.updateUI(); 
+        renderInventory();
+    }
     if (tabName === 'shop') renderShop();
-    if (tabName === 'info' || tabName === 'dragon') {
+    if (tabName === 'book') renderBook(); // 도감 그리기
+    if (tabName === 'dragon') {
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
     }
@@ -109,24 +103,57 @@ function switchTab(tabName) {
     }
 }
 
-// 가방 그리기
+// 가방 그리기 (이제 info 탭 안에서 작동)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
     grid.innerHTML = "";
     
     const itemIds = Object.keys(player.inventory);
-    if(itemIds.length === 0) grid.innerHTML = "<p>비어있음</p>";
+    if(itemIds.length === 0) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888;'>비어있음</p>";
 
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
             const div = document.createElement('div');
             div.className = 'slot-item';
-            div.onclick = () => useItem(id); // player.js의 useItem
-            div.innerHTML = `<span>${item.emoji}</span><span>x${player.inventory[id]}</span>`;
+            div.onclick = () => useItem(id); 
+            div.innerHTML = `<span>${item.emoji}</span><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
             grid.appendChild(div);
         }
+    });
+}
+
+// 도감 그리기 (신규)
+function renderBook() {
+    const grid = document.getElementById('book-grid');
+    if(!grid) return;
+    grid.innerHTML = "";
+
+    // player.discovered가 없으면 초기화
+    if(!player.discovered) player.discovered = [];
+
+    // DRAGON_TYPES에 정의된 모든 용을 순회
+    Object.keys(DRAGON_TYPES).forEach(typeKey => {
+        const dragonInfo = DRAGON_TYPES[typeKey];
+        const isFound = player.discovered.includes(typeKey);
+
+        const div = document.createElement('div');
+        div.className = `book-slot ${isFound ? 'found' : ''}`;
+        
+        if (isFound) {
+            div.innerHTML = `
+                <div class="book-emoji">${dragonInfo.emoji}</div>
+                <div style="font-weight:bold;">${dragonInfo.name}</div>
+            `;
+            div.onclick = () => showAlert(`[${dragonInfo.name}]\n${dragonInfo.desc}`);
+        } else {
+            div.innerHTML = `
+                <div class="book-emoji" style="filter:grayscale(1); opacity:0.3;">❓</div>
+                <div>???</div>
+            `;
+        }
+        grid.appendChild(div);
     });
 }
 
@@ -150,7 +177,7 @@ function renderShop() {
     });
 }
 
-// 구매 로직 (Alert -> ShowAlert 변경)
+// 구매 로직
 function buyItem(id) {
     const item = ITEM_DB[id];
     if (player.gold >= item.price) {
@@ -158,9 +185,7 @@ function buyItem(id) {
             player.gold -= item.price;
             addItem(id, 1);
             updateCurrency();
-            showAlert("구매 완료!", () => {
-                 saveGame(); // 구매 후 저장
-            });
+            showAlert("구매 완료!", () => { saveGame(); });
         });
     } else {
         showAlert("골드가 부족합니다.");
@@ -178,41 +203,29 @@ document.getElementById('file-input').addEventListener('change', function(e) {
         reader.onload = function(evt) {
             document.getElementById('ui-profile-img').style.backgroundImage = `url('${evt.target.result}')`;
             document.getElementById('ui-profile-img').style.backgroundSize = "cover";
-            // 이미지 데이터는 용량이 커서 로컬스토리지 저장은 생략하거나 별도 처리 필요
         }
         reader.readAsDataURL(file);
     }
 });
 
-
-// ==========================================
-// [신규] 저장 시스템 및 모달 유틸리티
-// ==========================================
-
-// 1. 저장 기능
+// 저장 시스템
 function saveGame() {
-    // 닉네임도 저장 데이터에 포함
     player.nickname = userNickname; 
-    
-    const data = {
-        player: player,
-        timestamp: Date.now()
-    };
+    const data = { player: player, timestamp: Date.now() };
     localStorage.setItem('dragonSaveData', JSON.stringify(data));
     console.log("게임 저장 완료");
 }
 
-// 2. 불러오기 기능
 function loadGame() {
     const saved = localStorage.getItem('dragonSaveData');
     if (saved) {
         try {
             const data = JSON.parse(saved);
-            // player 객체 덮어쓰기 (참조 유지)
             Object.assign(player, data.player);
-            
-            // 닉네임 복구
             if(player.nickname) userNickname = player.nickname;
+            
+            // 데이터 구조 호환성 체크 (도감 배열 없으면 추가)
+            if(!player.discovered) player.discovered = [];
             
             console.log("게임 불러오기 성공");
         } catch(e) {
@@ -221,24 +234,20 @@ function loadGame() {
     }
 }
 
-// 3. 자동 저장 (1분마다)
 setInterval(saveGame, 60000);
 
-// 4. 모달 시스템 (alert 대체)
+// 모달 시스템
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
     document.getElementById('modal-text').innerText = msg;
     
-    // 버튼 설정
     document.getElementById('modal-btn-alert').classList.remove('hidden');
     document.getElementById('modal-btn-confirm').classList.add('hidden');
     
     modal.classList.remove('hidden');
     modal.classList.add('active');
 
-    // 확인 버튼 클릭 시 동작 재정의
-    // 기존 이벤트 제거를 위해 cloneNode 사용 또는 onclick 덮어쓰기
     const okBtn = document.querySelector('#modal-btn-alert button');
     okBtn.onclick = function() {
         closeModal();
@@ -246,13 +255,11 @@ window.showAlert = function(msg, callback) {
     };
 };
 
-// 5. 모달 시스템 (confirm 대체)
 window.showConfirm = function(msg, yesCallback, noCallback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "확인";
     document.getElementById('modal-text').innerText = msg;
     
-    // 버튼 설정
     document.getElementById('modal-btn-alert').classList.add('hidden');
     const confirmGroup = document.getElementById('modal-btn-confirm');
     confirmGroup.classList.remove('hidden');
@@ -260,7 +267,6 @@ window.showConfirm = function(msg, yesCallback, noCallback) {
     modal.classList.remove('hidden');
     modal.classList.add('active');
 
-    // 예/아니오 이벤트 연결
     document.getElementById('btn-confirm-yes').onclick = function() {
         closeModal();
         if(yesCallback) yesCallback();
@@ -276,3 +282,4 @@ window.closeModal = function() {
     modal.classList.remove('active');
     modal.classList.add('hidden');
 };
+
