@@ -1,8 +1,8 @@
 // ==========================================
-// js/data.js (완전한 코드)
+// js/data.js (지역 7개 확장 & 속성별 알 추가)
 // ==========================================
 
-// [시스템 1] 등급 및 확률 데이터
+// [시스템 1] 등급 데이터 (확률은 hatchery.js에서 레벨에 따라 보정됨)
 const RARITY_DATA = {
     "common": { name: "일반", color: "#b0b0b0", prob: 50 },
     "rare": { name: "희귀", color: "#3498db", prob: 30 },
@@ -11,7 +11,7 @@ const RARITY_DATA = {
     "legend": { name: "전설", color: "#f1c40f", prob: 1 }
 };
 
-// [시스템 3] 성장 데이터 (단계별 이미지 구분)
+// [시스템 3] 성장 데이터
 const DRAGON_DATA = {
     stages: ["알", "유아기", "성장기", "성룡", "고룡"],
     reqClicks: [20, 50, 150, 500], 
@@ -24,36 +24,43 @@ const DRAGON_DATA = {
     ]
 };
 
-// [시스템 4] 탐험 지역 (배경 이미지 추가)
-// 배경 이미지가 없으면 기본 검은 화면이 뜹니다. assets/images/bg/ 폴더에 해당 파일들을 넣어주세요.
+// [시스템 4] 탐험 지역 (7개로 확장 및 속성 지정)
 const REGION_DATA = [
-    { id: 0, name: "초보자의 숲", levelReq: 1, desc: "평화로운 숲입니다.", bg: "assets/images/bg/forest.jpg" },
-    { id: 1, name: "바위 산맥", levelReq: 5, desc: "광물이 많습니다.", bg: "assets/images/bg/mountain.jpg" },
-    { id: 2, name: "어둠의 동굴", levelReq: 10, desc: "희귀한 보석이 있습니다.", bg: "assets/images/bg/cave.jpg" },
-    { id: 3, name: "타오르는 화산", levelReq: 20, desc: "불 속성 용이 삽니다.", bg: "assets/images/bg/volcano.jpg" },
-    { id: 4, name: "얼음 협곡", levelReq: 30, desc: "물 속성 용이 삽니다.", bg: "assets/images/bg/ice.jpg" },
-    { id: 5, name: "용의 성지", levelReq: 50, desc: "전설의 용이 잠들어 있습니다.", bg: "assets/images/bg/shrine.jpg" }
+    { id: 0, name: "푸른 숲", levelReq: 1, type: "forest", desc: "풀 속성 용이 서식합니다.", bg: "assets/images/bg/forest.jpg" },
+    { id: 1, name: "깊은 바다", levelReq: 1, type: "water", desc: "물 속성 용이 서식합니다.", bg: "assets/images/bg/sea.jpg" },
+    { id: 2, name: "화산 지대", levelReq: 1, type: "fire", desc: "불 속성 용이 서식합니다.", bg: "assets/images/bg/volcano.jpg" },
+    { id: 3, name: "번개 황무지", levelReq: 1, type: "electric", desc: "번개 속성 용이 서식합니다.", bg: "assets/images/bg/storm.jpg" },
+    { id: 4, name: "강철 동굴", levelReq: 1, type: "metal", desc: "강철 속성 용이 서식합니다.", bg: "assets/images/bg/cave.jpg" },
+    { id: 5, name: "구름 신전", levelReq: 30, type: "light", desc: "빛 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/sky.jpg" },
+    { id: 6, name: "지하 심연", levelReq: 30, type: "dark", desc: "어둠 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/abyss.jpg" }
 ];
 
-// 탐험 확률 (재화 수급 추가)
 const ENCOUNTER_RATES = {
     NOTHING: 20,
-    RESOURCE: 50, // 재료/골드/보석
-    NEST: 30      // 둥지
+    RESOURCE: 50, 
+    NEST: 30
 };
 
-// [신규] 둥지 강화 데이터 (필요 재료량)
 const NEST_UPGRADE_COST = [10, 30, 60, 100, 200]; 
 
-// 아이템 데이터베이스 (costType 추가 - 재화 버그 수정용)
+// 아이템 데이터베이스 (속성별 알 추가)
 const ITEM_DB = {
-    // 소비
+    // 소비/재료
     "potion_s": { name: "성장 물약", img: "assets/images/item/potion_growth.png", price: 100, desc: "경험치 +20", type: "use", effect: 20, costType: "gold" },
     "nest_wood": { name: "둥지 재료", img: "assets/images/item/material_wood.png", price: 50, desc: "둥지 강화", type: "material", costType: "gold" },
     
-    // 알 (뽑기권)
-    "egg_random": { name: "미지의 알", img: "assets/images/item/item_egg_box.png", price: 1000, desc: "랜덤 용 (일반~희귀)", type: "egg", costType: "gold" },
-    "egg_shiny": { name: "신비한 알", img: "assets/images/ui/icon_gem.png", price: 5, desc: "높은 등급 & 이로치 확률 UP", type: "egg", costType: "gem" },
+    // 알 (속성별) - 탐험에서 획득 / 상점에서 구매
+    "egg_fire": { name: "불의 알", img: "assets/images/dragon/egg_fire.png", price: 2000, desc: "불 속성 용 부화", type: "egg", dragonType: "fire", costType: "gold" },
+    "egg_water": { name: "물의 알", img: "assets/images/dragon/egg_water.png", price: 2000, desc: "물 속성 용 부화", type: "egg", dragonType: "water", costType: "gold" },
+    "egg_forest": { name: "풀의 알", img: "assets/images/dragon/egg_forest.png", price: 2000, desc: "풀 속성 용 부화", type: "egg", dragonType: "forest", costType: "gold" },
+    "egg_electric": { name: "번개의 알", img: "assets/images/dragon/egg_electric.png", price: 2000, desc: "번개 속성 용 부화", type: "egg", dragonType: "electric", costType: "gold" },
+    "egg_metal": { name: "강철의 알", img: "assets/images/dragon/egg_metal.png", price: 2000, desc: "강철 속성 용 부화", type: "egg", dragonType: "metal", costType: "gold" },
+    "egg_light": { name: "빛의 알", img: "assets/images/dragon/egg_light.png", price: 5000, desc: "빛 속성 용 부화", type: "egg", dragonType: "light", costType: "gold" },
+    "egg_dark": { name: "어둠의 알", img: "assets/images/dragon/egg_dark.png", price: 5000, desc: "어둠 속성 용 부화", type: "egg", dragonType: "dark", costType: "gold" },
+
+    // 특수 알
+    "egg_random": { name: "미지의 알", img: "assets/images/item/item_egg_box.png", price: 1000, desc: "랜덤 속성", type: "egg", dragonType: "random", costType: "gold" },
+    "egg_shiny": { name: "신비한 알", img: "assets/images/ui/icon_gem.png", price: 5, desc: "높은 등급 & 이로치 확률 UP", type: "egg", dragonType: "random", costType: "gem" },
 
     // 장비
     "sword_wood": { name: "목검", img: "assets/images/equipment/weapon_wood_sword.png", price: 200, desc: "공격력 +5", type: "equip", slot: "arm", stat: 5, costType: "gold" },
