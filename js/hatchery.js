@@ -1,15 +1,22 @@
 // ==========================================
-// js/hatchery.js (경험치 보상 & 이미지 매핑 적용)
+// js/hatchery.js (알 이름 숨김 & 룰렛 버그 수정)
 // ==========================================
 
-// DOM 요소
 const dragonDisplay = document.getElementById('dragon-display');
 const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
 const clickMsgBtn = document.getElementById('click-msg'); 
 
-// 화면 갱신 통합 함수
+// [신규] 알 이름 매핑 (속성별 가명)
+const EGG_TYPE_NAMES = {
+    "fire": "불타는 알",
+    "water": "촉촉한 알",
+    "forest": "싱그러운 알",
+    "electric": "찌릿한 알",
+    "metal": "단단한 알"
+};
+
 function updateCaveUI() {
     renderEggList();     
     renderNest();        
@@ -17,7 +24,6 @@ function updateCaveUI() {
     renderUpgradeBtn(); 
 }
 
-// 둥지 강화 버튼 렌더링
 function renderUpgradeBtn() {
     const nestPanel = document.querySelector('.nest-panel');
     let upgradeBtn = document.getElementById('btn-upgrade-nest');
@@ -42,16 +48,20 @@ function renderUpgradeBtn() {
     }
 }
 
-// 둥지(메인 용) 렌더링
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
 
-    // 이름 표시
-    const stageName = DRAGON_DATA.stages[dragonData.stage];
-    dragonNameUI.innerText = `${dragonData.name} (${stageName})`;
+    // [수정] 0단계(알)일 때는 진짜 이름 숨기기
+    let displayName = dragonData.name;
+    let displayStage = DRAGON_DATA.stages[dragonData.stage];
+    
+    if (dragonData.stage === 0) {
+        displayName = EGG_TYPE_NAMES[dragonData.type] || "미지의 알";
+    }
 
-    // 게이지바 로직
+    dragonNameUI.innerText = `${displayName} (${displayStage})`;
+
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
     let percent = 0;
     
@@ -69,27 +79,19 @@ function renderNest() {
     
     if(progressBar) progressBar.style.width = `${percent}%`;
 
-    // [핵심 수정] 이미지 매핑 적용
-    // dragon.js에 있는 getDragonImage 함수를 사용, 없으면 기본 배열 사용
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
-    
     if (window.getDragonImage) {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
-    } else if (DRAGON_DATA.stageImages && DRAGON_DATA.stageImages[dragonData.stage]) {
-        // dragon.js가 아직 업데이트 안 되었을 경우의 예비책
-        imgSrc = DRAGON_DATA.stageImages[dragonData.stage];
     }
 
     dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img">`;
     
-    // 이로치 효과
     const imgEl = dragonDisplay.querySelector('img');
     if(dragonData.isShiny && imgEl) {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
 }
 
-// 보유한 용 리스트 렌더링
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
@@ -104,17 +106,20 @@ function renderEggList() {
         div.style.textAlign = "center";
         div.style.border = index === player.currentDragonIndex ? "2px solid #ffd700" : "1px solid #5d4a6d";
         
-        // 리스트 아이콘은 알 이미지 또는 현재 단계 이미지
         let iconSrc = "assets/images/dragon/stage_egg.png";
         if(window.getDragonImage) {
-             // 리스트에는 항상 알이나 유아기 등 작은 이미지를 보여줄 수도 있음
-             // 여기서는 현재 단계 이미지를 작게 보여줌
              iconSrc = window.getDragonImage(dragon.id, dragon.stage);
+        }
+
+        // [수정] 리스트에서도 알 이름 숨기기
+        let listName = dragon.name;
+        if(dragon.stage === 0) {
+            listName = EGG_TYPE_NAMES[dragon.type] || "알";
         }
 
         div.innerHTML = `
             <img src="${iconSrc}" class="list-egg-img"><br>
-            <span style="font-size:0.7rem">${dragon.name}</span>
+            <span style="font-size:0.7rem">${listName}</span>
         `;
         
         div.onclick = () => {
@@ -126,7 +131,6 @@ function renderEggList() {
     });
 }
 
-// 마력 주입 버튼 클릭 이벤트
 if(clickMsgBtn) {
     clickMsgBtn.addEventListener('click', () => {
         const dragon = player.myDragons[player.currentDragonIndex];
@@ -142,8 +146,12 @@ if(clickMsgBtn) {
                 dragon.stage++;
                 dragon.clicks = 0;
                 
-                // [신규] 성장 시 플레이어 경험치 획득
-                // (단계별 보상: 1->2: 50xp, 2->3: 100xp, 3->4: 300xp, 4->5: 1000xp)
+                // 도감에 최대 성장 단계 기록 갱신 (player.js의 데이터)
+                if(!player.maxStages) player.maxStages = {};
+                if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
+                    player.maxStages[dragon.id] = dragon.stage;
+                }
+
                 const xpReward = [0, 50, 100, 300, 1000];
                 const gain = xpReward[dragon.stage] || 50;
                 
@@ -151,7 +159,6 @@ if(clickMsgBtn) {
 
                 renderNest(); 
                 
-                // 이미지도 갱신된 상태로 알림창 표시
                 let evolvedImg = "assets/images/dragon/stage_adult.png";
                 if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
 
@@ -173,8 +180,10 @@ if(clickMsgBtn) {
     });
 }
 
-// 룰렛 로직
+// [수정] 룰렛 버그 수정 (중복 실행 방지)
 let rouletteInterval;
+let rouletteTimeout; // [추가] 타임아웃 ID 저장용
+
 function startEggRoulette(isShinyEgg = false) { 
     document.getElementById('roulette-modal').classList.remove('hidden');
     document.getElementById('roulette-modal').classList.add('active');
@@ -187,16 +196,21 @@ function startEggRoulette(isShinyEgg = false) {
     ];
     
     if(rouletteInterval) clearInterval(rouletteInterval);
+    if(rouletteTimeout) clearTimeout(rouletteTimeout); // [추가] 기존 타임아웃 제거
+
     rouletteInterval = setInterval(() => {
         const randImg = candidates[Math.floor(Math.random() * candidates.length)];
         display.innerHTML = `<img src="${randImg}" style="width:100px; height:100px;">`;
     }, 100);
     
-    setTimeout(() => stopRoulette(isShinyEgg), 3000);
+    // [추가] 타임아웃 ID 저장
+    rouletteTimeout = setTimeout(() => stopRoulette(isShinyEgg), 3000);
 }
 
 function stopRoulette(isShinyEgg) {
-    clearInterval(rouletteInterval);
+    // [핵심] 타임아웃과 인터벌 모두 정리하여 중복 실행 원천 차단
+    if(rouletteTimeout) clearTimeout(rouletteTimeout);
+    if(rouletteInterval) clearInterval(rouletteInterval);
     
     const rand = Math.random() * 100;
     let rarity = 'common';
@@ -222,15 +236,15 @@ function stopRoulette(isShinyEgg) {
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
-    // 결과 화면에 베이비 이미지 보여주기
-    let resultImg = "assets/images/dragon/stage_baby.png";
-    if(window.getDragonImage) resultImg = window.getDragonImage(resultDragon.id, 1); // 1=baby
+    // 결과 화면: 0단계(알) 이미지를 보여주기
+    let resultImg = "assets/images/dragon/egg_fire.png";
+    if(window.getDragonImage) resultImg = window.getDragonImage(resultDragon.id, 0); 
 
     const shinyStyle = isShiny ? 'filter:hue-rotate(150deg) brightness(1.2);' : '';
     document.getElementById('roulette-display').innerHTML = `
         <div style="text-align:center">
             <img src="${resultImg}" style="width:100px; height:100px; ${shinyStyle}"><br>
-            <b style="color:${RARITY_DATA[rarity].color}">${RARITY_DATA[rarity].name}</b>
+            <b style="color:${RARITY_DATA[rarity].color}">알을 획득했습니다!</b>
         </div>
     `;
     
@@ -242,13 +256,21 @@ function stopRoulette(isShinyEgg) {
             isNew = true;
         }
 
-        const shinyText = isShiny ? "<br><b style='color:#ff00ff'>✨ 색이 다른(이로치) 용입니다! ✨</b>" : "";
-        const newText = isNew ? "<br>(도감에 새로 등록되었습니다!)" : "";
+        // [신규] 획득 시 maxStages에 0단계 등록
+        if(!player.maxStages) player.maxStages = {};
+        if(typeof player.maxStages[resultDragon.id] === 'undefined') {
+            player.maxStages[resultDragon.id] = 0;
+        }
+
+        const shinyText = isShiny ? "<br><b style='color:#ff00ff'>✨ 신비한 기운이 느껴집니다! ✨</b>" : "";
+        
+        // 이름 대신 속성 알 이름 표시
+        const eggName = EGG_TYPE_NAMES[resultDragon.type] || "알";
 
         showAlert(`
-            <b style="color:${RARITY_DATA[rarity].color} font-size:1.2rem;">[${resultDragon.name}] 획득!</b>
-            ${shinyText}${newText}<br>
-            <span style="font-size:0.8rem; color:#aaa;">${resultDragon.desc}</span>
+            <b style="color:${RARITY_DATA[rarity].color} font-size:1.2rem;">[${eggName}] 획득!</b>
+            ${shinyText}<br>
+            <span style="font-size:0.8rem; color:#aaa;">정성껏 보살펴주세요.</span>
         `, () => {
             player.myDragons.push({
                 uId: Date.now(), 
