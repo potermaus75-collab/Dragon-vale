@@ -71,7 +71,7 @@ function startGame() {
     saveGame(); 
 }
 
-// 탭 전환 (수정됨: info에서 인벤토리도 갱신, book 추가)
+// 탭 전환
 function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -82,18 +82,20 @@ function switchTab(tabName) {
     const navBtns = document.querySelectorAll('.nav-btn');
     navBtns.forEach(btn => btn.classList.remove('active'));
     
-    // 버튼 인덱스 매핑 수정 (0:Info, 1:Dragon, 2:Explore, 3:Book, 4:Shop)
     const tabMap = {'info':0, 'dragon':1, 'explore':2, 'book':3, 'shop':4};
     if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
 
+    // 하단 탭 아이콘 이미지 교체 (초기화 때 한 번만 해도 되지만 여기서도 보장)
+    // (HTML에 img 태그를 미리 넣어두는 것이 좋음. 여기서는 생략하고 CSS/HTML 구조 따름)
+
     // 데이터 갱신
-    if (tabName === 'info') { // 내 정보 탭에서 인벤토리도 그림
+    if (tabName === 'info') { 
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
         renderInventory();
     }
     if (tabName === 'shop') renderShop();
-    if (tabName === 'book') renderBook(); // 도감 그리기
+    if (tabName === 'book') renderBook(); 
     if (tabName === 'dragon') {
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
@@ -103,7 +105,7 @@ function switchTab(tabName) {
     }
 }
 
-// 가방 그리기 (이제 info 탭 안에서 작동)
+// [수정] 가방 그리기 (이미지 적용)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -118,22 +120,21 @@ function renderInventory() {
             const div = document.createElement('div');
             div.className = 'slot-item';
             div.onclick = () => useItem(id); 
-            div.innerHTML = `<span>${item.emoji}</span><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
+            // 이미지 태그 사용
+            div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'"><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
             grid.appendChild(div);
         }
     });
 }
 
-// 도감 그리기 (신규)
+// [수정] 도감 그리기 (이미지 적용)
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
     grid.innerHTML = "";
 
-    // player.discovered가 없으면 초기화
     if(!player.discovered) player.discovered = [];
 
-    // DRAGON_TYPES에 정의된 모든 용을 순회
     Object.keys(DRAGON_TYPES).forEach(typeKey => {
         const dragonInfo = DRAGON_TYPES[typeKey];
         const isFound = player.discovered.includes(typeKey);
@@ -143,13 +144,20 @@ function renderBook() {
         
         if (isFound) {
             div.innerHTML = `
-                <div class="book-emoji">${dragonInfo.emoji}</div>
+                <img src="${dragonInfo.img}" class="book-img">
                 <div style="font-weight:bold;">${dragonInfo.name}</div>
             `;
-            div.onclick = () => showAlert(`[${dragonInfo.name}]\n${dragonInfo.desc}`);
+            // 클릭 시 설명
+            div.onclick = () => showAlert(`
+                <div style="text-align:center;">
+                    <img src="${dragonInfo.img}" style="width:100px;height:100px;"><br>
+                    <b style="font-size:1.2rem; color:#f1c40f;">${dragonInfo.name}</b><br><br>
+                    ${dragonInfo.desc}
+                </div>
+            `);
         } else {
             div.innerHTML = `
-                <div class="book-emoji" style="filter:grayscale(1); opacity:0.3;">❓</div>
+                <img src="assets/images/ui/icon_question.png" class="book-img" style="opacity:0.3; filter:grayscale(1);">
                 <div>???</div>
             `;
         }
@@ -157,7 +165,7 @@ function renderBook() {
     });
 }
 
-// 상점 그리기
+// [수정] 상점 그리기 (이미지 적용)
 function renderShop() {
     const list = document.getElementById('shop-list');
     if(!list) return;
@@ -168,10 +176,12 @@ function renderShop() {
         div.className = 'shop-item';
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:1.5rem;">${item.emoji}</span>
+                <img src="${item.img}" class="item-img-lg">
                 <div><b>${item.name}</b><br><small style="color:#aaa;">${item.desc}</small></div>
             </div>
-            <button class="btn-stone" style="width:80px; height:40px; font-size:0.9rem;" onclick="buyItem('${id}')">💰 ${item.price}</button>
+            <button class="btn-stone" style="width:80px; height:40px; font-size:0.9rem;" onclick="buyItem('${id}')">
+                <img src="assets/images/ui/icon_gold.png" class="currency-icon"> ${item.price}
+            </button>
         `;
         list.appendChild(div);
     });
@@ -223,10 +233,7 @@ function loadGame() {
             const data = JSON.parse(saved);
             Object.assign(player, data.player);
             if(player.nickname) userNickname = player.nickname;
-            
-            // 데이터 구조 호환성 체크 (도감 배열 없으면 추가)
             if(!player.discovered) player.discovered = [];
-            
             console.log("게임 불러오기 성공");
         } catch(e) {
             console.error("세이브 파일 로드 실패", e);
@@ -236,11 +243,13 @@ function loadGame() {
 
 setInterval(saveGame, 60000);
 
-// 모달 시스템
+// [수정] 모달 시스템 (HTML 지원)
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
-    document.getElementById('modal-text').innerText = msg;
+    
+    // innerText -> innerHTML 로 변경하여 이미지 태그 지원
+    document.getElementById('modal-text').innerHTML = msg; 
     
     document.getElementById('modal-btn-alert').classList.remove('hidden');
     document.getElementById('modal-btn-confirm').classList.add('hidden');
@@ -258,7 +267,7 @@ window.showAlert = function(msg, callback) {
 window.showConfirm = function(msg, yesCallback, noCallback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "확인";
-    document.getElementById('modal-text').innerText = msg;
+    document.getElementById('modal-text').innerHTML = msg; // HTML 지원
     
     document.getElementById('modal-btn-alert').classList.add('hidden');
     const confirmGroup = document.getElementById('modal-btn-confirm');
