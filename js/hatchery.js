@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (알의 정체 숨김 및 나중에 도감 등록)
+// js/hatchery.js (둥지 연출 및 교배 버튼 추가)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -17,12 +17,15 @@ const EGG_TYPE_NAMES = {
     "dark": "불길한 알",
     "random": "미지의 알"
 };
+// breeding.js 등 다른 파일에서 참조할 수 있도록 전역 노출
+window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
 
 function updateCaveUI() {
     renderEggList();     
     renderNest();        
     renderCaveInventory(); 
     renderUpgradeBtn(); 
+    renderBreedingBtn(); // [추가] 교배 버튼 렌더링
 }
 
 function renderCaveInventory() {
@@ -70,6 +73,28 @@ function renderUpgradeBtn() {
     }
 }
 
+// [신규] 교배 버튼 생성 함수
+function renderBreedingBtn() {
+    const nestPanel = document.querySelector('.nest-panel');
+    let breedBtn = document.getElementById('btn-open-breeding');
+    
+    if (!breedBtn) {
+        breedBtn = document.createElement('button');
+        breedBtn.id = 'btn-open-breeding';
+        breedBtn.className = 'btn-stone';
+        breedBtn.style.marginTop = '5px';
+        breedBtn.style.color = '#ff9ff3'; // 핑크색 텍스트
+        breedBtn.innerHTML = `💕 교배하기`;
+        
+        // breeding.js에 있는 함수 호출
+        breedBtn.onclick = () => {
+            if(window.openBreedingModal) window.openBreedingModal();
+            else console.error("breeding.js not loaded");
+        };
+        nestPanel.appendChild(breedBtn);
+    }
+}
+
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
@@ -77,13 +102,12 @@ function renderNest() {
     let displayStage = DRAGON_DATA.stages[dragonData.stage];
     let displayName = dragonData.name;
 
-    // [수정] 알 단계에서는 정체를 숨김
+    // 알 단계에서는 정체를 숨김
     if (dragonData.stage === 0) {
         displayName = EGG_TYPE_NAMES[dragonData.type] || "미확인 알";
         displayStage = "알";
         dragonNameUI.innerText = `${displayName} (${displayStage})`;
     } else {
-        // 부화 후 정상 표시
         dragonNameUI.innerText = `${displayName} (${displayStage})`;
     }
 
@@ -110,10 +134,15 @@ function renderNest() {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img" 
-        onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">`;
+    // [수정] 둥지 오버레이(nest-overlay-img) 추가
+    // 용 이미지가 뒤에, 둥지 앞부분 이미지가 앞에 오도록 배치
+    dragonDisplay.innerHTML = `
+        <img src="${imgSrc}" class="main-dragon-img" 
+            onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">
+        <div class="nest-overlay-img"></div>
+    `;
     
-    const imgEl = dragonDisplay.querySelector('img');
+    const imgEl = dragonDisplay.querySelector('.main-dragon-img');
     if(dragonData.isShiny && imgEl) {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
@@ -150,7 +179,7 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
-        // [핵심 수정] 알(0) -> 유아기(1)로 넘어갈 때 도감 등록!
+        // 알(0) -> 유아기(1)로 넘어갈 때 도감 등록
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
@@ -224,7 +253,6 @@ function renderEggList() {
     });
 }
 
-// [수정] 룰렛 없이 바로 용 데이터 생성 (UI 없음, 내부 로직만 존재)
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
@@ -273,8 +301,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
-    // [중요] 도감(player.discovered)에 등록하지 않음!
-    // 0단계(알) 상태로 myDragons에만 추가
     player.myDragons.push({
         uId: Date.now(), 
         id: resultDragon.id,
@@ -286,7 +312,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         name: resultDragon.name 
     });
     
-    // 알 이미지 캐싱용 0단계 등록은 필요할 수 있음
     if(!player.maxStages) player.maxStages = {};
     if(typeof player.maxStages[resultDragon.id] === 'undefined') {
         player.maxStages[resultDragon.id] = 0;
@@ -296,6 +321,5 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     if(window.saveGame) window.saveGame();
 }
 
-// 룰렛 관련 함수는 이제 사용 안하므로 window 객체 할당만 유지 (호환성)
 window.updateUI = updateCaveUI; 
 window.hatchEggInternal = hatchEggInternal;
