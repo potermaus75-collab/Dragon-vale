@@ -3,7 +3,7 @@ const dragonDisplay = document.getElementById('dragon-display');
 const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
-const clickMsgBtn = document.getElementById('click-msg'); // 버튼으로 변경됨
+const clickMsgBtn = document.getElementById('click-msg'); 
 
 function updateCaveUI() {
     renderEggList();     
@@ -15,19 +15,25 @@ function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
 
-    // 이름
+    // 이름 표시
     const stageName = DRAGON_DATA.stages[dragonData.stage];
     dragonNameUI.innerText = `${dragonData.name} (${stageName})`;
 
-    // ★ 게이지바 로직 (확실하게 수정)
+    // 게이지바 로직
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
     let percent = 0;
+    
+    // 고룡(마지막 단계) 체크
     if (dragonData.stage >= DRAGON_DATA.stages.length - 1) {
         percent = 100;
         clickMsgBtn.innerText = "성장 완료";
+        clickMsgBtn.disabled = true; // 버튼 비활성화 시각 효과
+        clickMsgBtn.style.opacity = 0.5;
     } else {
         percent = (dragonData.clicks / max) * 100;
         clickMsgBtn.innerText = "마력 주입";
+        clickMsgBtn.disabled = false;
+        clickMsgBtn.style.opacity = 1;
     }
     
     // CSS Width 적용
@@ -35,7 +41,7 @@ function renderNest() {
         progressBar.style.width = `${percent}%`;
     }
 
-    // 이모티콘/이미지
+    // 이모티콘/이미지 (나중에 에셋으로 교체 가능)
     let emoji = "🥚";
     if (dragonData.stage === 1) emoji = "🐣";
     else if (dragonData.stage >= 2) emoji = "🐲";
@@ -43,7 +49,7 @@ function renderNest() {
 
     dragonDisplay.innerText = emoji;
     
-    // 이로치 효과
+    // 이로치(Shiny) 효과
     if(dragonData.type === 'shiny') {
         dragonDisplay.style.textShadow = "0 0 20px #f1c40f";
     } else {
@@ -59,11 +65,12 @@ function renderEggList() {
         const div = document.createElement('div');
         div.style.marginBottom = "5px";
         div.style.padding = "5px";
-        div.style.background = index === player.currentDragonIndex ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.3)";
+        // 선택된 용 강조
+        div.style.background = index === player.currentDragonIndex ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
         div.style.borderRadius = "5px";
         div.style.cursor = "pointer";
         div.style.textAlign = "center";
-        div.style.border = "1px solid #5d4a6d";
+        div.style.border = index === player.currentDragonIndex ? "2px solid #ffd700" : "1px solid #5d4a6d";
         
         div.innerHTML = `<span style="font-size:1.5rem">🥚</span><br><span style="font-size:0.7rem">${dragon.name}</span>`;
         
@@ -76,7 +83,7 @@ function renderEggList() {
     });
 }
 
-// 마력 주입 버튼 클릭 이벤트
+// 마력 주입 버튼 클릭 이벤트 (모달 적용됨)
 if(clickMsgBtn) {
     clickMsgBtn.addEventListener('click', () => {
         const dragon = player.myDragons[player.currentDragonIndex];
@@ -84,24 +91,38 @@ if(clickMsgBtn) {
 
         const max = DRAGON_DATA.reqClicks[dragon.stage];
         
+        // 마지막 단계가 아닐 때만 작동
         if (dragon.stage < DRAGON_DATA.stages.length - 1) {
             dragon.clicks++;
+            
+            // 성장 완료 조건 달성
             if (dragon.clicks >= max) {
                 dragon.stage++;
                 dragon.clicks = 0;
-                alert(`✨ ${dragon.name}이(가) 성장했습니다!`);
+                
+                // ★ Alert -> showAlert 교체
+                // 화면을 먼저 갱신하고 축하 메시지를 띄움
+                renderNest(); 
+                showAlert(`✨ 축하합니다!\n[${dragon.name}]이(가) 성장했습니다!`);
+                
+                // 저장
+                if(window.saveGame) window.saveGame();
+            } else {
+                // 성장 중일 때는 화면만 갱신 (너무 자주 뜨면 귀찮으므로)
+                renderNest();
             }
-            renderNest(); // 화면 갱신 (게이지바 업데이트)
         } else {
-            alert("더 이상 성장할 수 없습니다.");
+            showAlert("더 이상 성장할 수 없습니다. (최대 레벨)");
         }
     });
 }
 
-// 룰렛 로직 (기존 유지)
+// 룰렛 로직
 let rouletteInterval;
 function startRoulette() {
     document.getElementById('roulette-modal').classList.remove('hidden');
+    document.getElementById('roulette-modal').classList.add('active'); // active 클래스 추가
+    
     const display = document.getElementById('roulette-display');
     const candidates = ["🔥", "💧", "🌿", "⚡", "💎"];
     
@@ -123,12 +144,18 @@ function stopRoulette() {
     document.getElementById('roulette-display').innerText = result.emoji;
     
     setTimeout(() => {
-        alert(`[${result.name}] 획득!`);
-        player.myDragons.push({
-            id: Date.now(), type: result.type, stage: 0, clicks: 0, name: result.name
+        // ★ alert -> showAlert
+        showAlert(`[${result.name}] 획득!`, () => {
+            player.myDragons.push({
+                id: Date.now(), type: result.type, stage: 0, clicks: 0, name: result.name
+            });
+            document.getElementById('roulette-modal').classList.add('hidden');
+            document.getElementById('roulette-modal').classList.remove('active');
+            updateCaveUI();
+            
+            // 저장
+            if(window.saveGame) window.saveGame();
         });
-        document.getElementById('roulette-modal').classList.add('hidden');
-        updateCaveUI();
     }, 500);
 }
 
@@ -141,9 +168,13 @@ function updateEquipmentUI() {
         if (itemId && ITEM_DB[itemId]) {
             el.innerText = ITEM_DB[itemId].emoji;
             el.style.border = "2px solid #f1c40f";
+            el.style.background = "rgba(0,0,0,0.5)";
         } else {
-            el.innerText = slot.toUpperCase();
-            el.style.border = "";
+            // 장비 없을 때 텍스트
+            const slotNames = {head:'머리', body:'몸', arm:'무기', leg:'다리'};
+            el.innerText = slotNames[slot];
+            el.style.border = "2px solid #5d4a6d";
+            el.style.background = "transparent";
         }
     });
 }
@@ -151,3 +182,4 @@ function updateEquipmentUI() {
 window.updateUI = updateCaveUI; 
 window.startEggRoulette = startRoulette;
 window.stopRoulette = stopRoulette;
+
