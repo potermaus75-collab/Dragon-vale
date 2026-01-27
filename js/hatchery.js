@@ -1,31 +1,32 @@
 // ==========================================
-// js/hatchery.js (터치 성장 및 동굴 가방 추가)
+// js/hatchery.js (확률 변동, 속성 필터링, 성장 제한 적용)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
 const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
-// clickMsgBtn 변수는 더 이상 사용하지 않으므로 삭제해도 되지만, 오류 방지 차원에서 null 체크용으로 둡니다.
-const clickMsgBtn = document.getElementById('click-msg'); 
 
+// [수정] 알 이름 매핑 (빛, 어둠 추가)
 const EGG_TYPE_NAMES = {
     "fire": "불타는 알",
     "water": "촉촉한 알",
     "forest": "싱그러운 알",
     "electric": "찌릿한 알",
-    "metal": "단단한 알"
+    "metal": "단단한 알",
+    "light": "찬란한 알",
+    "dark": "불길한 알",
+    "random": "미지의 알"
 };
 
 function updateCaveUI() {
     renderEggList();     
     renderNest();        
-    // updateEquipmentUI(); // 동굴에서는 장비창 제외
-    renderCaveInventory(); // [신규] 동굴 가방
+    renderCaveInventory(); 
     renderUpgradeBtn(); 
 }
 
-// [신규] 동굴 전용 인벤토리 (장비 제외: 알, 재료, 물약 등)
+// 동굴 전용 인벤토리 (장비 제외)
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -38,7 +39,7 @@ function renderCaveInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            // 장비(equip)가 아닌 것들만 표시
+            // 장비가 아닌 것들만 표시
             if(item && item.type !== 'equip') {
                 hasItem = true;
                 const div = document.createElement('div');
@@ -94,25 +95,34 @@ function renderNest() {
 
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
     
-    // 클릭 가능 여부 판단
-    const isMaxLevel = dragonData.stage >= DRAGON_DATA.stages.length - 1;
+    // [핵심] 성장 한계 체크 
+    // 에픽(epic) 이상은 고룡(4)까지, 그 외는 성룡(3)까지
+    let maxLevelLimit = 4; // 기본 고룡
+    const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
     
-    // 게이지 업데이트
+    if (!isHighTier) {
+        maxLevelLimit = 3; // 성룡이 끝
+    }
+
+    const isMaxLevel = dragonData.stage >= maxLevelLimit;
+    
     let percent = 0;
     if (isMaxLevel) {
         percent = 100;
+        if(!isHighTier && dragonData.stage === 3) {
+             displayStage += " (MAX)";
+             dragonNameUI.innerText = `${displayName} (${displayStage})`;
+        }
     } else {
         percent = (dragonData.clicks / max) * 100;
     }
     if(progressBar) progressBar.style.width = `${percent}%`;
 
-    // 이미지 렌더링
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
     if (window.getDragonImage) {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    // 이미지를 새로 그릴 때마다 이벤트 핸들러 연결
     dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img">`;
     
     const imgEl = dragonDisplay.querySelector('img');
@@ -120,28 +130,36 @@ function renderNest() {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
 
-    // [핵심] 이미지 클릭 시 성장 로직 실행
+    // 클릭 이벤트 연결
     if(imgEl && !isMaxLevel) {
         imgEl.style.cursor = "pointer";
-        // 모바일 터치 반응 개선을 위해 onclick 사용
         imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
+    } else if (imgEl && isMaxLevel) {
+        imgEl.style.cursor = "default";
+        imgEl.onclick = () => showAlert("이 용은 더 이상 성장할 수 없습니다.<br>(일반~서사 등급은 성룡까지만 성장)");
     }
 }
 
-// [신규] 용 클릭 핸들러 (기존 버튼 로직 이동)
+// [수정] 용 클릭 핸들러 (한계 돌파 체크 포함)
 function handleDragonClick(dragon, imgEl) {
-    // 클릭 애니메이션 (CSS 클래스 활용)
+    // 애니메이션
     imgEl.classList.remove('click-anim');
-    void imgEl.offsetWidth; // 리플로우 강제 (애니메이션 리셋용)
+    void imgEl.offsetWidth; 
     imgEl.classList.add('click-anim');
+
+    // 성장 한계 재확인 (보안)
+    let maxLevelLimit = 4; 
+    const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
+    if (!isHighTier) maxLevelLimit = 3; 
+
+    if (dragon.stage >= maxLevelLimit) return; 
 
     const max = DRAGON_DATA.reqClicks[dragon.stage];
     
-    // 성장 로직
+    // 클릭 파워 (둥지 레벨 비례)
     const clickPower = 1 + (player.nestLevel || 0);
     dragon.clicks += clickPower;
     
-    // 게이지 즉시 업데이트 (부드러운 반응)
     const percent = Math.min(100, (dragon.clicks / max) * 100);
     if(progressBar) progressBar.style.width = `${percent}%`;
 
@@ -160,7 +178,7 @@ function handleDragonClick(dragon, imgEl) {
         
         if(window.gainExp) window.gainExp(gain);
 
-        renderNest(); // 이미지 변경을 위해 재렌더링
+        renderNest(); 
         
         let evolvedImg = "assets/images/dragon/stage_adult.png";
         if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
@@ -215,20 +233,33 @@ function renderEggList() {
     });
 }
 
-// 룰렛 로직 (기존 유지 + 안전장치)
+// [핵심 수정] 룰렛 로직 (속성 필터링 + 레벨 스케일링)
 let rouletteInterval;
 let rouletteTimeout;
+let currentTargetType = null; // 목표 속성 저장
 
-function startEggRoulette(isShinyEgg = false) { 
+function startEggRoulette(isShinyEgg = false, targetType = null) { 
+    currentTargetType = targetType; // 속성 저장 (예: 'fire')
     document.getElementById('roulette-modal').classList.remove('hidden');
     document.getElementById('roulette-modal').classList.add('active');
     
     const display = document.getElementById('roulette-display');
-    const candidates = [
+    
+    // 룰렛 연출용 이미지 (targetType이 있으면 해당 속성 알만 보여줌)
+    let candidates = [
         "assets/images/dragon/egg_fire.png",
         "assets/images/dragon/egg_water.png",
-        "assets/images/dragon/egg_forest.png"
+        "assets/images/dragon/egg_forest.png",
+        "assets/images/dragon/egg_electric.png",
+        "assets/images/dragon/egg_metal.png",
+        "assets/images/dragon/egg_light.png",
+        "assets/images/dragon/egg_dark.png"
     ];
+
+    if (targetType && EGG_TYPE_NAMES[targetType]) {
+        // 특정 속성이면 그 알 이미지 하나만 보여줌
+        candidates = [`assets/images/dragon/egg_${targetType}.png`];
+    }
     
     if(rouletteInterval) clearInterval(rouletteInterval);
     if(rouletteTimeout) clearTimeout(rouletteTimeout);
@@ -245,25 +276,63 @@ function stopRoulette(isShinyEgg) {
     if(rouletteTimeout) clearTimeout(rouletteTimeout);
     if(rouletteInterval) clearInterval(rouletteInterval);
     
+    // [시스템] 레벨 기반 확률 보정
+    // 레벨 1당 에픽/전설 확률 0.05% 증가 (Lv.100 -> +5%)
+    const lv = player.level || 1;
+    const bonusProb = lv * 0.05; 
+
+    // 기본 확률
+    let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); // 전설은 조금만 오름
+    let pEpic = RARITY_DATA.epic.prob + bonusProb;
+    let pHeroic = RARITY_DATA.heroic.prob;
+    let pRare = RARITY_DATA.rare.prob;
+    
+    if(isShinyEgg) {
+        pLegend += 2; pEpic += 5; pHeroic += 20;
+    }
+
     const rand = Math.random() * 100;
     let rarity = 'common';
-    const bonus = isShinyEgg ? 20 : 0; 
 
-    if (rand < RARITY_DATA.legend.prob + (isShinyEgg ? 2 : 0)) rarity = 'legend';
-    else if (rand < RARITY_DATA.epic.prob + (isShinyEgg ? 5 : 0)) rarity = 'epic';
-    else if (rand < RARITY_DATA.heroic.prob + bonus) rarity = 'heroic';
-    else if (rand < RARITY_DATA.rare.prob + bonus) rarity = 'rare';
+    if (rand < pLegend) rarity = 'legend';
+    else if (rand < pLegend + pEpic) rarity = 'epic';
+    else if (rand < pLegend + pEpic + pHeroic) rarity = 'heroic';
+    else if (rand < pLegend + pEpic + pHeroic + pRare) rarity = 'rare';
     else rarity = 'common';
 
+    // [시스템] 속성 필터링 및 후보군 선정
     const candidates = [];
     if(typeof DRAGON_DEX !== 'undefined') {
         for (const key in DRAGON_DEX) {
-            if (DRAGON_DEX[key].rarity === rarity) {
-                candidates.push({ ...DRAGON_DEX[key], id: key });
+            const dragon = DRAGON_DEX[key];
+            // 1. 등급 일치 여부 확인
+            if (dragon.rarity === rarity) {
+                // 2. 속성 일치 여부 확인 (targetType이 있을 경우)
+                if (currentTargetType) {
+                    if (dragon.type === currentTargetType) {
+                        candidates.push({ ...dragon, id: key });
+                    }
+                } else {
+                    // targetType이 없으면(미지의 알) 모든 속성 가능
+                    candidates.push({ ...dragon, id: key });
+                }
             }
         }
     }
 
+    // 만약 해당 희귀도에 해당 속성 용이 없으면 (예: 빛 속성 커먼이 없는데 커먼이 뜸)
+    // -> 해당 속성의 "가장 낮은 등급" 용을 강제로 지급
+    if (candidates.length === 0 && currentTargetType) {
+        for (const key in DRAGON_DEX) {
+            if (DRAGON_DEX[key].type === currentTargetType) {
+                candidates.push({ ...DRAGON_DEX[key], id: key });
+                rarity = DRAGON_DEX[key].rarity; // 실제 획득한 용의 등급으로 변경
+                break; 
+            }
+        }
+    }
+
+    // 그래도 후보가 없으면 (정말 예외) 불도마뱀
     if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
     
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
@@ -286,18 +355,21 @@ function stopRoulette(isShinyEgg) {
             player.discovered.push(resultDragon.id);
         }
 
+        // 획득 시 maxStages 0단계 등록
         if(!player.maxStages) player.maxStages = {};
         if(typeof player.maxStages[resultDragon.id] === 'undefined') {
             player.maxStages[resultDragon.id] = 0;
         }
 
         const shinyText = isShiny ? "<br><b style='color:#ff00ff'>✨ 신비한 기운이 느껴집니다! ✨</b>" : "";
+        
+        // 속성별 알 이름 (예: 불의 알)
         const eggName = EGG_TYPE_NAMES[resultDragon.type] || "알";
 
         showAlert(`
             <b style="color:${RARITY_DATA[rarity].color} font-size:1.2rem;">[${eggName}] 획득!</b>
             ${shinyText}<br>
-            <span style="font-size:0.8rem; color:#aaa;">정성껏 보살펴주세요.</span>
+            <span style="font-size:0.8rem; color:#aaa;">${resultDragon.name} (${RARITY_DATA[rarity].name})</span>
         `, () => {
             player.myDragons.push({
                 uId: Date.now(), 
