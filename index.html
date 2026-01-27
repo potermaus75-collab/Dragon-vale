@@ -95,7 +95,7 @@
                     </div>
                     
                     <div class="inventory-section">
-                        <h3>🎒 소지품</h3>
+                        <h3>🎒 장비 가방</h3>
                         <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
                     </div>
                 </div>
@@ -106,9 +106,16 @@
                     <div class="egg-panel" id="my-egg-list"></div>
                     <div class="nest-panel">
                         <h3 id="dragon-name-ui">용 이름</h3>
-                        <div id="dragon-display" style="margin:20px; display:flex; justify-content:center; align-items:center;"></div>
+                        
+                        <div id="dragon-display" style="margin:10px; display:flex; justify-content:center; align-items:center;"></div>
+                        
                         <div class="rune-bar"><div id="progress-fill"></div></div>
-                        <button id="click-msg" class="btn-stone">마력 주입</button>
+                        
+                        <div class="inventory-section" style="width:95%; margin-top:10px; padding:5px;">
+                            <h4 style="margin:5px 0; font-size:0.8rem; color:#aaa;">📦 둥지 창고 (재료/알)</h4>
+                            <div id="cave-inventory-grid" class="grid-4"></div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -205,4 +212,3 @@
     <script src="js/main.js"></script>
 </body>
 </html>
-
