@@ -1,14 +1,14 @@
 // ==========================================
-// js/hatchery.js (알 이름 숨김 & 룰렛 버그 수정)
+// js/hatchery.js (터치 성장 및 동굴 가방 추가)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
 const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
+// clickMsgBtn 변수는 더 이상 사용하지 않으므로 삭제해도 되지만, 오류 방지 차원에서 null 체크용으로 둡니다.
 const clickMsgBtn = document.getElementById('click-msg'); 
 
-// [신규] 알 이름 매핑 (속성별 가명)
 const EGG_TYPE_NAMES = {
     "fire": "불타는 알",
     "water": "촉촉한 알",
@@ -20,8 +20,39 @@ const EGG_TYPE_NAMES = {
 function updateCaveUI() {
     renderEggList();     
     renderNest();        
-    updateEquipmentUI(); 
+    // updateEquipmentUI(); // 동굴에서는 장비창 제외
+    renderCaveInventory(); // [신규] 동굴 가방
     renderUpgradeBtn(); 
+}
+
+// [신규] 동굴 전용 인벤토리 (장비 제외: 알, 재료, 물약 등)
+function renderCaveInventory() {
+    const grid = document.getElementById('cave-inventory-grid');
+    if(!grid) return;
+    grid.innerHTML = "";
+    
+    if(!player.inventory) player.inventory = {};
+    const itemIds = Object.keys(player.inventory);
+    let hasItem = false;
+
+    itemIds.forEach(id => {
+        if(player.inventory[id] > 0) {
+            const item = ITEM_DB[id];
+            // 장비(equip)가 아닌 것들만 표시
+            if(item && item.type !== 'equip') {
+                hasItem = true;
+                const div = document.createElement('div');
+                div.className = 'slot-item';
+                div.onclick = () => useItem(id); 
+                div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'"><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
+                grid.appendChild(div);
+            }
+        }
+    });
+    
+    if(!hasItem) {
+        grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>아이템 없음</p>";
+    }
 }
 
 function renderUpgradeBtn() {
@@ -52,7 +83,6 @@ function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
 
-    // [수정] 0단계(알)일 때는 진짜 이름 숨기기
     let displayName = dragonData.name;
     let displayStage = DRAGON_DATA.stages[dragonData.stage];
     
@@ -63,32 +93,87 @@ function renderNest() {
     dragonNameUI.innerText = `${displayName} (${displayStage})`;
 
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
-    let percent = 0;
     
-    if (dragonData.stage >= DRAGON_DATA.stages.length - 1) {
+    // 클릭 가능 여부 판단
+    const isMaxLevel = dragonData.stage >= DRAGON_DATA.stages.length - 1;
+    
+    // 게이지 업데이트
+    let percent = 0;
+    if (isMaxLevel) {
         percent = 100;
-        clickMsgBtn.innerText = "성장 완료";
-        clickMsgBtn.disabled = true; 
-        clickMsgBtn.style.opacity = 0.5;
     } else {
         percent = (dragonData.clicks / max) * 100;
-        clickMsgBtn.innerText = "마력 주입";
-        clickMsgBtn.disabled = false;
-        clickMsgBtn.style.opacity = 1;
     }
-    
     if(progressBar) progressBar.style.width = `${percent}%`;
 
+    // 이미지 렌더링
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
     if (window.getDragonImage) {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
+    // 이미지를 새로 그릴 때마다 이벤트 핸들러 연결
     dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img">`;
     
     const imgEl = dragonDisplay.querySelector('img');
     if(dragonData.isShiny && imgEl) {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
+    }
+
+    // [핵심] 이미지 클릭 시 성장 로직 실행
+    if(imgEl && !isMaxLevel) {
+        imgEl.style.cursor = "pointer";
+        // 모바일 터치 반응 개선을 위해 onclick 사용
+        imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
+    }
+}
+
+// [신규] 용 클릭 핸들러 (기존 버튼 로직 이동)
+function handleDragonClick(dragon, imgEl) {
+    // 클릭 애니메이션 (CSS 클래스 활용)
+    imgEl.classList.remove('click-anim');
+    void imgEl.offsetWidth; // 리플로우 강제 (애니메이션 리셋용)
+    imgEl.classList.add('click-anim');
+
+    const max = DRAGON_DATA.reqClicks[dragon.stage];
+    
+    // 성장 로직
+    const clickPower = 1 + (player.nestLevel || 0);
+    dragon.clicks += clickPower;
+    
+    // 게이지 즉시 업데이트 (부드러운 반응)
+    const percent = Math.min(100, (dragon.clicks / max) * 100);
+    if(progressBar) progressBar.style.width = `${percent}%`;
+
+    if (dragon.clicks >= max) {
+        dragon.stage++;
+        dragon.clicks = 0;
+        
+        // 도감 갱신
+        if(!player.maxStages) player.maxStages = {};
+        if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
+            player.maxStages[dragon.id] = dragon.stage;
+        }
+
+        const xpReward = [0, 50, 100, 300, 1000];
+        const gain = xpReward[dragon.stage] || 50;
+        
+        if(window.gainExp) window.gainExp(gain);
+
+        renderNest(); // 이미지 변경을 위해 재렌더링
+        
+        let evolvedImg = "assets/images/dragon/stage_adult.png";
+        if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
+
+        showAlert(`
+            <div style="text-align:center;">
+                <img src="${evolvedImg}" style="width:100px;"><br>
+                ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
+                <b style="color:#2ecc71">(경험치 +${gain})</b>
+            </div>
+        `);
+        
+        if(window.saveGame) window.saveGame();
     }
 }
 
@@ -111,7 +196,6 @@ function renderEggList() {
              iconSrc = window.getDragonImage(dragon.id, dragon.stage);
         }
 
-        // [수정] 리스트에서도 알 이름 숨기기
         let listName = dragon.name;
         if(dragon.stage === 0) {
             listName = EGG_TYPE_NAMES[dragon.type] || "알";
@@ -131,58 +215,9 @@ function renderEggList() {
     });
 }
 
-if(clickMsgBtn) {
-    clickMsgBtn.addEventListener('click', () => {
-        const dragon = player.myDragons[player.currentDragonIndex];
-        if (!dragon) return;
-
-        const max = DRAGON_DATA.reqClicks[dragon.stage];
-        
-        if (dragon.stage < DRAGON_DATA.stages.length - 1) {
-            const clickPower = 1 + (player.nestLevel || 0);
-            dragon.clicks += clickPower;
-            
-            if (dragon.clicks >= max) {
-                dragon.stage++;
-                dragon.clicks = 0;
-                
-                // 도감에 최대 성장 단계 기록 갱신 (player.js의 데이터)
-                if(!player.maxStages) player.maxStages = {};
-                if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
-                    player.maxStages[dragon.id] = dragon.stage;
-                }
-
-                const xpReward = [0, 50, 100, 300, 1000];
-                const gain = xpReward[dragon.stage] || 50;
-                
-                if(window.gainExp) window.gainExp(gain);
-
-                renderNest(); 
-                
-                let evolvedImg = "assets/images/dragon/stage_adult.png";
-                if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
-
-                showAlert(`
-                    <div style="text-align:center;">
-                        <img src="${evolvedImg}" style="width:100px;"><br>
-                        ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
-                        <b style="color:#2ecc71">(경험치 +${gain})</b>
-                    </div>
-                `);
-                
-                if(window.saveGame) window.saveGame();
-            } else {
-                renderNest();
-            }
-        } else {
-            showAlert("더 이상 성장할 수 없습니다. (최대 레벨)");
-        }
-    });
-}
-
-// [수정] 룰렛 버그 수정 (중복 실행 방지)
+// 룰렛 로직 (기존 유지 + 안전장치)
 let rouletteInterval;
-let rouletteTimeout; // [추가] 타임아웃 ID 저장용
+let rouletteTimeout;
 
 function startEggRoulette(isShinyEgg = false) { 
     document.getElementById('roulette-modal').classList.remove('hidden');
@@ -190,25 +225,23 @@ function startEggRoulette(isShinyEgg = false) {
     
     const display = document.getElementById('roulette-display');
     const candidates = [
-        "assets/images/element/element_fire.png",
-        "assets/images/element/element_water.png",
-        "assets/images/element/element_forest.png"
+        "assets/images/dragon/egg_fire.png",
+        "assets/images/dragon/egg_water.png",
+        "assets/images/dragon/egg_forest.png"
     ];
     
     if(rouletteInterval) clearInterval(rouletteInterval);
-    if(rouletteTimeout) clearTimeout(rouletteTimeout); // [추가] 기존 타임아웃 제거
+    if(rouletteTimeout) clearTimeout(rouletteTimeout);
 
     rouletteInterval = setInterval(() => {
         const randImg = candidates[Math.floor(Math.random() * candidates.length)];
         display.innerHTML = `<img src="${randImg}" style="width:100px; height:100px;">`;
     }, 100);
     
-    // [추가] 타임아웃 ID 저장
     rouletteTimeout = setTimeout(() => stopRoulette(isShinyEgg), 3000);
 }
 
 function stopRoulette(isShinyEgg) {
-    // [핵심] 타임아웃과 인터벌 모두 정리하여 중복 실행 원천 차단
     if(rouletteTimeout) clearTimeout(rouletteTimeout);
     if(rouletteInterval) clearInterval(rouletteInterval);
     
@@ -236,7 +269,6 @@ function stopRoulette(isShinyEgg) {
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
-    // 결과 화면: 0단계(알) 이미지를 보여주기
     let resultImg = "assets/images/dragon/egg_fire.png";
     if(window.getDragonImage) resultImg = window.getDragonImage(resultDragon.id, 0); 
 
@@ -250,21 +282,16 @@ function stopRoulette(isShinyEgg) {
     
     setTimeout(() => {
         if(!player.discovered) player.discovered = [];
-        let isNew = false;
         if(!player.discovered.includes(resultDragon.id)) {
             player.discovered.push(resultDragon.id);
-            isNew = true;
         }
 
-        // [신규] 획득 시 maxStages에 0단계 등록
         if(!player.maxStages) player.maxStages = {};
         if(typeof player.maxStages[resultDragon.id] === 'undefined') {
             player.maxStages[resultDragon.id] = 0;
         }
 
         const shinyText = isShiny ? "<br><b style='color:#ff00ff'>✨ 신비한 기운이 느껴집니다! ✨</b>" : "";
-        
-        // 이름 대신 속성 알 이름 표시
         const eggName = EGG_TYPE_NAMES[resultDragon.type] || "알";
 
         showAlert(`
