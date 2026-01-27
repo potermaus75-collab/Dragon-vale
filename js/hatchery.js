@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (둥지 연출 및 교배 버튼 추가)
+// js/hatchery.js (팝업 이미지 수정 및 레이어 변경 대응)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -25,7 +25,7 @@ function updateCaveUI() {
     renderNest();        
     renderCaveInventory(); 
     renderUpgradeBtn(); 
-    renderBreedingBtn(); // [추가] 교배 버튼 렌더링
+    renderBreedingBtn(); 
 }
 
 function renderCaveInventory() {
@@ -73,7 +73,6 @@ function renderUpgradeBtn() {
     }
 }
 
-// [신규] 교배 버튼 생성 함수
 function renderBreedingBtn() {
     const nestPanel = document.querySelector('.nest-panel');
     let breedBtn = document.getElementById('btn-open-breeding');
@@ -134,8 +133,8 @@ function renderNest() {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    // [수정] 둥지 오버레이(nest-overlay-img) 추가
-    // 용 이미지가 뒤에, 둥지 앞부분 이미지가 앞에 오도록 배치
+    // [수정] 용 이미지와 둥지 이미지의 순서(z-index)는 CSS에서 제어
+    // 여기서는 구조만 잡아줍니다. (이미지 주소 할당)
     dragonDisplay.innerHTML = `
         <img src="${imgSrc}" class="main-dragon-img" 
             onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">
@@ -179,15 +178,24 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
-        // 알(0) -> 유아기(1)로 넘어갈 때 도감 등록
+        // [수정됨] 알(0) -> 유아기(1) 부화 시 이미지 표시 로직 추가
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
                 player.discovered.push(dragon.id);
             }
+
+            // 아기 용 이미지 가져오기
+            let babyImg = "assets/images/dragon/stage_baby.png";
+            if(window.getDragonImage) babyImg = window.getDragonImage(dragon.id, 1);
+
             showAlert(`
                 <div style="text-align:center;">
                     <h3>🐣 부화 성공!</h3>
+                    
+                    <img src="${babyImg}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
+                         onerror="handleImgError(this, '${dragon.type}', 1)">
+                    
                     <br>알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!
                     <br><span style="font-size:0.8rem; color:#aaa;">(도감에 등록되었습니다)</span>
                 </div>
