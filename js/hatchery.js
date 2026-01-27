@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (완전한 코드)
+// js/hatchery.js (경험치 보상 & 이미지 매핑 적용)
 // ==========================================
 
 // DOM 요소
@@ -14,10 +14,10 @@ function updateCaveUI() {
     renderEggList();     
     renderNest();        
     updateEquipmentUI(); 
-    renderUpgradeBtn(); // [신규] 강화 버튼 렌더링
+    renderUpgradeBtn(); 
 }
 
-// [신규] 둥지 강화 버튼 생성
+// 둥지 강화 버튼 렌더링
 function renderUpgradeBtn() {
     const nestPanel = document.querySelector('.nest-panel');
     let upgradeBtn = document.getElementById('btn-upgrade-nest');
@@ -69,18 +69,22 @@ function renderNest() {
     
     if(progressBar) progressBar.style.width = `${percent}%`;
 
-    // 이미지 표시
+    // [핵심 수정] 이미지 매핑 적용
+    // dragon.js에 있는 getDragonImage 함수를 사용, 없으면 기본 배열 사용
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
-    if (DRAGON_DATA.stageImages && DRAGON_DATA.stageImages[dragonData.stage]) {
+    
+    if (window.getDragonImage) {
+        imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
+    } else if (DRAGON_DATA.stageImages && DRAGON_DATA.stageImages[dragonData.stage]) {
+        // dragon.js가 아직 업데이트 안 되었을 경우의 예비책
         imgSrc = DRAGON_DATA.stageImages[dragonData.stage];
     }
 
     dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img">`;
     
-    // 이로치(Shiny) 효과 (이미지에 필터 적용)
+    // 이로치 효과
     const imgEl = dragonDisplay.querySelector('img');
     if(dragonData.isShiny && imgEl) {
-        // 색조 변경 및 밝기 조절로 '다른 색' 표현
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
 }
@@ -100,8 +104,16 @@ function renderEggList() {
         div.style.textAlign = "center";
         div.style.border = index === player.currentDragonIndex ? "2px solid #ffd700" : "1px solid #5d4a6d";
         
+        // 리스트 아이콘은 알 이미지 또는 현재 단계 이미지
+        let iconSrc = "assets/images/dragon/stage_egg.png";
+        if(window.getDragonImage) {
+             // 리스트에는 항상 알이나 유아기 등 작은 이미지를 보여줄 수도 있음
+             // 여기서는 현재 단계 이미지를 작게 보여줌
+             iconSrc = window.getDragonImage(dragon.id, dragon.stage);
+        }
+
         div.innerHTML = `
-            <img src="assets/images/dragon/stage_egg.png" class="list-egg-img"><br>
+            <img src="${iconSrc}" class="list-egg-img"><br>
             <span style="font-size:0.7rem">${dragon.name}</span>
         `;
         
@@ -123,20 +135,34 @@ if(clickMsgBtn) {
         const max = DRAGON_DATA.reqClicks[dragon.stage];
         
         if (dragon.stage < DRAGON_DATA.stages.length - 1) {
-            // [핵심] 둥지 레벨만큼 클릭 효율 증가 (기본 1 + 레벨)
             const clickPower = 1 + (player.nestLevel || 0);
             dragon.clicks += clickPower;
             
             if (dragon.clicks >= max) {
                 dragon.stage++;
                 dragon.clicks = 0;
+                
+                // [신규] 성장 시 플레이어 경험치 획득
+                // (단계별 보상: 1->2: 50xp, 2->3: 100xp, 3->4: 300xp, 4->5: 1000xp)
+                const xpReward = [0, 50, 100, 300, 1000];
+                const gain = xpReward[dragon.stage] || 50;
+                
+                if(window.gainExp) window.gainExp(gain);
+
                 renderNest(); 
+                
+                // 이미지도 갱신된 상태로 알림창 표시
+                let evolvedImg = "assets/images/dragon/stage_adult.png";
+                if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
+
                 showAlert(`
                     <div style="text-align:center;">
-                        <img src="${DRAGON_DATA.stageImages[dragon.stage]}" style="width:100px;"><br>
-                        ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!
+                        <img src="${evolvedImg}" style="width:100px;"><br>
+                        ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
+                        <b style="color:#2ecc71">(경험치 +${gain})</b>
                     </div>
                 `);
+                
                 if(window.saveGame) window.saveGame();
             } else {
                 renderNest();
@@ -149,7 +175,7 @@ if(clickMsgBtn) {
 
 // 룰렛 로직
 let rouletteInterval;
-function startEggRoulette(isShinyEgg = false) { // isShinyEgg: 보석 알 여부
+function startEggRoulette(isShinyEgg = false) { 
     document.getElementById('roulette-modal').classList.remove('hidden');
     document.getElementById('roulette-modal').classList.add('active');
     
@@ -166,19 +192,14 @@ function startEggRoulette(isShinyEgg = false) { // isShinyEgg: 보석 알 여부
         display.innerHTML = `<img src="${randImg}" style="width:100px; height:100px;">`;
     }, 100);
     
-    // 3초 후 멈춤
     setTimeout(() => stopRoulette(isShinyEgg), 3000);
 }
 
-// [핵심] 50마리 중 뽑기 로직
 function stopRoulette(isShinyEgg) {
     clearInterval(rouletteInterval);
     
-    // 1. 뽑을 용의 등급 결정 (가중치 랜덤)
     const rand = Math.random() * 100;
     let rarity = 'common';
-    
-    // 신비한 알(보석)이면 확률 보정 (희귀 이상 나올 확률 증가)
     const bonus = isShinyEgg ? 20 : 0; 
 
     if (rand < RARITY_DATA.legend.prob + (isShinyEgg ? 2 : 0)) rarity = 'legend';
@@ -187,32 +208,33 @@ function stopRoulette(isShinyEgg) {
     else if (rand < RARITY_DATA.rare.prob + bonus) rarity = 'rare';
     else rarity = 'common';
 
-    // 2. 해당 등급의 용 목록 추출
     const candidates = [];
-    for (const key in DRAGON_DEX) {
-        if (DRAGON_DEX[key].rarity === rarity) {
-            candidates.push({ ...DRAGON_DEX[key], id: key }); // 데이터에 ID 포함
+    if(typeof DRAGON_DEX !== 'undefined') {
+        for (const key in DRAGON_DEX) {
+            if (DRAGON_DEX[key].rarity === rarity) {
+                candidates.push({ ...DRAGON_DEX[key], id: key });
+            }
         }
     }
 
-    // 3. 후보 중 랜덤 선택 (혹시 없으면 불도마뱀)
-    if (candidates.length === 0) candidates.push({ ...DRAGON_DEX['fire_c1'], id: 'fire_c1' });
-    const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
+    if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
     
-    // 4. 이로치(색이 다른 용) 결정 (기본 5%, 보석알 20%)
+    const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
-    // UI 표시
+    // 결과 화면에 베이비 이미지 보여주기
+    let resultImg = "assets/images/dragon/stage_baby.png";
+    if(window.getDragonImage) resultImg = window.getDragonImage(resultDragon.id, 1); // 1=baby
+
     const shinyStyle = isShiny ? 'filter:hue-rotate(150deg) brightness(1.2);' : '';
     document.getElementById('roulette-display').innerHTML = `
         <div style="text-align:center">
-            <img src="assets/images/dragon/stage_baby.png" style="width:100px; height:100px; ${shinyStyle}"><br>
+            <img src="${resultImg}" style="width:100px; height:100px; ${shinyStyle}"><br>
             <b style="color:${RARITY_DATA[rarity].color}">${RARITY_DATA[rarity].name}</b>
         </div>
     `;
     
     setTimeout(() => {
-        // 도감 등록
         if(!player.discovered) player.discovered = [];
         let isNew = false;
         if(!player.discovered.includes(resultDragon.id)) {
@@ -229,10 +251,10 @@ function stopRoulette(isShinyEgg) {
             <span style="font-size:0.8rem; color:#aaa;">${resultDragon.desc}</span>
         `, () => {
             player.myDragons.push({
-                uId: Date.now(), // 고유 ID
-                id: resultDragon.id, // 도감 ID
+                uId: Date.now(), 
+                id: resultDragon.id,
                 type: resultDragon.type,
-                isShiny: isShiny, // 이로치 여부 저장
+                isShiny: isShiny,
                 rarity: rarity,
                 stage: 0, 
                 clicks: 0, 
@@ -246,7 +268,6 @@ function stopRoulette(isShinyEgg) {
     }, 1000);
 }
 
-// 장비 UI 갱신
 function updateEquipmentUI() {
     const slots = ['head', 'body', 'arm', 'leg'];
     slots.forEach(slot => {
