@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (도감 상세 보기 & 검은 실루엣)
+// js/main.js (도감 이미지 수정 및 가방 분리 적용)
 // ==========================================
 
 // 전역 변수
@@ -13,7 +13,7 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// 스마트 프리로딩 (생략 - 기존 코드와 동일하지만 전체 포함)
+// 스마트 프리로딩
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
     "assets/images/ui/panel_banner.png",
@@ -53,7 +53,6 @@ function preloadAssets() {
             stageSuffixes.forEach(suffix => {
                 imagesToLoad.push(`assets/images/dragon/${baseName}${suffix}`);
             });
-            // 공통 알 이미지 추가 로드
             imagesToLoad.push(`assets/images/dragon/egg_fire.png`);
             imagesToLoad.push(`assets/images/dragon/egg_water.png`);
             imagesToLoad.push(`assets/images/dragon/egg_forest.png`);
@@ -195,6 +194,7 @@ function switchTab(tabName) {
     }
 }
 
+// [수정] 내 정보 탭에서는 '장비(equip)'만 보여줌
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -202,22 +202,27 @@ function renderInventory() {
     if(!player.inventory) player.inventory = {};
 
     const itemIds = Object.keys(player.inventory);
-    if(itemIds.length === 0) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888;'>비어있음</p>";
+    let hasItem = false;
 
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            if(!item) return;
-            const div = document.createElement('div');
-            div.className = 'slot-item';
-            div.onclick = () => useItem(id); 
-            div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'"><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
-            grid.appendChild(div);
+            // 장비(equip)만 필터링
+            if(item && item.type === 'equip') {
+                hasItem = true;
+                const div = document.createElement('div');
+                div.className = 'slot-item';
+                div.onclick = () => useItem(id); 
+                div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'"><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
+                grid.appendChild(div);
+            }
         }
     });
+
+    if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// [핵심] 도감 상세 보기 기능 강화 (5단계 표시 + 실루엣)
+// [수정] 도감에 현재 성장 단계(maxStage) 반영
 function renderBook() {
     const grid = document.getElementById('book-grid');
     if(!grid) return;
@@ -236,17 +241,20 @@ function renderBook() {
         if(isFound) div.style.borderColor = rarityColor;
 
         if (isFound) {
-            // 성체 이미지(3단계)를 대표 아이콘으로
-            let displayImg = "assets/images/dragon/stage_adult.png";
+            // 도달한 최고 단계 확인
+            const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
+            
+            let displayImg = "assets/images/dragon/stage_egg.png";
             if(window.getDragonImage) {
-                displayImg = window.getDragonImage(dragonId, 3); 
+                // 현재 상태(최고 단계)의 이미지 가져오기
+                displayImg = window.getDragonImage(dragonId, maxStage); 
             }
+
             div.innerHTML = `
                 <img src="${displayImg}" class="book-img">
                 <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
             `;
             
-            // [클릭 이벤트] 상세 정보 모달
             div.onclick = () => {
                 showDragonDetailModal(dragonId, dragonInfo, rarityColor);
             };
@@ -260,20 +268,14 @@ function renderBook() {
     });
 }
 
-// [신규] 도감 상세 모달 생성 함수
 function showDragonDetailModal(dragonId, info, color) {
-    // 플레이어가 도달한 최대 단계 확인
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
-    // 5단계 이미지 HTML 생성
     let stagesHtml = `<div style="display:flex; justify-content:space-around; align-items:flex-end; margin:15px 0; gap:5px;">`;
     
     for(let i=0; i<5; i++) {
         const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
-        // 도달하지 못한 단계는 검은 실루엣 처리 (brightness 0)
-        // 단, 0단계(알)는 공통 이미지이므로 항상 보여줘도 됨(스포일러 방지 이미 되어있음)
-        // 하지만 요청대로 "성장하지 않은 단계는 검은 실루엣" 처리
         const isUnknown = i > maxStage;
         const style = isUnknown ? 
             "filter: brightness(0); opacity: 0.5; width:40px; height:40px;" : 
