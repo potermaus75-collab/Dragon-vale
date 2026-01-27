@@ -5,9 +5,18 @@
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 body, html {
     margin: 0; padding: 0; width: 100%; height: 100%;
-    background-color: #000; /* 기본 배경 검정 */
+    
+    /* [수정됨] 배경 변경: 단순 검정 -> 신비로운 보라색 동굴 느낌 그라데이션 */
+    background: radial-gradient(circle at center, #3a2e4d 0%, #1a1025 100%);
+    
     font-family: 'Nanum Gothic', sans-serif;
     overflow: hidden;
+    color: #fff; /* 기본 글자색 흰색 */
+}
+
+/* 추가 팁: 모달 뒷배경도 약간 보라빛이 돌게 수정 */
+#common-modal, #roulette-modal {
+    background: rgba(10, 5, 15, 0.85) !important; /* 더 짙은 보라색 반투명 */
 }
 
 /* 화면 공통 */
