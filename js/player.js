@@ -1,85 +1,73 @@
 // ==========================================
-// js/player.js (레벨업 시스템 포함)
+// js/player.js (최대 성장 단계 저장 기능 추가)
 // ==========================================
 
-// 플레이어 초기 상태 정의
 const INITIAL_PLAYER_STATE = {
     level: 1, 
-    exp: 0,       // [신규] 현재 경험치
-    maxExp: 100,  // [신규] 다음 레벨까지 필요 경험치
+    exp: 0,       
+    maxExp: 100,  
     gold: 500,
     gem: 10, 
     inventory: {}, 
     myDragons: [
+        // 초기 지급 용
         { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common" } 
     ],
     currentDragonIndex: 0,
     equipment: { head: null, body: null, arm: null, leg: null },
     stats: { explore: 0, atk: 10, def: 5 },
     discovered: [], 
+    maxStages: {}, // [신규] 용 별 최대 도달 단계 저장 { "fire_c1": 2, ... }
     nestLevel: 0,
     nickname: "Guest"
 };
 
-// 실제 플레이어 변수
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
 let tempLoot = []; 
 
-// 재화, 스탯, [신규] 경험치 UI 갱신
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
     if(goldUI) goldUI.innerText = player.gold;
     if(gemUI) gemUI.innerText = player.gem;
     
-    // [신규] 레벨 및 경험치바 표시
     const levelUI = document.getElementById('ui-level');
     const expBar = document.getElementById('ui-exp-fill');
     
     if(levelUI) levelUI.innerText = `Lv.${player.level}`;
-    
     if(expBar) {
-        // maxExp가 0이 되는 오류 방지
         const max = player.maxExp || 100;
         const percent = Math.min(100, (player.exp / max) * 100);
         expBar.style.width = `${percent}%`;
     }
-
-    // 스탯 재계산
     recalcStats();
 }
 
-// [신규] 경험치 획득 및 레벨업 시스템
 function gainExp(amount) {
     if(typeof player.exp === 'undefined') player.exp = 0;
     if(!player.maxExp) player.maxExp = 100;
 
     player.exp += amount;
 
-    // 레벨업 체크
     if (player.exp >= player.maxExp) {
-        player.exp -= player.maxExp; // 초과 경험치 이월
+        player.exp -= player.maxExp; 
         player.level++;
-        player.maxExp = Math.floor(player.maxExp * 1.5); // 필요 경험치 1.5배씩 증가
+        player.maxExp = Math.floor(player.maxExp * 1.5); 
         
-        // 레벨업 축하 알림
         if(window.showAlert) {
             window.showAlert(`
                 <div style="text-align:center; color:#f1c40f;">
-                    <h2>LEVEL UP!</h2>
-                    <br>
+                    <h2>LEVEL UP!</h2><br>
                     <b style="font-size:1.5rem;">Lv.${player.level} 달성!</b><br><br>
                     <span style="font-size:0.9rem; color:#fff;">이제 새로운 지역을 탐험할 수 있습니다.</span>
                 </div>
             `);
         }
-        // 중요 이벤트이므로 즉시 저장
         saveGame();
     }
     updateCurrency();
 }
 
-// 스탯 재계산 함수
 function recalcStats() {
     let baseAtk = 10;
     let baseDef = 5;
@@ -91,7 +79,6 @@ function recalcStats() {
             else baseDef += ITEM_DB[itemId].stat;
         }
     });
-    
     player.stats.atk = baseAtk;
     player.stats.def = baseDef;
 
@@ -102,10 +89,7 @@ function recalcStats() {
 }
 
 function addItem(itemId, count = 1, force = false) {
-    if (!ITEM_DB[itemId] && !force) {
-        console.warn(`[System] 존재하지 않는 아이템 ID: ${itemId}`);
-        return;
-    }
+    if (!ITEM_DB[itemId] && !force) return;
     if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
@@ -145,26 +129,17 @@ function useItem(itemId) {
     const item = ITEM_DB[itemId];
     if (!item) {
         delete player.inventory[itemId];
-        if(typeof renderInventory === 'function') renderInventory();
         return;
     }
     
     if (item.type === "equip") {
         showConfirm(
-            `<div style="text-align:center">
-                <img src="${item.img}" style="width:64px;"><br>
-                <b>${item.name}</b><br>
-                (효과: 스탯 +${item.stat})<br>
-                장착하시겠습니까?
-            </div>`, 
+            `<div style="text-align:center"><img src="${item.img}" style="width:64px;"><br><b>${item.name}</b><br>(효과: 스탯 +${item.stat})<br>장착하시겠습니까?</div>`, 
             () => equipItem(itemId, item.slot)
         );
     } else if (item.type === "egg") {
         showConfirm(
-            `<div style="text-align:center">
-                <img src="${item.img}" style="width:64px;"><br>
-                <b>${item.name}</b>을(를) 부화시키겠습니까?
-            </div>`, 
+            `<div style="text-align:center"><img src="${item.img}" style="width:64px;"><br><b>${item.name}</b>을(를) 부화시키겠습니까?</div>`, 
             () => {
                 player.inventory[itemId]--;
                 if(window.startEggRoulette) window.startEggRoulette(itemId === 'egg_shiny');
@@ -192,28 +167,22 @@ function upgradeNest() {
         showAlert("이미 최고 레벨입니다!");
         return;
     }
-    
     const cost = NEST_UPGRADE_COST[player.nestLevel || 0];
     const userWood = player.inventory['nest_wood'] || 0;
     
     if (userWood >= cost) {
         showConfirm(
-            `<div style="text-align:center">
-                <img src="assets/images/item/material_wood.png" style="width:40px;"><br>
-                <b>둥지를 강화하시겠습니까?</b><br>
-                소모: 둥지 재료 ${cost}개<br>
-                효과: 터치 당 경험치 +1
-            </div>`,
+            `<div style="text-align:center"><img src="assets/images/item/material_wood.png" style="width:40px;"><br><b>둥지 강화?</b><br>소모: ${cost} 재료</div>`,
             () => {
                 player.inventory['nest_wood'] -= cost;
                 player.nestLevel = (player.nestLevel || 0) + 1;
-                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b><br>이제 용이 더 빨리 자랍니다!`);
+                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b>`);
                 if(window.updateUI) window.updateUI();
-                if(typeof saveGame === 'function') saveGame();
+                saveGame();
             }
         );
     } else {
-        showAlert(`둥지 재료가 부족합니다.<br>(보유: ${userWood} / 필요: ${cost})<br><small>탐험에서 '둥지 재료'를 모으세요.</small>`);
+        showAlert(`재료가 부족합니다. (보유: ${userWood}/${cost})`);
     }
 }
 
@@ -225,7 +194,7 @@ function equipItem(itemId, slot) {
     updateCurrency(); 
     if(window.updateUI) window.updateUI();
     if(typeof renderInventory === 'function') renderInventory();
-    if(window.saveGame) window.saveGame();
+    saveGame();
 }
 
 function unequipItem(slot) {
@@ -236,11 +205,10 @@ function unequipItem(slot) {
         updateCurrency(); 
         if(window.updateUI) window.updateUI();
         if(typeof renderInventory === 'function') renderInventory();
-        if(window.saveGame) window.saveGame();
+        saveGame();
     }
 }
 
-// 저장 및 불러오기 (데이터 병합 로직 포함)
 function saveGame() {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
     const data = { player: player, timestamp: Date.now() };
@@ -255,31 +223,35 @@ function loadGame() {
             const parsedData = JSON.parse(saved);
             const savedPlayer = parsedData.player;
 
-            // [중요] 데이터 병합 (초기값 + 저장값)
             player = { ...INITIAL_PLAYER_STATE, ...savedPlayer };
 
-            // 필수 객체 안전장치
             if(!player.inventory) player.inventory = {};
             if(!player.discovered) player.discovered = [];
             if(!player.myDragons) player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
             if(!player.equipment) player.equipment = { head: null, body: null, arm: null, leg: null };
             if(!player.stats) player.stats = { explore: 0, atk: 10, def: 5 };
             
-            // [신규] 경험치 필드가 없던 구버전 세이브 호환
+            // [신규] maxStages 초기화 (없으면 빈 객체)
+            if(!player.maxStages) player.maxStages = {};
+
+            // [호환성] 기존에 가지고 있던 용들의 현재 단계도 maxStages에 기록해줘야 함
+            player.myDragons.forEach(d => {
+                if(!player.maxStages[d.id] || player.maxStages[d.id] < d.stage) {
+                    player.maxStages[d.id] = d.stage;
+                }
+            });
+
             if(typeof player.exp === 'undefined') player.exp = 0;
             if(!player.maxExp) player.maxExp = 100;
 
             if(player.nickname && typeof userNickname !== 'undefined') {
                 userNickname = player.nickname;
             }
-
             console.log("게임 불러오기 성공");
         } catch(e) {
-            console.error("세이브 파일 로드 실패", e);
+            console.error("로드 실패", e);
             player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
         }
     }
 }
-
-// 전역 할당 (다른 파일에서 호출 가능하도록)
 window.gainExp = gainExp;
