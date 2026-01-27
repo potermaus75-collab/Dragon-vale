@@ -1,8 +1,8 @@
 // ==========================================
-// js/data.js (지역 7개 확장 & 속성별 알 추가)
+// js/data.js (탐험 확률 조정)
 // ==========================================
 
-// [시스템 1] 등급 데이터 (확률은 hatchery.js에서 레벨에 따라 보정됨)
+// [시스템 1] 등급 데이터
 const RARITY_DATA = {
     "common": { name: "일반", color: "#b0b0b0", prob: 50 },
     "rare": { name: "희귀", color: "#3498db", prob: 30 },
@@ -24,7 +24,7 @@ const DRAGON_DATA = {
     ]
 };
 
-// [시스템 4] 탐험 지역 (7개로 확장 및 속성 지정)
+// [시스템 4] 탐험 지역
 const REGION_DATA = [
     { id: 0, name: "푸른 숲", levelReq: 1, type: "forest", desc: "풀 속성 용이 서식합니다.", bg: "assets/images/bg/forest.jpg" },
     { id: 1, name: "깊은 바다", levelReq: 1, type: "water", desc: "물 속성 용이 서식합니다.", bg: "assets/images/bg/sea.jpg" },
@@ -35,21 +35,22 @@ const REGION_DATA = [
     { id: 6, name: "지하 심연", levelReq: 30, type: "dark", desc: "어둠 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/abyss.jpg" }
 ];
 
+// [수정] 둥지 발견 확률 하향 (30 -> 15)
 const ENCOUNTER_RATES = {
     NOTHING: 20,
-    RESOURCE: 50, 
-    NEST: 30
+    RESOURCE: 65, // 나머지 확률을 여기로 배분
+    NEST: 15     // 절반으로 감소
 };
 
 const NEST_UPGRADE_COST = [10, 30, 60, 100, 200]; 
 
-// 아이템 데이터베이스 (속성별 알 추가)
+// 아이템 데이터베이스
 const ITEM_DB = {
     // 소비/재료
     "potion_s": { name: "성장 물약", img: "assets/images/item/potion_growth.png", price: 100, desc: "경험치 +20", type: "use", effect: 20, costType: "gold" },
     "nest_wood": { name: "둥지 재료", img: "assets/images/item/material_wood.png", price: 50, desc: "둥지 강화", type: "material", costType: "gold" },
     
-    // 알 (속성별) - 탐험에서 획득 / 상점에서 구매
+    // 알 (속성별)
     "egg_fire": { name: "불의 알", img: "assets/images/dragon/egg_fire.png", price: 2000, desc: "불 속성 용 부화", type: "egg", dragonType: "fire", costType: "gold" },
     "egg_water": { name: "물의 알", img: "assets/images/dragon/egg_water.png", price: 2000, desc: "물 속성 용 부화", type: "egg", dragonType: "water", costType: "gold" },
     "egg_forest": { name: "풀의 알", img: "assets/images/dragon/egg_forest.png", price: 2000, desc: "풀 속성 용 부화", type: "egg", dragonType: "forest", costType: "gold" },
