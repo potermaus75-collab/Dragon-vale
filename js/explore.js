@@ -1,8 +1,7 @@
 // ==========================================
-// js/explore.js (흐름 수정 및 잠금 기능)
+// js/explore.js (결과창 아이콘 및 둥지 이미지 수정)
 // ==========================================
 
-// 전역 변수 window에 할당 (main.js에서 체크하기 위함)
 window.isExploreActive = false; 
 
 let currentRegionId = -1;
@@ -58,7 +57,7 @@ function renderMap() {
 }
 
 function enterSelectedRegion() {
-    if (window.isExploreActive) return; // 중복 진입 방지
+    if (window.isExploreActive) return; 
 
     if (selectedRegionId === null) {
         showAlert("먼저 탐험할 지역을 선택해주세요.");
@@ -83,7 +82,7 @@ function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
     tempLoot = []; 
-    window.isExploreActive = true; // [중요] 탐험 시작 플래그 ON
+    window.isExploreActive = true; 
 
     toggleExploreView('run');
     
@@ -178,17 +177,20 @@ function processRandomEvent() {
     }
 }
 
+// [수정] 둥지 발견 시 '미지의 알(박스)' 이미지가 뜨도록 수정
 function encounterNest() {
-    // 이벤트 중 이동 버튼 비활성화
     const moveBtn = document.getElementById('btn-move');
     if(moveBtn) moveBtn.disabled = true;
 
     stealAttempts = 3; 
 
+    // 이미지가 없으면 기본값 사용, 있으면 egg_random 이미지 사용
+    const nestImg = (typeof ITEM_DB !== 'undefined' && ITEM_DB['egg_random']) ? ITEM_DB['egg_random'].img : "assets/images/dragon/stage_egg.png";
+
     setTimeout(() => {
         showConfirm(
             `<div style="text-align:center;">
-                <img src="assets/images/dragon/stage_egg.png" style="width:80px;"><br>
+                <img src="${nestImg}" style="width:80px;"><br>
                 <b>용의 둥지를 발견했습니다!</b><br>
                 알을 훔치시겠습니까?
             </div>`, 
@@ -212,7 +214,6 @@ function tryStealLoop() {
     if (success) {
         showAlert("성공! 알을 손에 넣었습니다!<br>(탐험을 성공적으로 마칩니다)", () => {
             addTempLoot("egg_random", 1);
-            // [수정] 성공 시 즉시 귀환
             finishExplore(true);
         });
     } else {
@@ -290,7 +291,7 @@ function fightParent(winChance) {
 function finishExplore(success = true) {
     if (!window.isExploreActive) return;
 
-    window.isExploreActive = false; // [중요] 상태 해제
+    window.isExploreActive = false; 
 
     const lootMsg = claimTempLoot();
     
@@ -306,7 +307,6 @@ function finishExplore(success = true) {
         
         toggleExploreView('map');
         
-        // [신규] 탐험 성공 시 플레이어 경험치 획득 (지역 레벨 * 5 + 5)
         if(success) {
             const xpGain = (currentRegionId * 5) + 5;
             if(window.gainExp) window.gainExp(xpGain);
@@ -325,6 +325,43 @@ function finishExplore(success = true) {
     } else {
         showAlert("마을로 돌아왔습니다.", onComplete);
     }
+}
+
+// [수정] 결과창에 아이콘 이미지 추가
+function claimTempLoot() {
+    if (tempLoot.length === 0) return "";
+    
+    let html = "<div style='background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; display:inline-block; text-align:left; width:80%;'>";
+    
+    tempLoot.forEach(item => {
+        if (item.id === 'gold') {
+            player.gold += item.count;
+            html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
+                        <img src="assets/images/ui/icon_gold.png" style="width:20px; margin-right:5px;">
+                        <span style="color:#f1c40f">${item.count} 골드</span>
+                     </div>`;
+        } else if (item.id === 'gem') {
+            player.gem += item.count;
+            html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
+                        <img src="assets/images/ui/icon_gem.png" style="width:20px; margin-right:5px;">
+                        <span style="color:#3498db">${item.count} 보석</span>
+                     </div>`;
+        } else {
+            const itemData = ITEM_DB[item.id];
+            const itemName = itemData ? itemData.name : "아이템";
+            const itemImg = itemData ? itemData.img : "assets/images/ui/icon_question.png";
+            
+            addItem(item.id, item.count);
+            html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
+                        <img src="${itemImg}" style="width:24px; margin-right:5px;">
+                        <span>${itemName} x${item.count}</span>
+                     </div>`;
+        }
+    });
+    
+    html += "</div>";
+    tempLoot = [];
+    return html;
 }
 
 window.initExploreTab = function() { renderMap(); }
