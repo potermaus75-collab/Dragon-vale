@@ -1,5 +1,5 @@
 /* =========================================
-   css/style.css (CSS 드래곤 기능 포함)
+   css/style.css (CSS 드래곤 사이즈 축소판)
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
@@ -231,7 +231,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 }
 
 /* =========================================
-   [신규] CSS 드래곤 (이미지 없을 때 대체)
+   [수정] CSS 드래곤 사이즈 축소 (도감 튀어나감 방지)
    ========================================= */
 .css-dragon {
     display: inline-block; position: relative;
@@ -241,33 +241,36 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 @keyframes dragonBreath {
     0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); }
 }
+
+/* 사이즈 조절 (기존 60~140px -> 40~80px 수준) */
 .css-dragon.stage-0 {
-    width: 60px !important; height: 70px !important;
+    width: 40px !important; height: 50px !important;
     border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    box-shadow: inset -5px -5px 10px rgba(0,0,0,0.5);
+    box-shadow: inset -3px -3px 5px rgba(0,0,0,0.5);
 }
 .css-dragon.stage-1 {
-    width: 70px !important; height: 70px !important;
+    width: 50px !important; height: 50px !important;
     clip-path: polygon(20% 20%, 50% 0%, 80% 20%, 90% 50%, 80% 90%, 20% 90%, 10% 50%);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 .css-dragon.stage-2 {
-    width: 90px !important; height: 90px !important;
+    width: 60px !important; height: 60px !important;
     clip-path: polygon(50% 0%, 100% 20%, 80% 50%, 100% 80%, 50% 100%, 0% 80%, 20% 50%, 0% 20%);
 }
 .css-dragon.stage-3 {
-    width: 120px !important; height: 120px !important;
+    width: 70px !important; height: 70px !important;
     clip-path: polygon(50% 0%, 80% 10%, 100% 35%, 85% 55%, 100% 100%, 50% 85%, 0% 100%, 15% 55%, 0% 35%, 20% 10%);
 }
 .css-dragon.stage-4 {
-    width: 140px !important; height: 140px !important;
+    width: 80px !important; height: 80px !important;
     clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-    filter: drop-shadow(0 0 10px currentColor);
+    filter: drop-shadow(0 0 5px currentColor);
 }
+
 .css-dragon.type-fire { background: radial-gradient(circle at 30% 30%, #ff7e5f, #c0392b); color: #e74c3c; }
 .css-dragon.type-water { background: radial-gradient(circle at 30% 30%, #3498db, #2c3e50); color: #3498db; }
 .css-dragon.type-forest { background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60); color: #2ecc71; }
 .css-dragon.type-electric { background: radial-gradient(circle at 30% 30%, #f1c40f, #8e44ad); color: #f1c40f; }
 .css-dragon.type-metal { background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: #95a5a6; }
-.css-dragon.type-light { background: radial-gradient(circle at 30% 30%, #ffffff, #f1c40f); box-shadow: 0 0 15px #f1c40f; color: #f1c40f; }
+.css-dragon.type-light { background: radial-gradient(circle at 30% 30%, #ffffff, #f1c40f); box-shadow: 0 0 10px #f1c40f; color: #f1c40f; }
 .css-dragon.type-dark { background: radial-gradient(circle at 30% 30%, #9b59b6, #000000); color: #8e44ad; }
