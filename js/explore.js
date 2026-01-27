@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (모달/저장 적용 버전)
+// js/explore.js
 // ==========================================
 
 let currentRegionId = -1;
@@ -13,6 +13,7 @@ function renderMap() {
     if(!list) return; 
     list.innerHTML = "";
     
+    // 버튼 찾기 (main.js가 생성한 구조에 맞춤)
     const enterBtn = document.querySelector('.enter-btn') || document.querySelector('#tab-explore button');
     
     if(enterBtn) {
@@ -26,6 +27,7 @@ function renderMap() {
         const isLocked = player.level < region.levelReq;
         
         div.className = `region-card ${isLocked ? 'locked' : ''}`;
+        // 텍스트 위주지만 필요시 이미지 추가 가능
         div.innerHTML = `
             <h3>${region.name}</h3>
             <p style="font-size:0.8rem; color:#aaa;">${isLocked ? `Lv.${region.levelReq} 필요` : region.desc}</p>
@@ -88,7 +90,7 @@ function startExplore(regionId) {
     bgElem.style.backgroundColor = "#222"; 
     
     document.getElementById('region-title').innerText = region.name;
-    document.getElementById('event-msg').innerText = "탐험을 시작합니다. 이동하세요.";
+    document.getElementById('event-msg').innerHTML = "탐험을 시작합니다. 이동하세요.";
     
     updateMoveUI();
 }
@@ -110,24 +112,25 @@ function updateMoveUI() {
     const moveBtn = document.getElementById('btn-move');
     const returnBtn = document.getElementById('btn-return');
 
-    counter.innerText = `남은 이동: ${movesLeft}`;
+    // 이동 아이콘 추가
+    counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle"> 남은 이동: ${movesLeft}`;
     
     if (movesLeft <= 0) {
         document.getElementById('event-msg').innerText = "날이 저물었습니다. 귀환하세요.";
         moveBtn.disabled = true;
         moveBtn.style.opacity = 0.5;
-        moveBtn.innerText = "이동 불가";
+        moveBtn.innerHTML = "이동 불가";
 
-        returnBtn.innerText = "🎁 보상 받기";
+        returnBtn.innerHTML = "<img src='assets/images/ui/icon_gift.png' style='width:20px;vertical-align:middle'> 보상 받기";
         returnBtn.classList.remove('sub');
         returnBtn.style.color = "#2ecc71";
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = false;
         moveBtn.style.opacity = 1;
-        moveBtn.innerText = "👣 이동";
+        moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         
-        returnBtn.innerText = "🏠 중도 포기";
+        returnBtn.innerHTML = "<img src='assets/images/ui/icon_home.png' style='width:20px;vertical-align:middle'> 중도 포기";
         returnBtn.classList.add('sub');
         returnBtn.style.color = "#aaa"; 
         returnBtn.onclick = () => finishExplore(false);
@@ -139,15 +142,18 @@ function processRandomEvent() {
     const msgArea = document.getElementById('event-msg');
 
     if (roll < ENCOUNTER_RATES.NOTHING) {
-        msgArea.innerText = "조용합니다... 아무것도 없습니다.";
+        msgArea.innerHTML = "조용합니다... 아무것도 없습니다.";
     } 
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.MATERIAL) {
         const amount = Math.floor(Math.random() * 3) + 1;
         addTempLoot("nest_wood", amount);
-        msgArea.innerText = `🔍 둥지 재료를 ${amount}개 발견했습니다!`;
+        
+        // [수정] 아이콘과 함께 메시지 출력
+        const itemImg = ITEM_DB["nest_wood"].img;
+        msgArea.innerHTML = `<img src="assets/images/ui/icon_search.png" style="width:20px; vertical-align:middle"> <img src="${itemImg}" style="width:24px; vertical-align:middle"> 둥지 재료를 ${amount}개 발견했습니다!`;
     } 
     else {
-        msgArea.innerText = "❗ 용의 둥지를 발견했습니다!";
+        msgArea.innerHTML = `<img src="assets/images/ui/icon_alert.png" style="width:24px; vertical-align:middle; animation: blinker 0.5s infinite;"> <b style="color:#e74c3c">용의 둥지를 발견했습니다!</b>`;
         encounterNest();
     }
 }
@@ -156,14 +162,15 @@ function encounterNest() {
     isExploreActive = false; 
     stealAttempts = 3; 
 
-    // ★ confirm -> showConfirm 교체
-    // setTimeout을 쓰는 이유: UI가 그려진 직후 모달이 뜨게 하기 위함
     setTimeout(() => {
-        showConfirm("용의 둥지를 발견했습니다!\n알을 훔치시겠습니까?", 
-            () => { // Yes
-                tryStealLoop();
-            },
-            () => { // No
+        showConfirm(
+            `<div style="text-align:center;">
+                <img src="assets/images/dragon/stage_egg.png" style="width:80px;"><br>
+                <b>용의 둥지를 발견했습니다!</b><br>
+                알을 훔치시겠습니까?
+            </div>`, 
+            () => { tryStealLoop(); },
+            () => { 
                 isExploreActive = true;
                 document.getElementById('event-msg').innerText = "둥지를 조용히 지나쳤습니다.";
                 if(movesLeft <= 0) updateMoveUI();
@@ -188,11 +195,10 @@ function tryStealLoop() {
         });
     } else {
         stealAttempts--;
-        // 실패 시 다시 시도할지 묻는 로직
         if (stealAttempts > 0) {
             showConfirm(`실패... 알이 너무 무겁습니다.\n(남은 기회: ${stealAttempts})\n다시 시도하시겠습니까?`,
-                () => { tryStealLoop(); }, // Yes -> 재귀 호출
-                () => { // No
+                () => { tryStealLoop(); }, 
+                () => {
                     isExploreActive = true;
                     document.getElementById('event-msg').innerText = "위험을 느끼고 물러났습니다.";
                     if(movesLeft <= 0) updateMoveUI();
@@ -209,7 +215,12 @@ function wakeParentDragon() {
     document.getElementById('event-msg').innerText = "크아앙! 부모 용 출현!";
     
     setTimeout(() => {
-        showConfirm("부모 용에게 들켰습니다! 싸우시겠습니까?\n(승리 시 알 획득, 패배 시 전리품 분실)",
+        showConfirm(
+            `<div style="text-align:center; color:#ff6b6b">
+                <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"><br>
+                <b>부모 용에게 들켰습니다!</b><br>
+                싸우시겠습니까?
+            </div>`,
             () => fightParent(),
             () => tryFlee()
         );
@@ -250,20 +261,19 @@ function finishExplore(success = true) {
         if(moveBtn) {
             moveBtn.disabled = false;
             moveBtn.style.opacity = 1;
-            moveBtn.innerText = "👣 이동";
+            moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
         }
         document.getElementById('explore-bg').style.backgroundColor = "#222";
         toggleExploreView('map');
         updateCurrency();
         
         if(typeof renderInventory === 'function') renderInventory();
-        
-        // ★ 중요: 탐험 끝나면 자동 저장
         if(typeof saveGame === 'function') saveGame();
     };
 
     if (success && lootMsg) {
-        showAlert(`[탐험 완료]\n마을에 무사히 도착했습니다.\n\n${lootMsg}`, onComplete);
+        // [수정] HTML 결과 메시지 출력
+        showAlert(`<div style="text-align:center"><b>[탐험 완료]</b><br>마을에 무사히 도착했습니다.<br><br>${lootMsg}</div>`, onComplete);
     } else if (!success) {
         showAlert("[탐험 실패]\n빈손으로 돌아왔습니다.", onComplete);
         clearTempLoot();
@@ -274,3 +284,4 @@ function finishExplore(success = true) {
 
 window.initExploreTab = function() { renderMap(); }
 window.enterSelectedRegion = enterSelectedRegion;
+
