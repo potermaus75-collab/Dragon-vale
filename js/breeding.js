@@ -1,5 +1,5 @@
 // ==========================================
-// js/breeding.js (교배 시스템 전담)
+// js/breeding.js (이미지 표시 수정)
 // ==========================================
 
 // 교배 관련 상태 변수
@@ -36,7 +36,6 @@ function updateParentSlots() {
             const dragon = player.myDragons[pIndex];
             let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
             
-            // 이미지 에러 처리 포함
             slotEl.innerHTML = `
                 <img src="${imgSrc}" style="width:60px; height:60px; object-fit:contain;" 
                 onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">
@@ -57,17 +56,14 @@ function selectParent(slotNum) {
     listDiv.innerHTML = "";
     listDiv.classList.remove('hidden');
 
-    // 교배 가능한 용 목록 생성 (성체(3) 이상)
     let count = 0;
     player.myDragons.forEach((dragon, index) => {
-        // 이미 다른 슬롯에 선택된 용은 제외
         const otherSlot = slotNum === 1 ? 2 : 1;
         if (selectedParents[otherSlot] === index) return;
 
-        // 성체(3) 혹은 고룡(4)만 가능
         if (dragon.stage >= 3) {
             const div = document.createElement('div');
-            div.className = "breeding-list-item"; // CSS에서 스타일 정의
+            div.className = "breeding-list-item"; 
             div.style.display = "flex";
             div.style.alignItems = "center";
             div.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
@@ -118,35 +114,35 @@ function tryBreeding() {
             player.gold -= cost;
             processBreeding(p1, p2);
             closeBreedingModal();
-            updateCurrency(); // main.js 연동
+            updateCurrency(); 
         }
     );
 }
 
-// [동작] 교배 결과 처리
+// [동작] 교배 결과 처리 (여기가 수정됨)
 function processBreeding(parent1, parent2) {
-    // 50% 확률로 엄마 속성, 50% 확률로 아빠 속성
     const targetType = Math.random() < 0.5 ? parent1.type : parent2.type;
     const eggId = `egg_${targetType}`;
     
-    // 인벤토리에 알 추가 (강제 추가 모드 true)
     addItem(eggId, 1, true); 
 
-    // 결과 메시지
-    // EGG_TYPE_NAMES가 hatchery.js에 있다면 전역 접근이 필요합니다. 
-    // 만약 접근이 안 된다면 여기서 직접 텍스트 처리하거나 hatchery.js에서 window 객체에 할당해야 합니다.
     const eggName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[targetType]) ? window.EGG_TYPE_NAMES[targetType] : "알";
+    
+    // [수정] 이모지 대신 실제 알 이미지 경로 생성
+    const eggImgSrc = `assets/images/dragon/egg_${targetType}.png`;
 
     let msg = `
         <div style="text-align:center;">
             <h3>💕 교배 성공!</h3>
-            <div style="font-size:3rem; margin:10px;">🥚</div>
-            사랑의 결실로 <b>[${eggName}]</b>을(를) 얻었습니다!<br>
-            <span style="color:#aaa; font-size:0.8rem;">(인벤토리로 지급됨)</span>
+            
+            <img src="${eggImgSrc}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
+                 onerror="handleImgError(this, '${targetType}', 0)">
+            
+            <br>사랑의 결실로 <b>[${eggName}]</b>을(를) 얻었습니다!
+            <br><span style="color:#aaa; font-size:0.8rem;">(인벤토리로 지급됨)</span>
         </div>
     `;
     
-    // 10% 확률로 보석 보너스
     if (Math.random() < 0.1) {
         player.gem += 1;
         msg += `<br><br><b style="color:#3498db">✨ 축하합니다!<br>보석 1개를 추가로 발견했습니다!</b>`;
