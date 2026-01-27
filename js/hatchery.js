@@ -1,5 +1,5 @@
 // DOM 요소
-const dragonDisplay = document.getElementById('dragon-display');
+const dragonDisplay = document.getElementById('dragon-display'); // 이제 div 안에 img가 들어감
 const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
@@ -38,24 +38,22 @@ function renderNest() {
         clickMsgBtn.style.opacity = 1;
     }
     
-    // CSS Width 적용
-    if(progressBar) {
-        progressBar.style.width = `${percent}%`;
+    if(progressBar) progressBar.style.width = `${percent}%`;
+
+    // [수정] 단계별 이미지 표시
+    // data.js에 stageImages 배열이 있다고 가정 (없으면 기본값 처리)
+    let imgSrc = "assets/images/dragon/stage_egg.png"; // 기본값
+    if (DRAGON_DATA.stageImages && DRAGON_DATA.stageImages[dragonData.stage]) {
+        imgSrc = DRAGON_DATA.stageImages[dragonData.stage];
     }
 
-    // 단계별 이모지 설정
-    let emoji = "🥚";
-    if (dragonData.stage === 1) emoji = "🐣";
-    else if (dragonData.stage >= 2) emoji = "🐲";
-    else if (dragonData.stage >= 4) emoji = "🐉";
-
-    dragonDisplay.innerText = emoji;
+    // 이미지 태그로 교체
+    dragonDisplay.innerHTML = `<img src="${imgSrc}" class="main-dragon-img">`;
     
-    // 이로치(Shiny) 효과
-    if(dragonData.type === 'shiny') {
-        dragonDisplay.style.textShadow = "0 0 20px #f1c40f";
-    } else {
-        dragonDisplay.style.textShadow = "none";
+    // 이로치(Shiny) 효과 (이미지에 필터 적용)
+    const imgEl = dragonDisplay.querySelector('img');
+    if(dragonData.type === 'shiny' && imgEl) {
+        imgEl.style.filter = "drop-shadow(0 0 10px #f1c40f) brightness(1.2)";
     }
 }
 
@@ -68,14 +66,17 @@ function renderEggList() {
         const div = document.createElement('div');
         div.style.marginBottom = "5px";
         div.style.padding = "5px";
-        // 선택된 용 강조 (노란 테두리)
         div.style.background = index === player.currentDragonIndex ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)";
         div.style.borderRadius = "5px";
         div.style.cursor = "pointer";
         div.style.textAlign = "center";
         div.style.border = index === player.currentDragonIndex ? "2px solid #ffd700" : "1px solid #5d4a6d";
         
-        div.innerHTML = `<span style="font-size:1.5rem">🥚</span><br><span style="font-size:0.7rem">${dragon.name}</span>`;
+        // [수정] 알 이미지 표시 (고정된 알 이미지 사용)
+        div.innerHTML = `
+            <img src="assets/images/dragon/stage_egg.png" class="list-egg-img"><br>
+            <span style="font-size:0.7rem">${dragon.name}</span>
+        `;
         
         div.onclick = () => {
             player.currentDragonIndex = index;
@@ -94,19 +95,18 @@ if(clickMsgBtn) {
 
         const max = DRAGON_DATA.reqClicks[dragon.stage];
         
-        // 마지막 단계가 아닐 때만 작동
         if (dragon.stage < DRAGON_DATA.stages.length - 1) {
             dragon.clicks++;
-            
-            // 성장 완료 조건 달성
             if (dragon.clicks >= max) {
                 dragon.stage++;
                 dragon.clicks = 0;
-                
                 renderNest(); 
-                showAlert(`✨ 축하합니다!\n[${dragon.name}]이(가) 성장했습니다!`);
-                
-                // 저장
+                showAlert(`
+                    <div style="text-align:center;">
+                        <img src="${DRAGON_DATA.stageImages[dragon.stage]}" style="width:100px;"><br>
+                        ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!
+                    </div>
+                `);
                 if(window.saveGame) window.saveGame();
             } else {
                 renderNest();
@@ -124,31 +124,37 @@ function startRoulette() {
     document.getElementById('roulette-modal').classList.add('active');
     
     const display = document.getElementById('roulette-display');
-    const candidates = ["🔥", "💧", "🌿", "⚡", "💎"];
+    // 룰렛 돌아가는 동안 보여줄 임시 이미지들
+    const candidates = [
+        "assets/images/element/element_fire.png",
+        "assets/images/element/element_water.png",
+        "assets/images/element/element_forest.png"
+    ];
     
     if(rouletteInterval) clearInterval(rouletteInterval);
     rouletteInterval = setInterval(() => {
-        display.innerText = candidates[Math.floor(Math.random() * candidates.length)];
-    }, 50);
+        const randImg = candidates[Math.floor(Math.random() * candidates.length)];
+        display.innerHTML = `<img src="${randImg}" style="width:100px; height:100px;">`;
+    }, 100);
 }
 
 function stopRoulette() {
     clearInterval(rouletteInterval);
     
-    // 뽑기 확률 및 데이터 정의 (data.js의 DRAGON_TYPES와 키값이 일치해야 도감이 작동함)
+    // 결과 데이터 (data.js의 DRAGON_TYPES 키와 일치해야 함)
     const types = [
-        {type: "fire", emoji: "🔥", name: "불꽃용"},
-        {type: "water", emoji: "💧", name: "물방울용"},
-        {type: "forest", emoji: "🌿", name: "풀잎용"},
-        {type: "electric", emoji: "⚡", name: "번개용"}, // 도감용 추가
-        {type: "metal", emoji: "💎", name: "강철용"}     // 도감용 추가
+        {type: "fire", img: "assets/images/element/element_fire.png", name: "불꽃용"},
+        {type: "water", img: "assets/images/element/element_water.png", name: "물방울용"},
+        {type: "forest", img: "assets/images/element/element_forest.png", name: "풀잎용"},
+        {type: "electric", img: "assets/images/element/element_electric.png", name: "번개용"},
+        {type: "metal", img: "assets/images/element/element_metal.png", name: "강철용"}
     ];
     const result = types[Math.floor(Math.random() * types.length)];
     
-    document.getElementById('roulette-display').innerText = result.emoji;
+    document.getElementById('roulette-display').innerHTML = `<img src="${result.img}" style="width:120px; height:120px; filter:drop-shadow(0 0 10px white);">`;
     
     setTimeout(() => {
-        // [수정됨] 도감 등록 로직 추가
+        // 도감 등록
         if(!player.discovered) player.discovered = [];
         let isNew = false;
         if(!player.discovered.includes(result.type)) {
@@ -156,10 +162,9 @@ function stopRoulette() {
             isNew = true;
         }
 
-        // 메시지 결정 (신규 발견 시 텍스트 추가)
         const msg = isNew 
-            ? `[${result.name}] 획득!\n(도감에 새로 등록되었습니다!)` 
-            : `[${result.name}] 획득!`;
+            ? `<b style="color:#f1c40f">[${result.name}] 획득!</b><br>(도감에 새로 등록되었습니다!)` 
+            : `<b>[${result.name}] 획득!</b>`;
 
         showAlert(msg, () => {
             player.myDragons.push({
@@ -168,35 +173,34 @@ function stopRoulette() {
             document.getElementById('roulette-modal').classList.add('hidden');
             document.getElementById('roulette-modal').classList.remove('active');
             updateCaveUI();
-            
-            // 획득 후 자동 저장
             if(window.saveGame) window.saveGame();
         });
-    }, 500);
+    }, 800);
 }
 
-// 장비 UI 갱신 (정보 탭으로 이동했지만 호환성을 위해 유지)
+// 장비 UI 갱신
 function updateEquipmentUI() {
     const slots = ['head', 'body', 'arm', 'leg'];
     slots.forEach(slot => {
         const el = document.querySelector(`.equip-slot.${slot}`);
         if(!el) return;
+        
+        // 기존 내용(글자) 비우고 새로 그림
+        el.innerHTML = "";
+        
         const itemId = player.equipment[slot];
         if (itemId && ITEM_DB[itemId]) {
-            el.innerText = ITEM_DB[itemId].emoji;
-            el.style.border = "2px solid #f1c40f";
-            el.style.background = "rgba(0,0,0,0.5)";
+            // [수정] 장비 이미지 표시
+            el.innerHTML = `<img src="${ITEM_DB[itemId].img}" class="equip-icon">`;
+            el.style.border = "none"; // CSS에서 제어하지만 확실하게
         } else {
-            const slotNames = {head:'머리', body:'몸', arm:'무기', leg:'다리'};
-            el.innerText = slotNames[slot];
-            el.style.border = "2px solid #5d4a6d";
-            el.style.background = "transparent";
+            // 장비 없을 때 텍스트 표시
+            const slotNames = {head:'머리', body:'갑옷', arm:'무기', leg:'신발'};
+            el.innerHTML = `<span style="font-size:0.8rem; text-shadow:1px 1px 2px #000;">${slotNames[slot]}</span>`;
         }
     });
 }
 
-// 전역 함수 연결
 window.updateUI = updateCaveUI; 
 window.startEggRoulette = startRoulette;
 window.stopRoulette = stopRoulette;
-
