@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (최종: 중앙 UI 연동 및 데이터 의존성 제거)
+// js/explore.js (수정완료: 새로고침 꼼수 방지 & 상태 복구)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -8,6 +8,55 @@ let currentRegionId = -1;
 let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
+
+// [추가] 탐험 상태 복구 함수 (main.js에서 호출)
+window.restoreExploration = function() {
+    if (!player.exploreState) return;
+
+    const state = player.exploreState;
+    console.log("탐험 상태 복구 중...", state);
+
+    // 변수 복구
+    currentRegionId = state.regionId;
+    movesLeft = state.moves;
+    tempLoot = state.loot || [];
+    window.isExploreActive = true;
+
+    // UI 강제 전환
+    const tabExplore = document.getElementById('tab-explore');
+    const tabMap = document.getElementById('explore-map-view');
+    const tabRun = document.getElementById('explore-run-view');
+    
+    // 다른 탭 숨기고 탐험 탭 활성화
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    tabExplore.classList.remove('hidden');
+    tabMap.classList.add('hidden');
+    tabRun.classList.remove('hidden');
+
+    // 내비게이션 바 상태 업데이트
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    // 탐험 버튼(인덱스 2) 활성화
+    const navBtns = document.querySelectorAll('.nav-btn');
+    if(navBtns[2]) navBtns[2].classList.add('active');
+
+    // 배경 및 텍스트 복구
+    const region = REGION_DATA[currentRegionId];
+    const bgElem = document.getElementById('explore-bg');
+    
+    if (region.bg) {
+        bgElem.style.backgroundImage = `url('${region.bg}')`;
+        bgElem.style.backgroundSize = "cover";
+        bgElem.style.backgroundPosition = "center";
+    } else {
+        bgElem.style.backgroundImage = "none";
+        bgElem.style.backgroundColor = "#222"; 
+    }
+    
+    document.getElementById('region-title').innerText = region.name;
+    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
+    
+    updateMoveUI();
+};
 
 function renderMap() {
     const list = document.getElementById('region-list');
@@ -22,7 +71,6 @@ function renderMap() {
         enterBtn.innerText = "지역을 선택하세요";
     }
 
-    // REGION_DATA는 data.js에서 가져옴
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
         const isLocked = player.level < region.levelReq;
@@ -96,6 +144,9 @@ function startExplore(regionId) {
     tempLoot = []; 
     window.isExploreActive = true; 
 
+    // [수정] 탐험 시작 시 상태 저장 (새로고침 방지)
+    saveExploreState();
+
     toggleExploreView('run');
     
     const region = REGION_DATA[regionId];
@@ -116,6 +167,16 @@ function startExplore(regionId) {
     updateMoveUI();
 }
 
+// [추가] 탐험 상태 저장 함수
+function saveExploreState() {
+    player.exploreState = {
+        regionId: currentRegionId,
+        moves: movesLeft,
+        loot: tempLoot
+    };
+    if(window.saveGame) window.saveGame(true); // 즉시 저장
+}
+
 function moveForward() {
     if (movesLeft <= 0 || !window.isExploreActive) return;
 
@@ -127,6 +188,9 @@ function moveForward() {
     bg.classList.add('walking-anim');
 
     processRandomEvent();
+    
+    // [수정] 이동할 때마다 상태 저장
+    saveExploreState();
     updateMoveUI();
 }
 
@@ -328,9 +392,11 @@ function finishExplore(success = true) {
             if(window.gainExp) window.gainExp(xpGain);
         }
 
-        // [중요] 탐험 종료 시 전체 UI 갱신 (인벤토리 등 반영)
+        // [수정] 탐험 종료 시 상태 초기화 및 저장
+        player.exploreState = null;
+        if(window.saveGame) window.saveGame(true);
+
         if(window.updateUI) window.updateUI();
-        if(window.saveGame) window.saveGame();
     };
 
     if (success && lootMsg) {
@@ -338,6 +404,8 @@ function finishExplore(success = true) {
     } else if (!success) {
         showAlert("[탐험 실패]\n빈손으로 돌아왔습니다.", onComplete);
         clearTempLoot();
+        player.exploreState = null; 
+        if(window.saveGame) window.saveGame(true);
     } else {
         showAlert("마을로 돌아왔습니다.", onComplete);
     }
@@ -366,6 +434,7 @@ function claimTempLoot() {
             const itemName = itemData ? itemData.name : "아이템";
             const itemImg = itemData ? itemData.img : "assets/images/ui/icon_question.png";
             
+            // [수정] 아이템 획득 시 재고에 안전하게 추가
             addItem(item.id, item.count);
             html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
                         <img src="${itemImg}" style="width:24px; margin-right:5px;" onerror="this.src='assets/images/ui/icon_question.png'">
