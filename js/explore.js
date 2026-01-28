@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (완전한 코드: UI 디자인 통일)
+// js/explore.js (최종: 지도 UI 연동)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,116 +9,75 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
-// [복구] 탐험 상태 복원 (새로고침 대응)
-window.restoreExploration = function() {
-    if (!player.exploreState) return;
-
-    const state = player.exploreState;
-    currentRegionId = state.regionId;
-    movesLeft = state.moves;
-    tempLoot = state.loot || [];
-    window.isExploreActive = true;
-
-    // 화면 강제 전환
-    const tabExplore = document.getElementById('tab-explore');
-    const tabMap = document.getElementById('explore-map-view');
-    const tabRun = document.getElementById('explore-run-view');
-    
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    tabExplore.classList.remove('hidden');
-    tabMap.classList.add('hidden');
-    tabRun.classList.remove('hidden');
-
-    // 배경 및 텍스트 복구
-    const region = REGION_DATA[currentRegionId];
-    const bgElem = document.getElementById('explore-bg');
-    if (region.bg) {
-        bgElem.style.backgroundImage = `url('${region.bg}')`;
-        bgElem.style.backgroundSize = "cover";
-        bgElem.style.backgroundPosition = "center";
-    }
-    
-    document.getElementById('region-title').innerText = region.name;
-    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
-    
-    updateMoveUI();
+// [UI] 초기화 및 지도 렌더링
+window.initExploreTab = function() {
+    renderMap();
+    updateMapCurrency(); // 상단 재화 표시
 };
 
+function updateMapCurrency() {
+    const goldUI = document.getElementById('ui-gold-map');
+    const gemUI = document.getElementById('ui-gem-map');
+    if(goldUI) goldUI.innerText = player.gold;
+    if(gemUI) gemUI.innerText = player.gem;
+}
+
 function renderMap() {
-    const list = document.getElementById('region-list');
-    if(!list) return; 
-    list.innerHTML = "";
+    const container = document.getElementById('map-icons-layer');
+    const enterBtn = document.getElementById('btn-enter-region');
+    
+    if(!container) return;
+    container.innerHTML = "";
     
     // 버튼 초기화
-    const enterBtn = document.querySelector('.enter-btn') || document.querySelector('#tab-explore button');
     if(enterBtn) {
         enterBtn.disabled = true;
-        enterBtn.style.filter = "grayscale(1)";
-        enterBtn.innerText = "지역 선택";
+        enterBtn.innerText = "지역을 선택하세요";
+        enterBtn.style.color = "#888";
     }
 
+    // REGION_DATA를 순회하며 지도 위에 아이콘 배치
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
-        const isLocked = player.level < region.levelReq;
+        div.className = `map-icon loc-${region.type}`; // CSS 클래스로 위치 지정
         
-        // [디자인] 어두운 패널 스타일 적용
-        div.style.background = "rgba(0, 0, 0, 0.6)";
-        div.style.border = "1px solid #555";
-        div.style.borderRadius = "8px";
-        div.style.padding = "15px";
-        div.style.marginBottom = "10px";
-        div.style.cursor = "pointer";
-        div.style.display = "flex";
-        div.style.justifyContent = "space-between";
-        div.style.alignItems = "center";
-        
-        const typeColor = {
-            fire:'#e74c3c', water:'#3498db', forest:'#2ecc71', 
-            electric:'#f1c40f', metal:'#95a5a6', light:'#fffacd', dark:'#8e44ad'
-        };
-        const color = typeColor[region.type] || '#fff';
-
-        if (isLocked) {
-            div.style.opacity = "0.5";
-            div.innerHTML = `
-                <div>
-                    <h3 style="color:#aaa; font-size:1rem; margin:0;">🔒 ${region.name}</h3>
-                    <p style="font-size:0.7rem; color:#888; margin:5px 0 0 0;">Lv.${region.levelReq} 필요</p>
-                </div>
-            `;
+        // 레벨 제한 확인
+        if (player.level < region.levelReq) {
+            div.classList.add('locked');
+            // 잠긴 지역 클릭 시 알림
+            div.onclick = () => {
+                showAlert(`[${region.name}] 접근 불가\n(Lv.${region.levelReq} 이상 필요)`);
+            };
         } else {
-            div.innerHTML = `
-                <div>
-                    <h3 style="color:${color}; font-size:1.1rem; text-shadow:0 0 5px ${color}; margin:0;">${region.name}</h3>
-                    <p style="font-size:0.7rem; color:#ccc; margin:5px 0 0 0;">${region.desc}</p>
-                </div>
-                <div style="font-size:1.5rem; color:${color};">▶</div>
-            `;
+            // 해금된 지역 클릭 시 선택
+            div.onclick = () => {
+                selectRegion(region.id, div);
+            };
         }
         
-        div.onclick = () => {
-            if(isLocked) {
-                showAlert(`레벨 ${region.levelReq} 이상 필요합니다.`);
-                return;
-            }
-            // 선택 효과 (다른 카드 리셋)
-            Array.from(list.children).forEach(c => {
-                c.style.background = "rgba(0, 0, 0, 0.6)";
-                c.style.borderColor = "#555";
-            });
-            div.style.background = "rgba(255, 255, 255, 0.1)";
-            div.style.borderColor = color;
-            
-            selectedRegionId = region.id;
-            if(enterBtn) {
-                enterBtn.disabled = false;
-                enterBtn.style.filter = "grayscale(0)";
-                enterBtn.innerText = "탐험 시작"; 
-            }
-        };
-        list.appendChild(div);
+        container.appendChild(div);
     });
-    toggleExploreView('map');
+}
+
+function selectRegion(id, element) {
+    selectedRegionId = id;
+    const region = REGION_DATA.find(r => r.id === id);
+    
+    // 모든 아이콘 선택 해제
+    document.querySelectorAll('.map-icon').forEach(icon => icon.classList.remove('selected'));
+    // 현재 아이콘 선택
+    element.classList.add('selected');
+    
+    // 버튼 활성화
+    const enterBtn = document.getElementById('btn-enter-region');
+    if(enterBtn) {
+        enterBtn.disabled = false;
+        enterBtn.innerText = "진입하기"; // 이미지에 텍스트가 있으면 비워도 됨
+        enterBtn.style.color = "#5dade2"; // 텍스트 색상 복구
+    }
+    
+    // 선택 시 간단한 토스트 메시지나 효과음 가능
+    console.log(`Region selected: ${region.name}`);
 }
 
 function enterSelectedRegion() {
@@ -130,18 +89,21 @@ function enterSelectedRegion() {
     startExplore(selectedRegionId);
 }
 
+// [화면 전환] 지도 <-> 탐험 진행
 function toggleExploreView(viewName) {
     const mapDiv = document.getElementById('explore-map-view');
     const runDiv = document.getElementById('explore-run-view');
     if(viewName === 'map') {
         mapDiv.classList.remove('hidden');
         runDiv.classList.add('hidden');
+        updateMapCurrency(); // 돌아올 때 재화 갱신
     } else {
         mapDiv.classList.add('hidden');
         runDiv.classList.remove('hidden');
     }
 }
 
+// [로직] 탐험 시작
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
@@ -154,6 +116,7 @@ function startExplore(regionId) {
     const region = REGION_DATA[regionId];
     const bgElem = document.getElementById('explore-bg');
     
+    // 탐험 배경 설정
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
@@ -175,7 +138,6 @@ function moveForward() {
     if (movesLeft <= 0 || !window.isExploreActive) return;
 
     movesLeft--;
-    // 애니메이션 리셋
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
@@ -200,21 +162,20 @@ function updateMoveUI() {
         moveBtn.innerText = "종료";
 
         returnBtn.innerText = "보상 받기";
-        returnBtn.classList.remove('sub');
         returnBtn.style.color = "#2ecc71";
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
-        moveBtn.style.opacity = window.isExploreActive ? 1 : 0.5;
+        moveBtn.style.opacity = 1;
         moveBtn.innerText = "앞으로 이동";
         
         returnBtn.innerText = "중도 포기";
-        returnBtn.classList.add('sub');
         returnBtn.style.color = "#aaa"; 
         returnBtn.onclick = () => finishExplore(false);
     }
 }
 
+// [이벤트] 랜덤 인카운터
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
@@ -224,7 +185,6 @@ function processRandomEvent() {
     } 
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
         const typeRoll = Math.random();
-        
         if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
             addTempLoot("gold", goldAmt);
@@ -244,6 +204,7 @@ function processRandomEvent() {
     }
 }
 
+// 둥지 발견
 function encounterNest() {
     const moveBtn = document.getElementById('btn-move');
     if(moveBtn) moveBtn.disabled = true;
@@ -256,7 +217,7 @@ function encounterNest() {
     setTimeout(() => {
         showConfirm(
             `<div style="text-align:center;">
-                <img src="${nestImg}" style="width:60px;" onerror="handleImgError(this, '${regionType}', 0)"><br>
+                <img src="${nestImg}" style="width:60px;" onerror="handleImgError(this)"><br>
                 <b>[${REGION_DATA[currentRegionId].name}] 둥지!</b><br>
                 알을 훔치시겠습니까?
             </div>`, 
@@ -387,7 +348,6 @@ function finishExplore(success = true) {
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
     let html = "<div style='background:rgba(0,0,0,0.3); padding:5px; border-radius:5px; text-align:left; font-size:0.8rem;'>";
-    
     tempLoot.forEach(item => {
         if (item.id === 'gold') {
             player.gold += item.count;
@@ -396,16 +356,44 @@ function claimTempLoot() {
             player.gem += item.count;
             html += `<div><span style="color:#3498db">${item.count} 보석</span></div>`;
         } else {
-            const itemData = ITEM_DB[item.id] || { name: "아이템" };
+            const itemData = window.ITEM_DB ? window.ITEM_DB[item.id] : { name: "아이템" };
             addItem(item.id, item.count);
             html += `<div>${itemData.name} x${item.count}</div>`;
         }
     });
-    
     html += "</div>";
     tempLoot = [];
     return html;
 }
 
-window.initExploreTab = function() { renderMap(); }
+// [복구] 새로고침 시 탐험 복원 로직
+window.restoreExploration = function() {
+    if (!player.exploreState) return;
+    const state = player.exploreState;
+    currentRegionId = state.regionId;
+    movesLeft = state.moves;
+    tempLoot = state.loot || [];
+    window.isExploreActive = true;
+
+    // 강제 화면 전환
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    document.getElementById('tab-explore').classList.remove('hidden');
+    document.getElementById('explore-map-view').classList.add('hidden');
+    document.getElementById('explore-run-view').classList.remove('hidden');
+
+    const region = REGION_DATA[currentRegionId];
+    document.getElementById('region-title').innerText = region.name;
+    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
+    
+    // 배경 복구
+    const bgElem = document.getElementById('explore-bg');
+    if (region.bg) {
+        bgElem.style.backgroundImage = `url('${region.bg}')`;
+        bgElem.style.backgroundSize = "cover";
+        bgElem.style.backgroundPosition = "center";
+    }
+    updateMoveUI();
+};
+
+window.initExploreTab = initExploreTab;
 window.enterSelectedRegion = enterSelectedRegion;
