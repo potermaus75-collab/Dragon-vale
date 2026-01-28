@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (수정완료: 새로고침 꼼수 방지 & 상태 복구)
+// js/explore.js (수정완료: 버튼 텍스트 '진입'으로 변경)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,37 +9,30 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
-// [추가] 탐험 상태 복구 함수 (main.js에서 호출)
 window.restoreExploration = function() {
     if (!player.exploreState) return;
 
     const state = player.exploreState;
     console.log("탐험 상태 복구 중...", state);
 
-    // 변수 복구
     currentRegionId = state.regionId;
     movesLeft = state.moves;
     tempLoot = state.loot || [];
     window.isExploreActive = true;
 
-    // UI 강제 전환
     const tabExplore = document.getElementById('tab-explore');
     const tabMap = document.getElementById('explore-map-view');
     const tabRun = document.getElementById('explore-run-view');
     
-    // 다른 탭 숨기고 탐험 탭 활성화
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     tabExplore.classList.remove('hidden');
     tabMap.classList.add('hidden');
     tabRun.classList.remove('hidden');
 
-    // 내비게이션 바 상태 업데이트
-    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-    // 탐험 버튼(인덱스 2) 활성화
     const navBtns = document.querySelectorAll('.nav-btn');
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if(navBtns[2]) navBtns[2].classList.add('active');
 
-    // 배경 및 텍스트 복구
     const region = REGION_DATA[currentRegionId];
     const bgElem = document.getElementById('explore-bg');
     
@@ -108,7 +101,8 @@ function renderMap() {
             if(enterBtn) {
                 enterBtn.disabled = false;
                 enterBtn.style.filter = "grayscale(0)";
-                enterBtn.innerText = `[${region.name}] 입장하기`;
+                // [수정] 텍스트 변경
+                enterBtn.innerText = "진입";
             }
         };
         list.appendChild(div);
@@ -144,7 +138,6 @@ function startExplore(regionId) {
     tempLoot = []; 
     window.isExploreActive = true; 
 
-    // [수정] 탐험 시작 시 상태 저장 (새로고침 방지)
     saveExploreState();
 
     toggleExploreView('run');
@@ -167,14 +160,13 @@ function startExplore(regionId) {
     updateMoveUI();
 }
 
-// [추가] 탐험 상태 저장 함수
 function saveExploreState() {
     player.exploreState = {
         regionId: currentRegionId,
         moves: movesLeft,
         loot: tempLoot
     };
-    if(window.saveGame) window.saveGame(true); // 즉시 저장
+    if(window.saveGame) window.saveGame(true); 
 }
 
 function moveForward() {
@@ -189,7 +181,6 @@ function moveForward() {
 
     processRandomEvent();
     
-    // [수정] 이동할 때마다 상태 저장
     saveExploreState();
     updateMoveUI();
 }
@@ -392,7 +383,6 @@ function finishExplore(success = true) {
             if(window.gainExp) window.gainExp(xpGain);
         }
 
-        // [수정] 탐험 종료 시 상태 초기화 및 저장
         player.exploreState = null;
         if(window.saveGame) window.saveGame(true);
 
@@ -434,7 +424,6 @@ function claimTempLoot() {
             const itemName = itemData ? itemData.name : "아이템";
             const itemImg = itemData ? itemData.img : "assets/images/ui/icon_question.png";
             
-            // [수정] 아이템 획득 시 재고에 안전하게 추가
             addItem(item.id, item.count);
             html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
                         <img src="${itemImg}" style="width:24px; margin-right:5px;" onerror="this.src='assets/images/ui/icon_question.png'">
