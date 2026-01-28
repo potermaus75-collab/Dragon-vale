@@ -1,5 +1,5 @@
 /* =========================================
-   css/style.css (최신 수정: 도감 3열/위치조정)
+   css/style.css (CSS 드래곤 삭제 및 최적화)
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
@@ -27,7 +27,7 @@ body, html {
 h1, h2, h3 { margin: 0; color: #fff; text-shadow: 2px 2px 0 #000; font-weight: 800; }
 p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 
-/* UI 컴포넌트: 공용 패널 */
+/* UI 컴포넌트 */
 .panel-box {
     width: 90%; max-width: 400px; padding: 40px;
     background: url('../assets/images/ui/panel_main.png') no-repeat center center !important;
@@ -37,23 +37,18 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     gap: 15px;
 }
 
-/* [수정] 세로형 패널 배경 (도감/상점용) */
+/* 세로형 패널 (도감/상점) */
 .bg-vertical {
     width: 95%; height: 90%; max-width: 450px;
     background: url('../assets/images/ui/panel_book.png') no-repeat center center !important;
     background-size: 100% 100% !important;
-    /* [수정 포인트] 상단 여백을 60px -> 35px로 줄여서 제목을 위로 올림 */
     padding: 35px 35px 40px 35px; 
     display: flex; flex-direction: column; align-items: center;
     position: relative;
 }
+.bg-vertical h3 { margin-bottom: 5px; font-size: 1.4rem; }
 
-.bg-vertical h3 {
-    /* [수정 포인트] 제목과 윗부분 사이 간격 미세 조정 */
-    margin-bottom: 5px;
-    font-size: 1.4rem;
-}
-
+/* 버튼 스타일 */
 .btn-stone {
     width: 140px; height: 50px;
     background: url('../assets/images/ui/btn_rect.png') no-repeat center center !important;
@@ -62,6 +57,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     color: #ffd700; font-size: 1.1rem; font-weight: bold;
     display: flex; justify-content: center; align-items: center;
     cursor: pointer; text-shadow: 1px 1px 2px #000;
+    gap: 5px; /* 이미지와 텍스트 사이 간격 */
 }
 .btn-stone:active { transform: scale(0.95); filter: brightness(0.8); }
 
@@ -182,7 +178,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background: url('../assets/images/ui/bar_rune.png') repeat-x left center !important; 
     background-color: #2ecc71; background-size: auto 100% !important; transition: width 0.2s;
 }
-.list-egg-img { width: 40px; height: 40px; object-fit: contain; }
 
 #dragon-display {
     margin: 10px;
@@ -216,8 +211,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 }
 
 .scroll-area { width: 100%; height: 100%; overflow-y: auto; }
-
-/* [수정] 3열 그리드 추가 */
 .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; width: 100%; }
 .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
 .list-row { display: flex; flex-direction: column; gap: 5px; }
@@ -231,81 +224,52 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
 }
 .shop-item { margin-bottom: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px; display: flex; justify-content: space-between; align-items: center; }
 
-/* -------------------------------------------
-   도감 슬라이더 및 페이지 UI
-   ------------------------------------------- */
-.book-slider-container {
-    width: 100%; flex: 1; 
-    overflow: hidden; /* 넘치는 페이지 숨김 */
-    position: relative;
-}
-
-.book-slider-track {
-    display: flex; /* 가로 배열 */
-    width: 100%; height: 100%;
-    transition: transform 0.3s ease-out; /* 부드러운 이동 */
-}
-
+/* 도감 슬라이더 */
+.book-slider-container { width: 100%; flex: 1; overflow: hidden; position: relative; }
+.book-slider-track { display: flex; width: 100%; height: 100%; transition: transform 0.3s ease-out; }
 .book-page {
-    width: 100%; height: 100%;
-    flex-shrink: 0; 
+    width: 100%; height: 100%; flex-shrink: 0; 
     display: flex; flex-direction: column; align-items: center;
-    overflow-y: auto; 
-    padding: 5px 15px; /* 좌우 패딩을 조금 줘서 중앙 정렬 */
+    overflow-y: auto; padding: 5px 15px; 
 }
 
-/* 도감 페이지 제목 (속성 이름) */
-.book-page-title {
-    font-size: 1.1rem; color: #f1c40f; 
-    margin-bottom: 8px; /* 간격 줄임 */
-    text-shadow: 0 0 5px #000;
+.book-page-title-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 8px;
 }
+.book-type-icon { width: 24px; height: 24px; object-fit: contain; }
+.book-page-title { font-size: 1.1rem; color: #f1c40f; text-shadow: 0 0 5px #000; margin: 0; }
 
-/* 도감 칸 (이미지 프레임 적용) */
 .book-slot-custom {
     width: 70px; height: 70px;
     background: url('../assets/images/ui/frame_book_slot.png') no-repeat center center;
     background-size: 100% 100%;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
-    margin: 5px auto; /* 중앙 정렬 */
-    position: relative; cursor: pointer;
+    margin: 5px auto; position: relative; cursor: pointer;
 }
 .book-slot-custom.unknown { filter: grayscale(1) brightness(0.6); }
 .book-slot-custom.unknown .book-img { opacity: 0.3; }
-
 .book-img { width: 50px; height: 50px; object-fit: contain; z-index: 2; }
+.list-egg-img { width: 40px; height: 40px; object-fit: contain; }
 
-/* -------------------------------------------
-   상세 정보창 (단일 단계 슬라이드)
-   ------------------------------------------- */
+/* 상세 정보창 */
 .detail-slider-container {
-    width: 100%; height: 180px; 
-    overflow: hidden; position: relative;
-    margin: 10px 0;
-    background: rgba(0,0,0,0.2); border-radius: 10px;
+    width: 100%; height: 180px; overflow: hidden; position: relative;
+    margin: 10px 0; background: rgba(0,0,0,0.2); border-radius: 10px;
 }
-.detail-slider-track {
-    display: flex; height: 100%;
-    transition: transform 0.3s ease-out;
-}
+.detail-slider-track { display: flex; height: 100%; transition: transform 0.3s ease-out; }
 .detail-stage-view {
     width: 100%; height: 100%; flex-shrink: 0;
-    display: flex; flex-direction: column; 
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
 }
 .detail-img-large {
     width: 120px; height: 120px; object-fit: contain;
     filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
 }
-.detail-stage-name {
-    margin-top: 5px; font-size: 0.9rem; color: #ccc;
-}
-.swipe-hint {
-    font-size: 0.7rem; color: #888; margin-top: 5px; 
-    animation: blinker 2s infinite;
-}
+.detail-stage-name { margin-top: 5px; font-size: 0.9rem; color: #ccc; }
+.swipe-hint { font-size: 0.7rem; color: #888; margin-top: 5px; animation: blinker 2s infinite; }
 
-#common-modal, #breeding-modal, #roulette-modal { background: rgba(10, 5, 15, 0.85) !important; }
+#common-modal, #breeding-modal { background: rgba(10, 5, 15, 0.85) !important; }
 
 @keyframes walkShake {
     0% { transform: scale(1) translateX(0); }
@@ -314,15 +278,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     75% { transform: scale(1.02) translateX(5px) translateY(2px); }
     100% { transform: scale(1) translateX(0); }
 }
-
 .walking-anim { animation: walkShake 0.5s ease-in-out; }
-
-@keyframes warningFlash {
-    0% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
-    50% { box-shadow: inset 0 0 50px red; border: 2px solid red; }
-    100% { box-shadow: inset 0 0 0 red; border: 1px solid #000; }
-}
-.warning-anim { animation: warningFlash 1s infinite; }
 
 .click-anim { animation: clickBounce 0.2s; }
 @keyframes clickBounce {
@@ -330,48 +286,3 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     50% { transform: scale(0.9); filter: brightness(1.2); }
     100% { transform: scale(1); }
 }
-
-/* =========================================
-   [수정] CSS 드래곤 (이미지 없을 때 폴백)
-   ========================================= */
-.css-dragon {
-    display: inline-block; position: relative;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    animation: dragonBreath 2s infinite ease-in-out;
-}
-@keyframes dragonBreath {
-    0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); }
-}
-
-/* 사이즈 조절 (기존 60~140px -> 40~80px 수준) */
-.css-dragon.stage-0 {
-    width: 40px !important; height: 50px !important;
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    box-shadow: inset -3px -3px 5px rgba(0,0,0,0.5);
-}
-.css-dragon.stage-1 {
-    width: 50px !important; height: 50px !important;
-    clip-path: polygon(20% 20%, 50% 0%, 80% 20%, 90% 50%, 80% 90%, 20% 90%, 10% 50%);
-    border-radius: 8px;
-}
-.css-dragon.stage-2 {
-    width: 60px !important; height: 60px !important;
-    clip-path: polygon(50% 0%, 100% 20%, 80% 50%, 100% 80%, 50% 100%, 0% 80%, 20% 50%, 0% 20%);
-}
-.css-dragon.stage-3 {
-    width: 70px !important; height: 70px !important;
-    clip-path: polygon(50% 0%, 80% 10%, 100% 35%, 85% 55%, 100% 100%, 50% 85%, 0% 100%, 15% 55%, 0% 35%, 20% 10%);
-}
-.css-dragon.stage-4 {
-    width: 80px !important; height: 80px !important;
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-    filter: drop-shadow(0 0 5px currentColor);
-}
-
-.css-dragon.type-fire { background: radial-gradient(circle at 30% 30%, #ff7e5f, #c0392b); color: #e74c3c; }
-.css-dragon.type-water { background: radial-gradient(circle at 30% 30%, #3498db, #2c3e50); color: #3498db; }
-.css-dragon.type-forest { background: radial-gradient(circle at 30% 30%, #2ecc71, #27ae60); color: #2ecc71; }
-.css-dragon.type-electric { background: radial-gradient(circle at 30% 30%, #f1c40f, #8e44ad); color: #f1c40f; }
-.css-dragon.type-metal { background: linear-gradient(135deg, #bdc3c7, #2c3e50); color: #95a5a6; }
-.css-dragon.type-light { background: radial-gradient(circle at 30% 30%, #ffffff, #f1c40f); box-shadow: 0 0 10px #f1c40f; color: #f1c40f; }
-.css-dragon.type-dark { background: radial-gradient(circle at 30% 30%, #9b59b6, #000000); color: #8e44ad; }
