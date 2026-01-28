@@ -1,12 +1,10 @@
 // ==========================================
-// js/breeding.js (이미지 표시 수정)
+// js/breeding.js (이모지 제거 및 이미지화)
 // ==========================================
 
-// 교배 관련 상태 변수
 let selectedParents = { 1: null, 2: null }; 
 let currentSelectingSlot = 0; 
 
-// [UI] 교배 모달 열기
 function openBreedingModal() {
     selectedParents = { 1: null, 2: null };
     updateParentSlots();
@@ -19,14 +17,12 @@ function openBreedingModal() {
     modal.classList.add('active');
 }
 
-// [UI] 교배 모달 닫기
 function closeBreedingModal() {
     const modal = document.getElementById('breeding-modal');
     modal.classList.remove('active');
     modal.classList.add('hidden');
 }
 
-// [UI] 부모 슬롯 업데이트
 function updateParentSlots() {
     for(let i=1; i<=2; i++) {
         const slotEl = document.getElementById(`parent-slot-${i}`);
@@ -49,7 +45,6 @@ function updateParentSlots() {
     }
 }
 
-// [동작] 부모 선택 창 띄우기
 function selectParent(slotNum) {
     currentSelectingSlot = slotNum;
     const listDiv = document.getElementById('breeding-select-list');
@@ -92,7 +87,6 @@ function selectParent(slotNum) {
     }
 }
 
-// [동작] 교배 시도
 function tryBreeding() {
     if (selectedParents[1] === null || selectedParents[2] === null) {
         showAlert("두 마리의 부모 용을 모두 선택해주세요.");
@@ -119,7 +113,6 @@ function tryBreeding() {
     );
 }
 
-// [동작] 교배 결과 처리 (여기가 수정됨)
 function processBreeding(parent1, parent2) {
     const targetType = Math.random() < 0.5 ? parent1.type : parent2.type;
     const eggId = `egg_${targetType}`;
@@ -127,13 +120,11 @@ function processBreeding(parent1, parent2) {
     addItem(eggId, 1, true); 
 
     const eggName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[targetType]) ? window.EGG_TYPE_NAMES[targetType] : "알";
-    
-    // [수정] 이모지 대신 실제 알 이미지 경로 생성
     const eggImgSrc = `assets/images/dragon/egg_${targetType}.png`;
 
     let msg = `
         <div style="text-align:center;">
-            <h3>💕 교배 성공!</h3>
+            <h3>교배 성공!</h3>
             
             <img src="${eggImgSrc}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
                  onerror="handleImgError(this, '${targetType}', 0)">
@@ -145,7 +136,7 @@ function processBreeding(parent1, parent2) {
     
     if (Math.random() < 0.1) {
         player.gem += 1;
-        msg += `<br><br><b style="color:#3498db">✨ 축하합니다!<br>보석 1개를 추가로 발견했습니다!</b>`;
+        msg += `<br><br><b style="color:#3498db">축하합니다!<br>보석 1개를 추가로 발견했습니다!</b>`;
     }
 
     showAlert(msg);
