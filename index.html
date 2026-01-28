@@ -53,28 +53,47 @@
             
             <div id="tab-dragon" class="tab-content">
                 <div class="nest-layout-container">
+                    
                     <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
-                        <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
-                        <button class="btn-menu-hamburger">≡</button>
+                        <div class="currency-slot gold-slot">
+                            💰 <span id="ui-gold">0</span>
+                        </div>
+                        <div class="currency-slot gem-slot">
+                            💎 <span id="ui-gem">0</span>
+                        </div>
                     </div>
+
                     <div class="nest-body-area">
+                        
                         <div class="nest-sidebar-left">
                             <div class="sidebar-header-text">알 목록</div>
                             <div id="my-egg-list" class="sidebar-list-content"></div>
                         </div>
+
                         <div class="nest-right-column">
                             <div class="nest-center-stage">
-                                <div class="dragon-name-box"><span id="dragon-name-ui">이름 없음</span></div>
-                                <div class="dragon-visual-area"><div id="dragon-display"></div></div>
+                                <div class="dragon-name-box">
+                                    <span id="dragon-name-ui">이름 없음</span>
+                                </div>
+                                
+                                <div class="dragon-visual-area">
+                                     <div id="dragon-display"></div>
+                                </div>
+
                                 <div class="nest-controls">
-                                    <div class="gauge-box"><div id="progress-fill" class="gauge-fill"></div><span class="gauge-text">0 / 100</span></div>
+                                    <div class="gauge-box">
+                                        <div id="progress-fill" class="gauge-fill"></div>
+                                        <span class="gauge-text">0 / 100</span>
+                                    </div>
                                     <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
                                 </div>
                             </div>
+
                             <div class="nest-bottom-panel">
                                 <div class="panel-label">인벤토리</div>
-                                <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
+                                <div class="panel-content-row">
+                                    <div id="cave-inventory-grid" class="material-scroll-row"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -84,26 +103,24 @@
             <div id="tab-info" class="tab-content hidden default-layout">
                 <div class="panel-box" style="width:95%;">
                     <h3>내 정보</h3>
-                    <div class="inventory-section"><h4>가방</h4><div id="inventory-grid" class="grid-4"></div></div>
+                    <div class="inventory-section">
+                        <h4>가방</h4>
+                        <div id="inventory-grid" class="grid-4"></div>
+                    </div>
                 </div>
             </div>
 
             <div id="tab-explore" class="tab-content hidden">
-                
-                <div id="explore-map-view" class="explore-layout">
+                 <div id="explore-map-view" class="explore-layout">
                     <div class="nest-header-area">
                         <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
                         <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
                     </div>
-
                     <div class="map-container-wrapper">
-                        <div class="map-title-text">정도</div> 
-                        
                         <div class="map-board">
                             <div id="map-icons-layer"></div>
                         </div>
                     </div>
-
                     <div class="map-bottom-area">
                         <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>
                             지역을 선택하세요
@@ -112,19 +129,19 @@
                 </div>
 
                 <div id="explore-run-view" class="hidden explore-layout">
-                    <div class="nest-header-area"></div> <div class="run-display-frame">
+                    <div class="nest-header-area"></div>
+                    <div class="run-display-frame">
                         <div class="run-bg-area" id="explore-bg">
                             <div class="run-info-overlay">
                                 <h3 id="region-title">지역 이름</h3>
                                 <p id="move-counter">남은 이동: 10</p>
-                                <div id="event-msg">탐험을 시작합니다.</div>
+                                <div id="event-msg">...</div>
                             </div>
                         </div>
                     </div>
-
                     <div class="run-controls">
-                        <button id="btn-move" class="btn-stone" onclick="moveForward()">앞으로 이동</button>
-                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기하기</button>
+                        <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
+                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
                     </div>
                 </div>
             </div>
