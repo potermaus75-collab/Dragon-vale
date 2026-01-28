@@ -1,19 +1,17 @@
 // ==========================================
-// js/main.js (UI 중앙 제어 및 최적화: 생략 없음)
+// js/main.js (수정완료: 초기화 로직 및 탐험 복구)
 // ==========================================
 
-// [시스템] 이미지 로드 실패 시 무조건 물음표 아이콘으로 대체 (CSS 드래곤 삭제됨)
 window.handleImgError = function(imgEl, dragonType, dragonStage) {
-    imgEl.onerror = null; // 무한루프 방지
+    imgEl.onerror = null; 
     imgEl.src = "assets/images/ui/icon_question.png"; 
     imgEl.style.objectFit = "contain";
 };
 
 let userNickname = "Guest";
 let prologueIndex = 0;
-let currentTab = 'dragon'; // 현재 활성 탭 추적
+let currentTab = 'dragon'; 
 
-// 도감용 변수
 let currentBookPage = 0;
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
 const CATEGORY_NAMES = {
@@ -106,8 +104,9 @@ document.getElementById('screen-start').addEventListener('click', () => {
 
     if (localStorage.getItem('dragonSaveData')) {
         loadGame();
-        if (userNickname && userNickname !== "Guest") {
-            document.getElementById('ui-nickname').innerText = userNickname;
+        // [수정] 닉네임 체크 및 바로 시작
+        if (player.nickname && player.nickname !== "Guest") {
+            document.getElementById('ui-nickname').innerText = player.nickname;
             startGame();
             return;
         }
@@ -119,6 +118,7 @@ function submitName() {
     const input = document.getElementById('input-nickname');
     if (input.value.trim() === "") return showAlert("이름을 입력해주세요!");
     userNickname = input.value;
+    player.nickname = userNickname; // [수정] 플레이어 객체에도 즉시 반영
     document.getElementById('ui-nickname').innerText = userNickname;
     saveGame();
     showScreen('screen-prologue');
@@ -127,7 +127,6 @@ function submitName() {
 
 function renderPrologue() {
     const textEl = document.getElementById('prologue-text');
-    // data.js의 PROLOGUE_DATA 사용
     textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
 }
 
@@ -142,17 +141,26 @@ function nextPrologueCut() {
 
 function startGame() {
     showScreen('screen-game');
-    switchTab('dragon'); 
+    
+    // [추가] 탐험 상태가 있다면 즉시 복구
+    if (player.exploreState) {
+        currentTab = 'explore';
+        // UI 먼저 렌더링 후 탐험 복구 호출
+        updateUI();
+        if(window.restoreExploration) window.restoreExploration();
+    } else {
+        switchTab('dragon'); 
+    }
 }
 
-// [핵심] 탭 전환 함수
 function switchTab(tabName) {
-    if (window.isExploreActive && tabName !== 'explore') {
+    // [수정] 플레이어 상태 기반으로 탐험 중인지 확인 (더 강력한 차단)
+    if ((window.isExploreActive || player.exploreState) && tabName !== 'explore') {
         showAlert("탐험 중에는 다른 메뉴로 이동할 수 없습니다!\n탐험을 먼저 완료하거나 포기해주세요.");
         return;
     }
 
-    currentTab = tabName; // 현재 탭 기억
+    currentTab = tabName; 
 
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -164,20 +172,17 @@ function switchTab(tabName) {
     navBtns.forEach(btn => btn.classList.remove('active'));
     
     const tabMap = {'info':0, 'dragon':1, 'explore':2, 'book':3, 'shop':4};
-    if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
+    if(tabMap[tabName] !== undefined && navBtns[tabMap[tabName]]) {
+        navBtns[tabMap[tabName]].classList.add('active');
+    }
 
-    // 탭 전환 시 즉시 UI 갱신 (전체 갱신이 아닌 필요한 부분만)
     updateUI();
 }
 
-// [핵심] 중앙 통제형 UI 업데이트 함수
 window.updateUI = function() {
-    // 1. 공통 재화(골드/보석/레벨) 업데이트
     if(window.updateCurrency) updateCurrency(); 
 
-    // 2. 현재 탭에 맞는 화면만 렌더링 (성능 최적화)
     if (currentTab === 'dragon') {
-        // hatchery.js에 있는 renderCaveUI 호출
         if(window.renderCaveUI) window.renderCaveUI(); 
     } 
     else if (currentTab === 'info') {
@@ -187,10 +192,11 @@ window.updateUI = function() {
         if(typeof renderShop === 'function') renderShop();
     }
     else if (currentTab === 'book') {
-        if(currentBookPage === 0) renderBook(); // 초기화 혹은 필요 시 렌더링
+        if(currentBookPage === 0) renderBook(); 
     }
     else if (currentTab === 'explore') {
-        if(window.initExploreTab) window.initExploreTab();
+        // 탐험 중이면 renderMap을 다시 부르지 않도록 주의 (exploreState 체크)
+        if (!player.exploreState && window.initExploreTab) window.initExploreTab();
     }
 };
 
@@ -220,7 +226,6 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// [리뉴얼] 도감 렌더링 (스와이프 페이지 방식 + 3열 그리드)
 function renderBook() {
     const bookContent = document.querySelector('#tab-book .book-bg');
     
@@ -244,7 +249,6 @@ function renderBook() {
     
     if(!player.discovered) player.discovered = [];
 
-    // 속성별 페이지 생성
     BOOK_CATEGORIES.forEach(category => {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
@@ -258,7 +262,6 @@ function renderBook() {
             </div>
         `;
         
-        // 3열 그리드 적용
         const gridDiv = document.createElement('div');
         gridDiv.className = 'grid-3';
         gridDiv.style.width = "100%";
@@ -293,7 +296,6 @@ function renderBook() {
         track.appendChild(pageDiv);
     });
 
-    // 스와이프 이벤트 등록
     addSwipeListener(document.querySelector('.book-slider-container'), 
         () => moveBookPage(1),  
         () => moveBookPage(-1)  
@@ -317,16 +319,13 @@ function updateBookSlider() {
     }
 }
 
-// [리뉴얼] 상세 정보 모달 (단계별 슬라이드 방식)
 function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
-    // 표시할 최대 단계 설정
     const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
     const totalStages = isHighTier ? 5 : 4;
     
-    // 슬라이더 HTML 생성
     let slidesHtml = "";
     for(let i=0; i < totalStages; i++) {
         const isUnknown = i > maxStage;
@@ -350,7 +349,6 @@ function showDragonDetailModal(dragonId, info) {
 
     const rarityColor = RARITY_DATA[info.rarity].color;
 
-    // 모달 내용 구성
     const modalContent = `
         <div style="text-align:center; width:100%;">
             <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
@@ -376,12 +374,11 @@ function showDragonDetailModal(dragonId, info) {
 
     showAlert(modalContent);
 
-    // 모달 렌더링 후 슬라이드 로직 적용
     setTimeout(() => {
         const track = document.getElementById('detail-track');
         if (!track) return;
         
-        let currentStage = Math.min(maxStage, totalStages - 1); // 현재 도달한 단계부터 보여줌
+        let currentStage = Math.min(maxStage, totalStages - 1); 
         
         const updateDetailSlider = () => {
             track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`;
@@ -409,7 +406,6 @@ function showDragonDetailModal(dragonId, info) {
     }, 100);
 }
 
-// [유틸] 스와이프 감지 함수 (쿨다운 추가)
 let isSwipeCooldown = false;
 
 function addSwipeListener(el, onLeft, onRight) {
@@ -428,7 +424,7 @@ function addSwipeListener(el, onLeft, onRight) {
     }, {passive: true});
 
     function handleGesture() {
-        const threshold = 60; // 감도 조절
+        const threshold = 60; 
         if (startX - endX > threshold) {
             if(onLeft) { onLeft(); triggerCooldown(); }
         } else if (endX - startX > threshold) {
@@ -438,11 +434,10 @@ function addSwipeListener(el, onLeft, onRight) {
 
     function triggerCooldown() {
         isSwipeCooldown = true;
-        setTimeout(() => { isSwipeCooldown = false; }, 500); // 0.5초 쿨다운
+        setTimeout(() => { isSwipeCooldown = false; }, 500); 
     }
 }
 
-// [리뉴얼] 상점 렌더링 (세로형 배경 적용)
 function renderShop() {
     const shopContent = document.querySelector('#tab-shop .shop-bg');
     if(shopContent) {
@@ -531,6 +526,7 @@ window.showAlert = function(msg, callback) {
     modal.classList.add('active');
 
     const okBtn = document.querySelector('#modal-btn-alert button');
+    // 이벤트 리스너 중복 방지를 위해 onclick 재할당 사용
     okBtn.onclick = function() {
         closeModal();
         if(callback) callback();
