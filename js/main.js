@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (UI 리뉴얼: 도감/상점 슬라이드 적용)
+// js/main.js (UI 리뉴얼: 스와이프 감도 조절 및 3열 그리드 적용)
 // ==========================================
 
 // [시스템] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
@@ -36,10 +36,10 @@ const PROLOGUE_DATA = [
 
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
-    "assets/images/ui/panel_book.png", // [신규]
+    "assets/images/ui/panel_book.png", 
     "assets/images/ui/panel_banner.png",
     "assets/images/ui/panel_vertical.png",
-    "assets/images/ui/frame_book_slot.png", // [신규]
+    "assets/images/ui/frame_book_slot.png", 
     "assets/images/ui/nest_front.png",
     "assets/images/ui/btn_rect.png",
     "assets/images/ui/btn_square.png"
@@ -220,9 +220,8 @@ function renderInventory() {
 function renderBook() {
     const bookContent = document.querySelector('#tab-book .book-bg');
     
-    // [UI 개선] 세로형 배경 클래스 교체
     if(bookContent) {
-        bookContent.className = 'bg-vertical'; // style.css에 추가한 클래스 사용
+        bookContent.className = 'bg-vertical'; 
         bookContent.innerHTML = `
             <h3>📜 용 도감</h3>
             <div class="book-slider-container">
@@ -245,12 +244,11 @@ function renderBook() {
         // 페이지 제목
         pageDiv.innerHTML = `<div class="book-page-title">${CATEGORY_NAMES[category] || category}</div>`;
         
-        // 그리드 생성
+        // [수정 포인트] 3열 그리드 사용 (grid-4 -> grid-3)
         const gridDiv = document.createElement('div');
-        gridDiv.className = 'grid-4';
+        gridDiv.className = 'grid-3'; 
         gridDiv.style.width = "100%";
 
-        // 해당 속성의 용 필터링
         const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === category);
         
         dragonKeys.forEach(dragonId => {
@@ -258,7 +256,6 @@ function renderBook() {
             const isFound = player.discovered.includes(dragonId);
             
             const slot = document.createElement('div');
-            // [UI 개선] 새로운 도감 슬롯 클래스 적용
             slot.className = `book-slot-custom ${isFound ? '' : 'unknown'}`;
             
             if (isFound) {
@@ -275,7 +272,7 @@ function renderBook() {
         });
 
         if(dragonKeys.length === 0) {
-            gridDiv.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#555;'>데이터 없음</p>";
+            gridDiv.innerHTML = "<p style='grid-column:span 3; text-align:center; color:#555;'>데이터 없음</p>";
         }
 
         pageDiv.appendChild(gridDiv);
@@ -284,8 +281,8 @@ function renderBook() {
 
     // 스와이프 이벤트 등록
     addSwipeListener(document.querySelector('.book-slider-container'), 
-        () => moveBookPage(1),  // 왼쪽으로 밀면 다음 페이지
-        () => moveBookPage(-1)  // 오른쪽으로 밀면 이전 페이지
+        () => moveBookPage(1),  
+        () => moveBookPage(-1)  
     );
 
     updateBookSlider();
@@ -311,11 +308,9 @@ function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
-    // 표시할 최대 단계 설정 (전설/에픽은 5단계, 그외 4단계)
     const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
     const totalStages = isHighTier ? 5 : 4;
     
-    // 슬라이더 HTML 생성
     let slidesHtml = "";
     for(let i=0; i < totalStages; i++) {
         const isUnknown = i > maxStage;
@@ -339,7 +334,6 @@ function showDragonDetailModal(dragonId, info) {
 
     const rarityColor = RARITY_DATA[info.rarity].color;
 
-    // 모달 내용 구성
     const modalContent = `
         <div style="text-align:center; width:100%;">
             <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
@@ -360,36 +354,29 @@ function showDragonDetailModal(dragonId, info) {
 
     showAlert(modalContent);
 
-    // [중요] 모달이 렌더링된 후 슬라이드 로직 적용
     setTimeout(() => {
         const track = document.getElementById('detail-track');
         if (!track) return;
         
-        let currentStage = Math.min(maxStage, totalStages - 1); // 현재 도달한 단계부터 보여줌
+        let currentStage = Math.min(maxStage, totalStages - 1); 
         
-        // 초기 위치 설정
         const updateDetailSlider = () => {
-            // detail-stage-view의 width는 track의 (100 / totalStages)% 임
-            // 하지만 CSS에서 view width를 100%로 잡고, track width를 넓혔으므로
-            // translateX 계산은 (currentStage * (100 / totalStages))% 가 되어야 함.
             track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`;
         };
         updateDetailSlider();
 
-        // 슬라이더 뷰들 스타일 조정 (JS 동적 계산)
         const views = track.querySelectorAll('.detail-stage-view');
         views.forEach(v => { v.style.width = `${100 / totalStages}%`; });
 
-        // 스와이프 리스너 등록
         const container = document.querySelector('.detail-slider-container');
         addSwipeListener(container, 
-            () => { // Left Swipe (Next)
+            () => { 
                 if(currentStage < totalStages - 1) {
                     currentStage++;
                     updateDetailSlider();
                 }
             },
-            () => { // Right Swipe (Prev)
+            () => { 
                 if(currentStage > 0) {
                     currentStage--;
                     updateDetailSlider();
@@ -399,7 +386,9 @@ function showDragonDetailModal(dragonId, info) {
     }, 100);
 }
 
-// [유틸] 스와이프 감지 함수
+// [수정] 스와이프 감지 함수 (쿨다운 추가)
+let isSwipeCooldown = false; // 전역 혹은 클로저 변수 사용
+
 function addSwipeListener(el, onLeft, onRight) {
     if(!el) return;
     let startX = 0;
@@ -411,16 +400,34 @@ function addSwipeListener(el, onLeft, onRight) {
     
     el.addEventListener('touchend', e => {
         endX = e.changedTouches[0].screenX;
+        
+        // [수정 포인트] 쿨다운 중이면 무시
+        if (isSwipeCooldown) return;
+        
         handleGesture();
     }, {passive: true});
 
     function handleGesture() {
-        const threshold = 50; // 최소 이동 거리
+        const threshold = 60; // 감도 약간 둔하게 (50 -> 60)
+        
         if (startX - endX > threshold) {
-            if(onLeft) onLeft();
+            // 왼쪽으로 밀기
+            if(onLeft) {
+                onLeft();
+                triggerCooldown();
+            }
         } else if (endX - startX > threshold) {
-            if(onRight) onRight();
+            // 오른쪽으로 밀기
+            if(onRight) {
+                onRight();
+                triggerCooldown();
+            }
         }
+    }
+
+    function triggerCooldown() {
+        isSwipeCooldown = true;
+        setTimeout(() => { isSwipeCooldown = false; }, 500); // 0.5초 쿨다운
     }
 }
 
