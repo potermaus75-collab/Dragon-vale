@@ -23,13 +23,6 @@
         </div>
     </section>
 
-    <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()">
-        <div class="panel-box" style="height: 50%;">
-            <p id="prologue-text">...</p>
-        </div>
-        <p class="blink">터치하여 계속 >></p>
-    </section>
-
     <section id="screen-game" class="full-screen hidden">
         
         <main id="game-view">
@@ -38,105 +31,60 @@
                 <div class="nest-layout-container">
                     
                     <div class="nest-header-area">
-                        <div class="nest-currency">
+                        <div class="currency-slot gold-slot">
                             <span id="ui-gold">0</span>
-                            <span id="ui-gem" style="margin-left: 60px;">0</span>
+                        </div>
+                        <div class="currency-slot gem-slot">
+                            <span id="ui-gem">0</span>
                         </div>
                         <button class="btn-menu-hamburger">≡</button>
                     </div>
 
-                    <div class="nest-sidebar-left">
-                        <div class="sidebar-label">알 목록</div>
-                        <div id="my-egg-list" class="sidebar-list-content">
-                            </div>
-                    </div>
-
-                    <div class="nest-center-stage">
-                        <div class="stage-title">
-                            <span id="dragon-name-ui">드래곤 이름</span>
-                        </div>
+                    <div class="nest-body-area">
                         
-                        <div class="dragon-visual-area">
-                             <div id="dragon-display"></div>
-                        </div>
-
-                        <div class="nest-controls">
-                            <div class="gauge-box">
-                                <div id="progress-fill" class="gauge-fill"></div>
-                                <span class="gauge-text">0 / 100</span>
-                            </div>
-                            <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
-                        </div>
-                    </div>
-
-                    <div class="nest-bottom-panel">
-                        <div class="panel-label">둥지 강화 재료</div>
-                        <div class="panel-content-row">
-                            <div id="cave-inventory-grid" class="material-scroll-row">
+                        <div class="nest-sidebar-left">
+                            <div class="sidebar-header-text">알 목록</div>
+                            <div id="my-egg-list" class="sidebar-list-content">
                                 </div>
-                            <button id="btn-upgrade-nest" class="btn-upgrade-img"></button>
+                        </div>
+
+                        <div class="nest-right-column">
+                            
+                            <div class="nest-center-stage">
+                                <div class="dragon-name-box">
+                                    <span id="dragon-name-ui">이름 없음</span>
+                                </div>
+                                
+                                <div class="dragon-visual-area">
+                                     <div id="dragon-display"></div>
+                                </div>
+
+                                <div class="nest-controls">
+                                    <div class="gauge-box">
+                                        <div id="progress-fill" class="gauge-fill"></div>
+                                        <span class="gauge-text">0 / 100</span>
+                                    </div>
+                                    <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
+                                </div>
+                            </div>
+
+                            <div class="nest-bottom-panel">
+                                <div class="panel-label">인벤토리</div>
+                                <div class="panel-content-row">
+                                    <div id="cave-inventory-grid" class="material-scroll-row">
+                                        </div>
+                                    </div>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-info" class="tab-content hidden default-layout">
-                <div class="panel-box" style="width:95%; height:90%;">
-                    <h3>내 정보</h3>
-                    <div class="profile-card">
-                        <div class="equip-slot head" onclick="unequipItem('head')"><span>머리</span></div>
-                        <div class="equip-slot body" onclick="unequipItem('body')"><span>갑옷</span></div>
-                        <div class="equip-slot arm" onclick="unequipItem('arm')"><span>무기</span></div>
-                        <div class="equip-slot leg" onclick="unequipItem('leg')"><span>신발</span></div>
-                        <div style="margin-top:auto; text-align:center;">
-                            <p>공격 <span id="stat-atk">10</span> / 방어 <span id="stat-def">5</span></p>
-                        </div>
-                    </div>
-                    <div class="inventory-section" style="width:100%; flex:1;">
-                        <h4>가방</h4>
-                        <div id="inventory-grid" class="grid-4"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-explore" class="tab-content hidden default-layout">
-                 <div id="explore-map-view" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
-                    <div class="map-frame" style="flex:1;">
-                        <div class="map-view" style="height:100%;">
-                            <div id="region-list" style="padding:10px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="explore-run-view" class="hidden" style="width:100%; height:100%;">
-                    <div class="map-frame" id="explore-bg" style="height:70%;">
-                        <div style="background:rgba(0,0,0,0.5); padding:10px;">
-                            <h3 id="region-title">지역</h3>
-                            <p id="move-counter">이동: 10</p>
-                            <p id="event-msg">...</p>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-                        <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
-                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-book" class="tab-content hidden default-layout">
-                <div class="book-bg bg-vertical">
-                    <h3>용 도감</h3>
-                    <div class="book-slider-container">
-                        <div class="book-slider-track" id="book-track"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-shop" class="tab-content hidden default-layout">
-                <div class="shop-bg bg-vertical">
-                    <h3>상점</h3>
-                    <div class="scroll-area"><div id="shop-list" class="list-row"></div></div>
-                </div>
-            </div>
+            <div id="tab-info" class="tab-content hidden default-layout"><h2 style="margin-top:100px;">준비 중</h2></div>
+            <div id="tab-explore" class="tab-content hidden default-layout"><h2 style="margin-top:100px;">준비 중</h2></div>
+            <div id="tab-book" class="tab-content hidden default-layout"><h2 style="margin-top:100px;">준비 중</h2></div>
+            <div id="tab-shop" class="tab-content hidden default-layout"><h2 style="margin-top:100px;">준비 중</h2></div>
 
         </main>
 
@@ -160,28 +108,11 @@
             </div>
         </div>
     </div>
-    
-    <div id="breeding-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.9); z-index:9500;">
-        <div class="panel-box">
-            <h3>교배</h3>
-            <div style="display:flex; justify-content:space-around; width:100%; margin:20px 0;">
-                <div id="parent-slot-1" class="new-slot-item" onclick="selectParent(1)"></div>
-                <div id="parent-slot-2" class="new-slot-item" onclick="selectParent(2)"></div>
-            </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-stone" onclick="tryBreeding()">확인</button>
-                <button class="btn-stone" onclick="closeBreedingModal()">취소</button>
-            </div>
-             <div id="breeding-select-list" class="hidden" style="margin-top:10px; width:100%;"></div>
-        </div>
-    </div>
 
     <script src="js/data.js"></script>
     <script src="js/dragon.js"></script>
     <script src="js/player.js"></script>
     <script src="js/hatchery.js"></script>
-    <script src="js/breeding.js"></script>
-    <script src="js/explore.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
