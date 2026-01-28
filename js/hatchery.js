@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (팝업 이미지 수정 및 레이어 변경 대응)
+// js/hatchery.js (이모지 제거 및 최신 로직 반영)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -17,7 +17,6 @@ const EGG_TYPE_NAMES = {
     "dark": "불길한 알",
     "random": "미지의 알"
 };
-// breeding.js 등 다른 파일에서 참조할 수 있도록 전역 노출
 window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
 
 function updateCaveUI() {
@@ -82,10 +81,10 @@ function renderBreedingBtn() {
         breedBtn.id = 'btn-open-breeding';
         breedBtn.className = 'btn-stone';
         breedBtn.style.marginTop = '5px';
-        breedBtn.style.color = '#ff9ff3'; // 핑크색 텍스트
-        breedBtn.innerHTML = `💕 교배하기`;
+        breedBtn.style.color = '#ff9ff3'; 
+        // [수정] 이모지 대신 텍스트만 사용 (아이콘 이미지가 있다면 img 태그 사용 권장)
+        breedBtn.innerHTML = `교배하기`;
         
-        // breeding.js에 있는 함수 호출
         breedBtn.onclick = () => {
             if(window.openBreedingModal) window.openBreedingModal();
             else console.error("breeding.js not loaded");
@@ -101,7 +100,6 @@ function renderNest() {
     let displayStage = DRAGON_DATA.stages[dragonData.stage];
     let displayName = dragonData.name;
 
-    // 알 단계에서는 정체를 숨김
     if (dragonData.stage === 0) {
         displayName = EGG_TYPE_NAMES[dragonData.type] || "미확인 알";
         displayStage = "알";
@@ -133,8 +131,7 @@ function renderNest() {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    // [수정] 용 이미지와 둥지 이미지의 순서(z-index)는 CSS에서 제어
-    // 여기서는 구조만 잡아줍니다. (이미지 주소 할당)
+    // 둥지 레이어링 유지
     dragonDisplay.innerHTML = `
         <img src="${imgSrc}" class="main-dragon-img" 
             onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">
@@ -178,20 +175,20 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
-        // [수정됨] 알(0) -> 유아기(1) 부화 시 이미지 표시 로직 추가
+        // 부화 (0 -> 1)
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
                 player.discovered.push(dragon.id);
             }
 
-            // 아기 용 이미지 가져오기
             let babyImg = "assets/images/dragon/stage_baby.png";
             if(window.getDragonImage) babyImg = window.getDragonImage(dragon.id, 1);
 
+            // [수정] 이모지 제거
             showAlert(`
                 <div style="text-align:center;">
-                    <h3>🐣 부화 성공!</h3>
+                    <h3>부화 성공!</h3>
                     
                     <img src="${babyImg}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
                          onerror="handleImgError(this, '${dragon.type}', 1)">
@@ -213,15 +210,16 @@ function handleDragonClick(dragon, imgEl) {
         if(window.gainExp) window.gainExp(gain);
         renderNest(); 
         
-        // 부화가 아닐 때만 일반 성장 메시지
+        // 성장 (1 -> 2...)
         if (oldStage !== 0) {
             let evolvedImg = "assets/images/dragon/stage_adult.png";
             if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
 
+            // [수정] 이모지 제거
             showAlert(`
                 <div style="text-align:center;">
                     <img src="${evolvedImg}" style="width:100px;" onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})"><br>
-                    ✨ 축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
+                    축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
                     <b style="color:#2ecc71">(경험치 +${gain})</b>
                 </div>
             `);
@@ -246,7 +244,6 @@ function renderEggList() {
         if(window.getDragonImage) iconSrc = window.getDragonImage(dragon.id, dragon.stage);
 
         let listName = dragon.name;
-        // 목록에서도 알이면 숨김
         if(dragon.stage === 0) listName = EGG_TYPE_NAMES[dragon.type] || "미확인 알";
 
         div.innerHTML = `
