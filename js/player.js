@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (룰렛 삭제, 중복 터치 방지)
+// js/player.js (저장 최적화 및 UI 동기화: 생략 없음)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -25,7 +25,8 @@ const INITIAL_PLAYER_STATE = {
 
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
 let tempLoot = []; 
-let isProcessing = false; // [중요] 중복 실행 방지 플래그
+let isProcessing = false; // 중복 실행 방지 플래그
+let saveTimeout = null;   // 저장 디바운싱용 타이머
 
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
@@ -65,7 +66,7 @@ function gainExp(amount) {
                 </div>
             `);
         }
-        saveGame();
+        saveGame(true); // 레벨업은 즉시 저장
     }
     updateCurrency();
 }
@@ -114,7 +115,6 @@ function claimTempLoot() {
 
 function clearTempLoot() { tempLoot = []; }
 
-// [수정] 아이템 사용 로직 (룰렛 UI 제거, 중복 방지)
 function useItem(itemId) {
     if (isProcessing) return; // 중복 실행 방지
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
@@ -147,11 +147,13 @@ function useItem(itemId) {
             () => {
                 player.inventory[itemId]--; // 재고 차감
                 
-                // [변경] 룰렛 없이 바로 둥지에 배치 (정체 숨김 상태)
                 const isShiny = (itemId === 'egg_shiny');
+                // hatchery.js에 있는 함수 호출
                 if(window.hatchEggInternal) window.hatchEggInternal(isShiny, item.dragonType || null);
                 
-                if(typeof renderInventory === 'function') renderInventory();
+                // [중요] 전역 UI 업데이트 호출 (인벤토리 갱신 포함)
+                if(window.updateUI) window.updateUI();
+                
                 showAlert("둥지에 알을 놓았습니다.<br>탭해서 깨워보세요!", () => { isProcessing = false; });
             },
             () => { isProcessing = false; }
@@ -165,10 +167,10 @@ function useItem(itemId) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
-                if(window.updateUI) window.updateUI(); 
             } else { isProcessing = false; }
         }
-        if(typeof renderInventory === 'function') renderInventory();
+        // 사용 후 즉시 UI 갱신
+        if(window.updateUI) window.updateUI();
     }
 }
 
@@ -208,9 +210,8 @@ function equipItem(itemId, slot) {
     player.equipment[slot] = itemId;
     player.inventory[itemId]--; 
     showAlert("장착 완료!");
-    updateCurrency(); 
+    
     if(window.updateUI) window.updateUI();
-    if(typeof renderInventory === 'function') renderInventory();
     saveGame();
 }
 
@@ -219,15 +220,28 @@ function unequipItem(slot) {
         addItem(player.equipment[slot], 1, true);
         player.equipment[slot] = null;
         showAlert("장비를 해제했습니다.");
-        updateCurrency(); 
+        
         if(window.updateUI) window.updateUI();
-        if(typeof renderInventory === 'function') renderInventory();
         saveGame();
     }
 }
 
-function saveGame() {
+// [핵심 최적화] 저장 디바운싱 (1초 딜레이)
+// immediate=true일 경우 즉시 저장 (레벨업, 중요 이벤트 등)
+function saveGame(immediate = false) {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
+    
+    if (immediate) {
+        if (saveTimeout) clearTimeout(saveTimeout);
+        executeSave();
+        return;
+    }
+
+    if (saveTimeout) clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(executeSave, 1000);
+}
+
+function executeSave() {
     const data = { player: player, timestamp: Date.now() };
     localStorage.setItem('dragonSaveData', JSON.stringify(data));
     console.log("게임 저장 완료");
