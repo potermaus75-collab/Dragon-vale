@@ -53,9 +53,9 @@
                 </div>
                 
                 <span style="display:block; margin-top:2px;">
-                    <img src="assets/images/ui/icon_gem.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gem">0</span>
+                    <img src="assets/images/ui/icon_gem.png" class="currency-icon" style="width:18px; vertical-align:middle" onerror="this.style.display='none'"> <span id="ui-gem">0</span>
                     &nbsp;
-                    <img src="assets/images/ui/icon_gold.png" class="currency-icon" style="width:18px; vertical-align:middle"> <span id="ui-gold">0</span>
+                    <img src="assets/images/ui/icon_gold.png" class="currency-icon" style="width:18px; vertical-align:middle" onerror="this.style.display='none'"> <span id="ui-gold">0</span>
                 </span>
             </div>
         </header>
@@ -95,7 +95,10 @@
                     </div>
                     
                     <div class="inventory-section">
-                        <h3>🎒 장비 가방</h3>
+                        <h3 style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                            <img src="assets/images/ui/icon_bag.png" style="width:24px;" onerror="this.style.display='none'">
+                            장비 가방
+                        </h3>
                         <div id="inventory-grid" class="grid-4" style="margin-top:10px;"></div>
                     </div>
                 </div>
@@ -112,7 +115,10 @@
                         <div class="rune-bar"><div id="progress-fill"></div></div>
                         
                         <div class="inventory-section" style="width:95%; margin-top:10px; padding:5px;">
-                            <h4 style="margin:5px 0; font-size:0.8rem; color:#aaa;">📦 둥지 창고 (재료/알)</h4>
+                            <h4 style="margin:5px 0; font-size:0.8rem; color:#aaa; display:flex; align-items:center; gap:5px;">
+                                <img src="assets/images/ui/icon_box.png" style="width:16px;" onerror="this.style.display='none'">
+                                둥지 창고 (재료/알)
+                            </h4>
                             <div id="cave-inventory-grid" class="grid-4"></div>
                         </div>
 
@@ -146,7 +152,10 @@
 
             <div id="tab-book" class="tab-content hidden">
                 <div class="book-bg">
-                    <h3>📜 용 도감</h3>
+                    <h3 style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                        <img src="assets/images/ui/icon_book.png" style="width:24px;" onerror="this.style.display='none'">
+                        용 도감
+                    </h3>
                     <div class="scroll-area">
                         <div id="book-grid" class="grid-4" style="margin-top:10px;"></div>
                     </div>
@@ -182,14 +191,21 @@
 
     <div id="breeding-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.9); z-index:9500;">
         <div class="panel-box" style="width:95%; max-width:500px; height:auto; min-height:400px;">
-            <h3>💕 사랑의 둥지</h3>
+            <h3 style="display:flex; align-items:center; gap:10px;">
+                <img src="assets/images/ui/icon_heart.png" style="width:24px;" onerror="this.style.display='none'">
+                사랑의 둥지
+            </h3>
             <p style="font-size:0.8rem; color:#aaa;">성체가 된 용 두 마리를 교배합니다.</p>
             
             <div style="display:flex; justify-content:space-around; align-items:center; width:100%; margin:20px 0;">
                 <div id="parent-slot-1" class="book-slot" onclick="selectParent(1)" style="width:80px; height:80px; cursor:pointer;">
                     <span style="font-size:2rem; color:#555;">+</span>
                 </div>
-                <div style="font-size:1.5rem;">❤️</div>
+                
+                <div style="display:flex; align-items:center;">
+                    <img src="assets/images/ui/icon_heart.png" style="width:30px;" onerror="this.style.display='none'">
+                </div>
+                
                 <div id="parent-slot-2" class="book-slot" onclick="selectParent(2)" style="width:80px; height:80px; cursor:pointer;">
                     <span style="font-size:2rem; color:#555;">+</span>
                 </div>
@@ -230,7 +246,8 @@
     <script src="js/dragon.js"></script>
     <script src="js/player.js"></script>
     <script src="js/hatchery.js"></script>
-    <script src="js/breeding.js"></script> <script src="js/explore.js"></script>
+    <script src="js/breeding.js"></script>
+    <script src="js/explore.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
