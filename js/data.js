@@ -1,5 +1,5 @@
 // ==========================================
-// js/data.js (데이터 통합 관리: 생략 없음)
+// js/data.js (수정완료: window 객체 노출 추가)
 // ==========================================
 
 // [시스템 1] 등급 데이터
@@ -11,7 +11,7 @@ const RARITY_DATA = {
     "legend": { name: "전설", color: "#f1c40f", prob: 1 }
 };
 
-// [시스템 2] 알 이름 (hatchery.js에서 이동됨)
+// [시스템 2] 알 이름
 const EGG_TYPE_NAMES = {
     "fire": "불타는 알",
     "water": "촉촉한 알",
@@ -27,7 +27,6 @@ const EGG_TYPE_NAMES = {
 const DRAGON_DATA = {
     stages: ["알", "유아기", "성장기", "성룡", "고룡"],
     reqClicks: [20, 50, 150, 500],
-    // 참고용 이미지 경로 (실제 사용은 main.js 등에서 조합)
     stageImages: [
         "assets/images/dragon/stage_egg.png",
         "assets/images/dragon/stage_baby.png",
@@ -37,7 +36,7 @@ const DRAGON_DATA = {
     ]
 };
 
-// [시스템 4] 프롤로그 (main.js에서 이동됨)
+// [시스템 4] 프롤로그
 const PROLOGUE_DATA = [
     { text: "옛날 옛적, 용들이 하늘을 지배하던 시대...\n(터치하여 계속)" },
     { text: "하지만 대전쟁 이후 용들은 모두 사라졌다." },
@@ -93,3 +92,14 @@ const ITEM_DB = {
 
 // 상점 목록
 const SHOP_LIST = ["potion_s", "nest_wood", "egg_random", "egg_shiny", "sword_wood", "helm_leather", "armor_cloth", "boots_leather"];
+
+// [중요] 수정 사항: 다른 JS 파일에서 접근할 수 있도록 window 객체에 할당
+window.RARITY_DATA = RARITY_DATA;
+window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
+window.DRAGON_DATA = DRAGON_DATA;
+window.PROLOGUE_DATA = PROLOGUE_DATA;
+window.REGION_DATA = REGION_DATA;
+window.ENCOUNTER_RATES = ENCOUNTER_RATES;
+window.NEST_UPGRADE_COST = NEST_UPGRADE_COST;
+window.ITEM_DB = ITEM_DB;
+window.SHOP_LIST = SHOP_LIST;
