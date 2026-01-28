@@ -1,34 +1,25 @@
 // ==========================================
-// js/main.js (이모지 -> 이미지 교체 및 로직 최적화)
+// js/main.js (UI 중앙 제어 및 최적화: 생략 없음)
 // ==========================================
 
-// [수정] 이미지 로드 실패 시 무조건 물음표 박스로 대체 (CSS 생성 로직 삭제)
+// [시스템] 이미지 로드 실패 시 무조건 물음표 아이콘으로 대체 (CSS 드래곤 삭제됨)
 window.handleImgError = function(imgEl, dragonType, dragonStage) {
-    imgEl.onerror = null; 
+    imgEl.onerror = null; // 무한루프 방지
     imgEl.src = "assets/images/ui/icon_question.png"; 
     imgEl.style.objectFit = "contain";
-    // 기존의 .css-dragon 클래스 추가 로직 삭제됨
 };
 
 let userNickname = "Guest";
 let prologueIndex = 0;
+let currentTab = 'dragon'; // 현재 활성 탭 추적
 
 // 도감용 변수
 let currentBookPage = 0;
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
-
-// [수정] 이모지 제거, 텍스트만 남김 (아이콘은 별도로 렌더링)
 const CATEGORY_NAMES = {
     "fire": "불의 장", "water": "물의 장", "forest": "숲의 장",
     "electric": "번개의 장", "metal": "강철의 장", "light": "빛의 장", "dark": "어둠의 장"
 };
-
-const PROLOGUE_DATA = [
-    { text: "옛날 옛적, 용들이 하늘을 지배하던 시대...\n(터치하여 계속)" },
-    { text: "하지만 대전쟁 이후 용들은 모두 사라졌다." },
-    { text: "당신은 우연히 숲속에서 낡은 알을 발견한다." },
-    { text: "이제 당신의 이야기가 시작된다." }
-];
 
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
@@ -40,9 +31,12 @@ const UI_ASSETS = [
     "assets/images/ui/btn_rect.png",
     "assets/images/ui/btn_square.png",
     "assets/images/ui/icon_question.png",
-    // 추가된 아이콘 에셋들 (필요 시 파일 추가)
     "assets/images/ui/icon_arrow_left.png",
-    "assets/images/ui/icon_arrow_right.png"
+    "assets/images/ui/icon_arrow_right.png",
+    "assets/images/ui/icon_bag.png",
+    "assets/images/ui/icon_box.png",
+    "assets/images/ui/icon_book.png",
+    "assets/images/ui/icon_heart.png"
 ];
 
 function preloadAssets() {
@@ -133,6 +127,7 @@ function submitName() {
 
 function renderPrologue() {
     const textEl = document.getElementById('prologue-text');
+    // data.js의 PROLOGUE_DATA 사용
     textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
 }
 
@@ -147,17 +142,17 @@ function nextPrologueCut() {
 
 function startGame() {
     showScreen('screen-game');
-    updateCurrency();
     switchTab('dragon'); 
-    if(window.updateUI) window.updateUI();
-    saveGame(); 
 }
 
+// [핵심] 탭 전환 함수
 function switchTab(tabName) {
     if (window.isExploreActive && tabName !== 'explore') {
         showAlert("탐험 중에는 다른 메뉴로 이동할 수 없습니다!\n탐험을 먼저 완료하거나 포기해주세요.");
         return;
     }
+
+    currentTab = tabName; // 현재 탭 기억
 
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.add('hidden');
@@ -171,24 +166,33 @@ function switchTab(tabName) {
     const tabMap = {'info':0, 'dragon':1, 'explore':2, 'book':3, 'shop':4};
     if(tabMap[tabName] !== undefined) navBtns[tabMap[tabName]].classList.add('active');
 
-    if (tabName === 'info') { 
-        updateCurrency();
-        if(window.updateUI) window.updateUI(); 
-        renderInventory();
+    // 탭 전환 시 즉시 UI 갱신 (전체 갱신이 아닌 필요한 부분만)
+    updateUI();
+}
+
+// [핵심] 중앙 통제형 UI 업데이트 함수
+window.updateUI = function() {
+    // 1. 공통 재화(골드/보석/레벨) 업데이트
+    if(window.updateCurrency) updateCurrency(); 
+
+    // 2. 현재 탭에 맞는 화면만 렌더링 (성능 최적화)
+    if (currentTab === 'dragon') {
+        // hatchery.js에 있는 renderCaveUI 호출
+        if(window.renderCaveUI) window.renderCaveUI(); 
+    } 
+    else if (currentTab === 'info') {
+        if(typeof renderInventory === 'function') renderInventory();
     }
-    if (tabName === 'shop') renderShop();
-    if (tabName === 'book') {
-        currentBookPage = 0; 
-        renderBook(); 
+    else if (currentTab === 'shop') {
+        if(typeof renderShop === 'function') renderShop();
     }
-    if (tabName === 'dragon') {
-        updateCurrency();
-        if(window.updateUI) window.updateUI(); 
+    else if (currentTab === 'book') {
+        if(currentBookPage === 0) renderBook(); // 초기화 혹은 필요 시 렌더링
     }
-    if (tabName === 'explore') {
+    else if (currentTab === 'explore') {
         if(window.initExploreTab) window.initExploreTab();
     }
-}
+};
 
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
@@ -216,12 +220,12 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
+// [리뉴얼] 도감 렌더링 (스와이프 페이지 방식 + 3열 그리드)
 function renderBook() {
     const bookContent = document.querySelector('#tab-book .book-bg');
     
     if(bookContent) {
         bookContent.className = 'bg-vertical'; 
-        // [수정] 안내 문구 이모지 제거 (화살표 이미지 사용 권장)
         bookContent.innerHTML = `
             <h3>용 도감</h3>
             <div class="book-slider-container">
@@ -240,11 +244,11 @@ function renderBook() {
     
     if(!player.discovered) player.discovered = [];
 
+    // 속성별 페이지 생성
     BOOK_CATEGORIES.forEach(category => {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         
-        // [수정] 이모지 대신 속성 아이콘 표시 (icon_fire.png 등)
         const typeIcon = `assets/images/ui/icon_${category}.png`;
         
         pageDiv.innerHTML = `
@@ -254,8 +258,9 @@ function renderBook() {
             </div>
         `;
         
+        // 3열 그리드 적용
         const gridDiv = document.createElement('div');
-        gridDiv.className = 'grid-3'; 
+        gridDiv.className = 'grid-3';
         gridDiv.style.width = "100%";
 
         const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === category);
@@ -288,6 +293,7 @@ function renderBook() {
         track.appendChild(pageDiv);
     });
 
+    // 스와이프 이벤트 등록
     addSwipeListener(document.querySelector('.book-slider-container'), 
         () => moveBookPage(1),  
         () => moveBookPage(-1)  
@@ -311,13 +317,16 @@ function updateBookSlider() {
     }
 }
 
+// [리뉴얼] 상세 정보 모달 (단계별 슬라이드 방식)
 function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
+    // 표시할 최대 단계 설정
     const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
     const totalStages = isHighTier ? 5 : 4;
     
+    // 슬라이더 HTML 생성
     let slidesHtml = "";
     for(let i=0; i < totalStages; i++) {
         const isUnknown = i > maxStage;
@@ -341,6 +350,7 @@ function showDragonDetailModal(dragonId, info) {
 
     const rarityColor = RARITY_DATA[info.rarity].color;
 
+    // 모달 내용 구성
     const modalContent = `
         <div style="text-align:center; width:100%;">
             <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
@@ -366,11 +376,12 @@ function showDragonDetailModal(dragonId, info) {
 
     showAlert(modalContent);
 
+    // 모달 렌더링 후 슬라이드 로직 적용
     setTimeout(() => {
         const track = document.getElementById('detail-track');
         if (!track) return;
         
-        let currentStage = Math.min(maxStage, totalStages - 1); 
+        let currentStage = Math.min(maxStage, totalStages - 1); // 현재 도달한 단계부터 보여줌
         
         const updateDetailSlider = () => {
             track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`;
@@ -382,13 +393,13 @@ function showDragonDetailModal(dragonId, info) {
 
         const container = document.querySelector('.detail-slider-container');
         addSwipeListener(container, 
-            () => { 
+            () => { // Left Swipe (Next)
                 if(currentStage < totalStages - 1) {
                     currentStage++;
                     updateDetailSlider();
                 }
             },
-            () => { 
+            () => { // Right Swipe (Prev)
                 if(currentStage > 0) {
                     currentStage--;
                     updateDetailSlider();
@@ -398,7 +409,8 @@ function showDragonDetailModal(dragonId, info) {
     }, 100);
 }
 
-let isSwipeCooldown = false; 
+// [유틸] 스와이프 감지 함수 (쿨다운 추가)
+let isSwipeCooldown = false;
 
 function addSwipeListener(el, onLeft, onRight) {
     if(!el) return;
@@ -416,26 +428,21 @@ function addSwipeListener(el, onLeft, onRight) {
     }, {passive: true});
 
     function handleGesture() {
-        const threshold = 60; 
+        const threshold = 60; // 감도 조절
         if (startX - endX > threshold) {
-            if(onLeft) {
-                onLeft();
-                triggerCooldown();
-            }
+            if(onLeft) { onLeft(); triggerCooldown(); }
         } else if (endX - startX > threshold) {
-            if(onRight) {
-                onRight();
-                triggerCooldown();
-            }
+            if(onRight) { onRight(); triggerCooldown(); }
         }
     }
 
     function triggerCooldown() {
         isSwipeCooldown = true;
-        setTimeout(() => { isSwipeCooldown = false; }, 500);
+        setTimeout(() => { isSwipeCooldown = false; }, 500); // 0.5초 쿨다운
     }
 }
 
+// [리뉴얼] 상점 렌더링 (세로형 배경 적용)
 function renderShop() {
     const shopContent = document.querySelector('#tab-shop .shop-bg');
     if(shopContent) {
