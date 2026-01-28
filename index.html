@@ -8,16 +8,29 @@
 </head>
 <body oncontextmenu="return false;" onselectstart="return false;">
 
+    <div style="display:none;">
+        <span id="ui-level">1</span>
+        <span id="ui-nickname">Player</span>
+        <div id="ui-exp-fill"></div>
+        <span id="stat-atk">10</span>
+        <span id="stat-def">5</span>
+    </div>
+
     <section id="screen-start" class="full-screen active">
         <div class="title-area">
             <h1>DRAGON<br>CHRONICLES</h1>
+            
             <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
                 <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-bottom: 5px;">로딩 준비 중...</p>
                 <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
                     <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
                 </div>
             </div>
-            <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;">터치하여 시작</p>
+
+            <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
+               onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ loadGame(); startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
+               터치하여 시작
+            </p>
         </div>
     </section>
 
@@ -45,10 +58,10 @@
                     
                     <div class="nest-header-area">
                         <div class="currency-slot gold-slot">
-                            <span id="ui-gold">0</span>
+                            💰 <span id="ui-gold">0</span>
                         </div>
                         <div class="currency-slot gem-slot">
-                            <span id="ui-gem">0</span>
+                            💎 <span id="ui-gem">0</span>
                         </div>
                         <button class="btn-menu-hamburger">≡</button>
                     </div>
@@ -57,7 +70,8 @@
                         
                         <div class="nest-sidebar-left">
                             <div class="sidebar-header-text">알 목록</div>
-                            <div id="my-egg-list" class="sidebar-list-content"></div>
+                            <div id="my-egg-list" class="sidebar-list-content">
+                                </div>
                         </div>
 
                         <div class="nest-right-column">
@@ -83,8 +97,9 @@
                             <div class="nest-bottom-panel">
                                 <div class="panel-label">인벤토리</div>
                                 <div class="panel-content-row">
-                                    <div id="cave-inventory-grid" class="material-scroll-row"></div>
-                                </div>
+                                    <div id="cave-inventory-grid" class="material-scroll-row">
+                                        </div>
+                                    </div>
                             </div>
 
                         </div>
@@ -93,66 +108,23 @@
             </div>
 
             <div id="tab-info" class="tab-content hidden default-layout">
-                <div class="panel-box" style="width:95%; height:90%;">
+                <div class="panel-box" style="width:95%;">
                     <h3>내 정보</h3>
-                    <div class="profile-card">
-                        <div class="silhouette-body">
-                            <div class="sil-head"></div><div class="sil-torso"></div>
-                            <div class="sil-arm-l"></div><div class="sil-arm-r"></div>
-                            <div class="sil-leg-l"></div><div class="sil-leg-r"></div>
-                        </div>
-                        <div class="equip-slot head" onclick="unequipItem('head')"><span>머리</span></div>
-                        <div class="equip-slot body" onclick="unequipItem('body')"><span>갑옷</span></div>
-                        <div class="equip-slot arm" onclick="unequipItem('arm')"><span>무기</span></div>
-                        <div class="equip-slot leg" onclick="unequipItem('leg')"><span>신발</span></div>
-                        <div style="margin-top:auto; text-align:center;">
-                            <p>공격 <span id="stat-atk">10</span> / 방어 <span id="stat-def">5</span></p>
-                        </div>
-                    </div>
-                    <div class="inventory-section" style="width:100%; flex:1;">
+                    <div class="inventory-section">
                         <h4>가방</h4>
                         <div id="inventory-grid" class="grid-4"></div>
                     </div>
                 </div>
             </div>
-
             <div id="tab-explore" class="tab-content hidden default-layout">
-                 <div id="explore-map-view" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center;">
-                    <div class="map-frame" style="flex:1;">
-                        <div class="map-view" style="height:100%;">
-                            <div id="region-list" style="padding:10px;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div id="explore-run-view" class="hidden" style="width:100%; height:100%;">
-                    <div class="map-frame" id="explore-bg" style="height:70%;">
-                        <div style="background:rgba(0,0,0,0.5); padding:10px;">
-                            <h3 id="region-title">지역</h3>
-                            <p id="move-counter">이동: 10</p>
-                            <p id="event-msg">...</p>
-                        </div>
-                    </div>
-                    <div style="display:flex; justify-content:center; gap:10px; margin-top:10px;">
-                        <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
-                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
-                    </div>
-                </div>
+                 <div id="explore-map-view" style="width:100%; height:100%;"><div class="map-frame"><div class="map-view"><div id="region-list"></div></div></div></div>
+                 <div id="explore-run-view" class="hidden"><div class="map-frame" id="explore-bg"><div style="background:rgba(0,0,0,0.5); padding:10px;"><h3 id="region-title">지역</h3><p id="move-counter">이동: 10</p><p id="event-msg">...</p></div></div><div style="display:flex; justify-content:center; gap:10px; margin-top:10px;"><button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button><button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button></div></div>
             </div>
-
             <div id="tab-book" class="tab-content hidden default-layout">
-                <div class="book-bg bg-vertical">
-                    <h3>용 도감</h3>
-                    <div class="book-slider-container">
-                        <div class="book-slider-track" id="book-track"></div>
-                    </div>
-                </div>
+                <div class="book-bg bg-vertical"><h3>용 도감</h3><div class="book-slider-container"><div class="book-slider-track" id="book-track"></div></div></div>
             </div>
-
             <div id="tab-shop" class="tab-content hidden default-layout">
-                <div class="shop-bg bg-vertical">
-                    <h3>상점</h3>
-                    <div class="scroll-area"><div id="shop-list" class="list-row"></div></div>
-                </div>
+                <div class="shop-bg bg-vertical"><h3>상점</h3><div class="scroll-area"><div id="shop-list" class="list-row"></div></div></div>
             </div>
 
         </main>
@@ -165,6 +137,18 @@
             <button class="nav-item"><img src="assets/images/ui_new/icon_setting.png"></button>
         </nav>
     </section>
+
+    <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000;">
+        <div class="panel-box">
+            <h3 id="modal-title">알림</h3>
+            <div id="modal-text" style="text-align:center; margin:20px 0;">내용</div>
+            <div id="modal-btn-alert" class="hidden"><button class="btn-stone" onclick="closeModal()">확인</button></div>
+            <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px;">
+                <button class="btn-stone" id="btn-confirm-yes">예</button>
+                <button class="btn-stone" id="btn-confirm-no" onclick="closeModal()">아니오</button>
+            </div>
+        </div>
+    </div>
 
     <div id="breeding-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.9); z-index:9500;">
         <div class="panel-box">
@@ -181,20 +165,6 @@
         </div>
     </div>
 
-    <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000;">
-        <div class="panel-box">
-            <h3 id="modal-title">알림</h3>
-            <div id="modal-text" style="text-align:center; margin:20px 0;">내용</div>
-            <div id="modal-btn-alert" class="hidden"><button class="btn-stone" onclick="closeModal()">확인</button></div>
-            <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px;">
-                <button class="btn-stone" id="btn-confirm-yes">예</button>
-                <button class="btn-stone" id="btn-confirm-no" onclick="closeModal()">아니오</button>
-            </div>
-        </div>
-    </div>
-
-    <input type="file" id="file-input" style="display: none;" accept="image/*">
-    
     <script src="js/data.js"></script>
     <script src="js/dragon.js"></script>
     <script src="js/player.js"></script>
