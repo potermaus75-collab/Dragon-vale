@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (이모지 제거 및 아이콘화)
+// js/explore.js (이미지화 및 최적화 완료)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -22,6 +22,7 @@ function renderMap() {
         enterBtn.innerText = "지역을 선택하세요";
     }
 
+    // REGION_DATA는 data.js에서 로드됨
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
         const isLocked = player.level < region.levelReq;
@@ -134,7 +135,7 @@ function updateMoveUI() {
     const moveBtn = document.getElementById('btn-move');
     const returnBtn = document.getElementById('btn-return');
 
-    // [수정] 이모지 -> 이미지 아이콘
+    // [수정] 아이콘 이미지 사용
     counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle" onerror="this.style.display='none'"> 남은 이동: ${movesLeft}`;
     
     if (movesLeft <= 0) {
@@ -169,7 +170,6 @@ function processRandomEvent() {
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
         const typeRoll = Math.random();
         
-        // [수정] 이모지 -> 이미지 아이콘
         if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
             addTempLoot("gold", goldAmt);
@@ -185,7 +185,6 @@ function processRandomEvent() {
         }
     } 
     else {
-        // [수정] 이모지 제거, 애니메이션 강조
         msgArea.innerHTML = `<div style="color:#ff6b6b; font-weight:bold; animation: blinker 0.2s infinite;">경고: 용의 기운이 느껴집니다!</div>`;
         encounterNest();
     }
@@ -259,7 +258,6 @@ function wakeParentDragon(eggId) {
         const atk = player.stats ? player.stats.atk : 10;
         const winChance = Math.min(90, 30 + atk); 
 
-        // [수정] 이모지 제거 및 부모 용 이미지 표시
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
                 <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"
@@ -331,8 +329,8 @@ function finishExplore(success = true) {
             if(window.gainExp) window.gainExp(xpGain);
         }
 
-        updateCurrency();
-        if(typeof renderInventory === 'function') renderInventory();
+        // [중요] 탐험 종료 시 전역 UI 업데이트
+        if(window.updateUI) window.updateUI();
         if(typeof saveGame === 'function') saveGame();
     };
 
