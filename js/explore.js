@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (수정완료: UI 디자인 통일)
+// js/explore.js (완전한 코드: UI 디자인 통일)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,7 +9,7 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
-// 탐험 상태 복구
+// [복구] 탐험 상태 복원 (새로고침 대응)
 window.restoreExploration = function() {
     if (!player.exploreState) return;
 
@@ -19,7 +19,7 @@ window.restoreExploration = function() {
     tempLoot = state.loot || [];
     window.isExploreActive = true;
 
-    // 탭 및 화면 강제 전환
+    // 화면 강제 전환
     const tabExplore = document.getElementById('tab-explore');
     const tabMap = document.getElementById('explore-map-view');
     const tabRun = document.getElementById('explore-run-view');
@@ -29,9 +29,9 @@ window.restoreExploration = function() {
     tabMap.classList.add('hidden');
     tabRun.classList.remove('hidden');
 
+    // 배경 및 텍스트 복구
     const region = REGION_DATA[currentRegionId];
     const bgElem = document.getElementById('explore-bg');
-    
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
@@ -49,7 +49,8 @@ function renderMap() {
     if(!list) return; 
     list.innerHTML = "";
     
-    const enterBtn = document.querySelector('.enter-btn');
+    // 버튼 초기화
+    const enterBtn = document.querySelector('.enter-btn') || document.querySelector('#tab-explore button');
     if(enterBtn) {
         enterBtn.disabled = true;
         enterBtn.style.filter = "grayscale(1)";
@@ -60,7 +61,7 @@ function renderMap() {
         const div = document.createElement('div');
         const isLocked = player.level < region.levelReq;
         
-        // [변경] 지역 카드 스타일 (JS에서 인라인 스타일로 디자인 적용)
+        // [디자인] 어두운 패널 스타일 적용
         div.style.background = "rgba(0, 0, 0, 0.6)";
         div.style.border = "1px solid #555";
         div.style.borderRadius = "8px";
@@ -81,15 +82,15 @@ function renderMap() {
             div.style.opacity = "0.5";
             div.innerHTML = `
                 <div>
-                    <h3 style="color:#aaa; font-size:1rem;">🔒 ${region.name}</h3>
-                    <p style="font-size:0.7rem; color:#888;">Lv.${region.levelReq} 필요</p>
+                    <h3 style="color:#aaa; font-size:1rem; margin:0;">🔒 ${region.name}</h3>
+                    <p style="font-size:0.7rem; color:#888; margin:5px 0 0 0;">Lv.${region.levelReq} 필요</p>
                 </div>
             `;
         } else {
             div.innerHTML = `
                 <div>
-                    <h3 style="color:${color}; font-size:1.1rem; text-shadow:0 0 5px ${color};">${region.name}</h3>
-                    <p style="font-size:0.7rem; color:#ccc;">${region.desc}</p>
+                    <h3 style="color:${color}; font-size:1.1rem; text-shadow:0 0 5px ${color}; margin:0;">${region.name}</h3>
+                    <p style="font-size:0.7rem; color:#ccc; margin:5px 0 0 0;">${region.desc}</p>
                 </div>
                 <div style="font-size:1.5rem; color:${color};">▶</div>
             `;
@@ -100,7 +101,7 @@ function renderMap() {
                 showAlert(`레벨 ${region.levelReq} 이상 필요합니다.`);
                 return;
             }
-            // 선택 효과
+            // 선택 효과 (다른 카드 리셋)
             Array.from(list.children).forEach(c => {
                 c.style.background = "rgba(0, 0, 0, 0.6)";
                 c.style.borderColor = "#555";
@@ -112,7 +113,7 @@ function renderMap() {
             if(enterBtn) {
                 enterBtn.disabled = false;
                 enterBtn.style.filter = "grayscale(0)";
-                enterBtn.innerText = "탐험 시작"; // 짧은 텍스트
+                enterBtn.innerText = "탐험 시작"; 
             }
         };
         list.appendChild(div);
@@ -122,7 +123,10 @@ function renderMap() {
 
 function enterSelectedRegion() {
     if (window.isExploreActive) return; 
-    if (selectedRegionId === null) return showAlert("지역을 선택해주세요.");
+    if (selectedRegionId === null) {
+        showAlert("먼저 탐험할 지역을 선택해주세요.");
+        return;
+    }
     startExplore(selectedRegionId);
 }
 
@@ -171,7 +175,7 @@ function moveForward() {
     if (movesLeft <= 0 || !window.isExploreActive) return;
 
     movesLeft--;
-    // 걷는 애니메이션용 클래스 재적용
+    // 애니메이션 리셋
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
@@ -220,6 +224,7 @@ function processRandomEvent() {
     } 
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
         const typeRoll = Math.random();
+        
         if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
             addTempLoot("gold", goldAmt);
@@ -382,6 +387,7 @@ function finishExplore(success = true) {
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
     let html = "<div style='background:rgba(0,0,0,0.3); padding:5px; border-radius:5px; text-align:left; font-size:0.8rem;'>";
+    
     tempLoot.forEach(item => {
         if (item.id === 'gold') {
             player.gold += item.count;
@@ -395,6 +401,7 @@ function claimTempLoot() {
             html += `<div>${itemData.name} x${item.count}</div>`;
         }
     });
+    
     html += "</div>";
     tempLoot = [];
     return html;
