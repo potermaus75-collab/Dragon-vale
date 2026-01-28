@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (최종: 버튼 버그 수정)
+// js/explore.js (최종 수정: 보상 버튼 버그 해결)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -139,7 +139,7 @@ function updateMoveUI() {
 
         returnBtn.innerText = "보상 받기";
         returnBtn.style.color = "#2ecc71";
-        // [중요] 여기서 finishExplore(true)를 호출할 때 클릭이 막히지 않도록 확인
+        // [수정] 보상 받기 클릭 시 플래그 체크를 우회하여 바로 실행
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
@@ -283,8 +283,8 @@ function fightParent(winChance, eggId) {
 }
 
 function finishExplore(success = true) {
-    // [수정] 보상 받기 버튼 클릭 시 이미 active가 아니어도 진행 가능하도록 조건 완화
-    // window.isExploreActive = false; (이미 false일 수 있음)
+    // 탐험 종료 처리
+    window.isExploreActive = false; 
 
     const lootMsg = claimTempLoot();
     
@@ -316,9 +316,6 @@ function finishExplore(success = true) {
     } else {
         showAlert("마을로 돌아왔습니다.", onComplete);
     }
-    
-    // 상태 초기화
-    window.isExploreActive = false;
 }
 
 function addTempLoot(itemId, count = 1) {
@@ -328,7 +325,6 @@ function addTempLoot(itemId, count = 1) {
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
     let html = "<div style='background:rgba(0,0,0,0.3); padding:5px; border-radius:5px; text-align:left; font-size:0.8rem;'>";
-    
     tempLoot.forEach(item => {
         if (item.id === 'gold') {
             player.gold += item.count;
@@ -342,38 +338,10 @@ function claimTempLoot() {
             html += `<div>${itemData.name} x${item.count}</div>`;
         }
     });
-    
     html += "</div>";
     tempLoot = [];
     return html;
 }
-
-// [복구]
-window.restoreExploration = function() {
-    if (!player.exploreState) return;
-    const state = player.exploreState;
-    currentRegionId = state.regionId;
-    movesLeft = state.moves;
-    tempLoot = state.loot || [];
-    window.isExploreActive = true;
-
-    const tabExplore = document.getElementById('tab-explore');
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    tabExplore.classList.remove('hidden');
-    document.getElementById('explore-map-view').classList.add('hidden');
-    document.getElementById('explore-run-view').classList.remove('hidden');
-
-    const region = REGION_DATA[currentRegionId];
-    const bgElem = document.getElementById('explore-bg');
-    if (region.bg) {
-        bgElem.style.backgroundImage = `url('${region.bg}')`;
-        bgElem.style.backgroundSize = "cover";
-        bgElem.style.backgroundPosition = "center";
-    }
-    document.getElementById('region-title').innerText = region.name;
-    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
-    updateMoveUI();
-};
 
 window.initExploreTab = initExploreTab;
 window.enterSelectedRegion = enterSelectedRegion;
