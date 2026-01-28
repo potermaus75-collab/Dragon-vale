@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (완전한 전체 코드)
+// js/hatchery.js (완전한 코드: 업그레이드 제거)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -14,7 +14,7 @@ window.renderCaveUI = function() {
     renderCaveInventory(); 
 };
 
-// 알 목록 (사이드바)
+// [UI] 알 목록 렌더링 (사이드바)
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
@@ -27,7 +27,6 @@ function renderEggList() {
         if(window.getDragonImage) iconSrc = window.getDragonImage(dragon.id, dragon.stage);
 
         div.innerHTML = `<img src="${iconSrc}" onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">`;
-        
         div.onclick = () => {
             player.currentDragonIndex = index;
             window.renderCaveUI(); 
@@ -36,7 +35,7 @@ function renderEggList() {
     });
 }
 
-// 둥지 화면 렌더링
+// [UI] 둥지 화면 렌더링 (중앙)
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
@@ -93,7 +92,7 @@ function renderNest() {
     }
 }
 
-// TOUCH 버튼 핸들러
+// [Logic] TOUCH 버튼 핸들러
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     const imgEl = dragonDisplay.querySelector('img');
@@ -103,6 +102,7 @@ window.handleTouchBtn = function() {
     }
 };
 
+// [Logic] 드래곤 클릭 시 성장 처리
 function handleDragonClick(dragon, imgEl) {
     imgEl.classList.remove('click-anim');
     void imgEl.offsetWidth; 
@@ -152,7 +152,7 @@ function handleDragonClick(dragon, imgEl) {
             showAlert(`
                 <div style="text-align:center;">
                     <img src="${evolvedImg}" style="width:100px;" onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})"><br>
-                    축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!<br>
+                    축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!
                 </div>
             `);
         }
@@ -164,14 +164,14 @@ function handleDragonClick(dragon, imgEl) {
 
         const xpReward = [0, 50, 100, 300, 1000];
         const gain = xpReward[dragon.stage] || 50;
-        
         if(window.gainExp) window.gainExp(gain);
+        
         renderNest(); 
         if(window.saveGame) window.saveGame();
     }
 }
 
-// 둥지 인벤토리 렌더링
+// [UI] 인벤토리 렌더링 (하단 패널)
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -197,12 +197,12 @@ function renderCaveInventory() {
     });
 }
 
-// 유틸: ID 생성
+// [Util] 고유 ID 생성
 function generateUID() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-// 로직: 알 생성
+// [Logic] 알 획득
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
