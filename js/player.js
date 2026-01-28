@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (저장 최적화 및 UI 동기화: 생략 없음)
+// js/player.js (수정완료: 깊은 복사 & 탐험 상태 저장)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -10,7 +10,7 @@ const INITIAL_PLAYER_STATE = {
     gem: 10, 
     inventory: {}, 
     myDragons: [
-        { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common" } 
+        { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common", uId: "init_001" } 
     ],
     currentDragonIndex: 0,
     equipment: { head: null, body: null, arm: null, leg: null },
@@ -20,13 +20,35 @@ const INITIAL_PLAYER_STATE = {
     maxStages: { "fire_c1": 0 }, 
     
     nestLevel: 0,
-    nickname: "Guest"
+    nickname: "Guest",
+    
+    // [추가] 탐험 상태 저장 (새로고침 꼼수 방지)
+    exploreState: null 
 };
 
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
 let tempLoot = []; 
-let isProcessing = false; // 중복 실행 방지 플래그
-let saveTimeout = null;   // 저장 디바운싱용 타이머
+let isProcessing = false; 
+let saveTimeout = null;   
+
+// [추가] 객체 깊은 병합 유틸리티 (데이터 유실 방지)
+function deepMerge(target, source) {
+    if (typeof target !== 'object' || target === null) return source;
+    if (typeof source !== 'object' || source === null) return target;
+
+    for (const key in source) {
+        if (Array.isArray(source[key])) {
+            // 배열은 대체 (혹은 전략에 따라 합치기 가능하지만 여기선 대체가 안전)
+            target[key] = source[key];
+        } else if (typeof source[key] === 'object' && source[key] !== null) {
+            if (!target[key]) target[key] = {};
+            deepMerge(target[key], source[key]);
+        } else {
+            target[key] = source[key];
+        }
+    }
+    return target;
+}
 
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
@@ -66,7 +88,7 @@ function gainExp(amount) {
                 </div>
             `);
         }
-        saveGame(true); // 레벨업은 즉시 저장
+        saveGame(true); 
     }
     updateCurrency();
 }
@@ -116,7 +138,7 @@ function claimTempLoot() {
 function clearTempLoot() { tempLoot = []; }
 
 function useItem(itemId) {
-    if (isProcessing) return; // 중복 실행 방지
+    if (isProcessing) return; 
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
     
     const item = ITEM_DB[itemId];
@@ -145,13 +167,11 @@ function useItem(itemId) {
                 <br><b>${item.name}</b>을(를) 둥지에 놓겠습니까?
             </div>`, 
             () => {
-                player.inventory[itemId]--; // 재고 차감
+                player.inventory[itemId]--; 
                 
                 const isShiny = (itemId === 'egg_shiny');
-                // hatchery.js에 있는 함수 호출
                 if(window.hatchEggInternal) window.hatchEggInternal(isShiny, item.dragonType || null);
                 
-                // [중요] 전역 UI 업데이트 호출 (인벤토리 갱신 포함)
                 if(window.updateUI) window.updateUI();
                 
                 showAlert("둥지에 알을 놓았습니다.<br>탭해서 깨워보세요!", () => { isProcessing = false; });
@@ -169,7 +189,6 @@ function useItem(itemId) {
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
             } else { isProcessing = false; }
         }
-        // 사용 후 즉시 UI 갱신
         if(window.updateUI) window.updateUI();
     }
 }
@@ -226,8 +245,6 @@ function unequipItem(slot) {
     }
 }
 
-// [핵심 최적화] 저장 디바운싱 (1초 딜레이)
-// immediate=true일 경우 즉시 저장 (레벨업, 중요 이벤트 등)
 function saveGame(immediate = false) {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
     
@@ -254,21 +271,8 @@ function loadGame() {
             const parsedData = JSON.parse(saved);
             const savedPlayer = parsedData.player;
 
-            player = { ...INITIAL_PLAYER_STATE, ...savedPlayer };
-
-            if(!player.inventory) player.inventory = {};
-            if(!player.discovered) player.discovered = ["fire_c1"]; 
-            if(!player.myDragons) player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
-            if(!player.equipment) player.equipment = { head: null, body: null, arm: null, leg: null };
-            if(!player.stats) player.stats = { explore: 0, atk: 10, def: 5 };
-            
-            if(!player.maxStages) player.maxStages = { "fire_c1": 0 };
-            player.myDragons.forEach(d => {
-                if(!player.maxStages[d.id] || player.maxStages[d.id] < d.stage) {
-                    player.maxStages[d.id] = d.stage;
-                }
-                if(!player.discovered.includes(d.id)) player.discovered.push(d.id);
-            });
+            // [수정] Deep Merge를 사용하여 기존 데이터 구조 유지하면서 저장된 값 불러오기
+            player = deepMerge(JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE)), savedPlayer);
 
             if(typeof player.exp === 'undefined') player.exp = 0;
             if(!player.maxExp) player.maxExp = 100;
