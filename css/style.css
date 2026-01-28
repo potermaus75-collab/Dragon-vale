@@ -1,13 +1,18 @@
 /* =========================================
-   css/style.css (최종 수정: Flexbox 레이아웃 및 겹침 해결)
+   css/style.css (최종 수정: 클릭 차단 해제 & 지도 복구)
    ========================================= */
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a1025; font-family: 'Nanum Gothic', sans-serif; overflow: hidden; color: #fff; }
 
-.full-screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; pointer-events: none;}
-.full-screen > * { pointer-events: auto; }
+/* [수정] pointer-events: none 제거 -> 클릭 가능 */
+.full-screen { 
+    width: 100%; height: 100%; position: absolute; top: 0; left: 0; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    z-index: 10; 
+}
+
 .hidden { display: none !important; }
 
 /* 기본 레이아웃 */
@@ -21,17 +26,16 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .nest-layout-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
 
-/* 헤더 (Flexbox 적용) */
+/* 헤더 */
 .nest-header-area { 
     width: 100%; height: 80px; flex-shrink: 0; 
     background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; 
     background-size: 100% 100%; 
     padding-top: env(safe-area-inset-top);
     display: flex; align-items: center; justify-content: center;
-    z-index: 20;
+    z-index: 20; position: relative;
 }
 
-/* 재화 컨테이너 */
 .header-currency-wrap {
     display: flex; gap: 10px; width: 220px; justify-content: space-between; margin-top: 15px; margin-left: 20px;
 }
@@ -41,7 +45,7 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 
 /* 바디 */
-.nest-body-area { flex: 1; display: flex; overflow: hidden; padding-top: 5px; }
+.nest-body-area { flex: 1; display: flex; overflow: hidden; padding-top: 5px; position: relative; }
 
 /* 사이드바 */
 .nest-sidebar-left { 
@@ -52,18 +56,15 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
     margin-left: 5px; position: relative; z-index: 10;
 }
 .sidebar-header-text { position: absolute; top: 12px; font-size: 0.8rem; color: #aaa; font-weight: bold; }
-.sidebar-list-content { margin-top: 45px; width: 100%; height: 85%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; -ms-overflow-style: none; scrollbar-width: none; padding-bottom: 10px; }
-.sidebar-list-content::-webkit-scrollbar { display: none; }
-
-/* 오른쪽 영역 */
-.nest-right-column { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.sidebar-list-content { margin-top: 45px; width: 100%; height: 85%; overflow-y: auto; display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 10px; }
 
 /* 중앙 무대 */
+.nest-right-column { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
 .nest-center-stage { width: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
 .dragon-name-box { width: 180px; height: 40px; margin-top: 15px; background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; background-size: contain; display: flex; justify-content: center; align-items: center; color: #00e5ff; font-weight: bold; font-size: 1rem; padding-bottom: 3px; }
 
 .dragon-visual-area { 
-    width: 240px; height: 200px; /* 높이 고정 */
+    width: 240px; height: 200px; 
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; 
     background-size: 80%; 
     display: flex; justify-content: center; align-items: center; 
@@ -71,10 +72,9 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .dragon-visual-area img { width: 140px; height: 140px; object-fit: contain; margin-bottom: 30px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
 
-/* [수정] 컨트롤 영역 (여백 확보) */
 .nest-controls { 
     display: flex; align-items: center; gap: 10px; 
-    margin-top: 40px; /* 드래곤과 겹치지 않게 충분한 여백 */
+    margin-top: 40px; 
     width: 90%; justify-content: center; 
     z-index: 10; 
 }
@@ -95,7 +95,6 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 .panel-label { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #00e5ff; font-weight: bold; background: #1a1025; padding: 0 5px; }
 .panel-content-row { width: 90%; height: 100%; display: flex; align-items: center; justify-content: flex-start; padding-top: 5px; padding-left: 10px; }
 .material-scroll-row { display: flex; gap: 8px; overflow-x: auto; width: 100%; justify-content: flex-start; }
-.material-scroll-row::-webkit-scrollbar { display: none; }
 
 /* === 탐험 탭 === */
 #tab-explore { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
@@ -103,12 +102,15 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 .map-container-wrapper { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
 .map-board { width: 340px; height: 340px; background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: contain; position: relative; }
 
-/* 지도 아이콘 */
+/* [수정] 지도 아이콘 컨테이너 크기 확보 */
+#map-icons-layer { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+
 .map-icon { position: absolute; width: 70px; height: 70px; background-size: contain; background-repeat: no-repeat; background-position: center; cursor: pointer; transition: transform 0.2s; filter: drop-shadow(0 0 2px #000); z-index: 30; }
 .map-icon:active { transform: scale(0.9); }
 .map-icon.locked { filter: grayscale(1) brightness(0.5); }
 .map-icon.selected { filter: drop-shadow(0 0 8px #ffd700) brightness(1.2); transform: scale(1.1); z-index: 40; }
 
+/* 좌표 */
 .loc-fire { top: 12%; left: 30%; background-image: url('../assets/images/ui_new/loc_fire.png'); }
 .loc-electric { top: 15%; left: 68%; background-image: url('../assets/images/ui_new/loc_electric.png'); }
 .loc-forest { top: 38%; left: 40%; background-image: url('../assets/images/ui_new/loc_forest.png'); }
@@ -120,7 +122,6 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 .map-bottom-area { width: 100%; height: 80px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
 .btn-enter-wide { width: 250px; height: 60px; background: url('../assets/images/ui_new/btn_enter_wide.png') no-repeat center center; background-size: contain; border: none; color: transparent; cursor: pointer; z-index: 50; }
 .btn-enter-wide:disabled { filter: grayscale(1); opacity: 0.6; }
-.btn-enter-wide:active { transform: scale(0.95); }
 
 /* 탐험 진행 */
 .run-display-frame { width: 90%; height: 300px; background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; padding: 20px; margin: 20px auto; }
@@ -129,14 +130,16 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 .run-controls { display: flex; justify-content: center; gap: 20px; z-index: 50; position: relative; }
 
 /* 공통 */
-.new-slot-item { width: 50px; height: 50px; flex-shrink: 0; background: url('../assets/images/ui_new/slot_box_default.png') no-repeat center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+.new-slot-item { width: 50px; height: 50px; flex-shrink: 0; background: url('../assets/images/ui_new/slot_box_default.png') no-repeat center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer;}
 .new-slot-item.active { background-image: url('../assets/images/ui_new/slot_box_active.png'); }
 .new-slot-item img { width: 70%; height: 70%; object-fit: contain; }
 .count-badge { position: absolute; bottom: 2px; right: 4px; font-size: 0.7rem; color: #fff; text-shadow: 1px 1px 1px #000; }
+
 .new-bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; background: url('../assets/images/ui_new/frame_nav.png') no-repeat center bottom; background-size: 100% 100%; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 10px; }
 .nav-item { background: none; border: none; width: 50px; height: 50px; cursor: pointer; }
 .nav-item img { width: 100%; height: 100%; object-fit: contain; }
-.btn-stone { width: 140px; height: 50px; background: #333; color: #fff; border: 1px solid #fff; z-index: 50; position: relative; }
+
+.btn-stone { width: 140px; height: 50px; background: #333; color: #fff; border: 1px solid #fff; z-index: 50; position: relative; cursor: pointer;}
 .panel-box { background: rgba(0,0,0,0.8); border: 2px solid #555; padding: 20px; color: #fff; width: 80%; }
 .bg-vertical { width: 95%; height: 90%; max-width: 450px; background: url('../assets/images/ui/panel_book.png') no-repeat center center !important; background-size: 100% 100% !important; padding: 35px 35px 40px 35px; display: flex; flex-direction: column; align-items: center; position: relative; }
 .bg-vertical h3 { margin-bottom: 5px; font-size: 1.4rem; }
