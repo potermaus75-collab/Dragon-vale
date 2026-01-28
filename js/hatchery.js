@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (완전한 코드: 진화 버그 수정)
+// js/hatchery.js (최종 수정: 진화 반영 및 UI 갱신)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -35,14 +35,14 @@ function renderEggList() {
     });
 }
 
-// 둥지 화면 렌더링
+// 둥지 화면
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
 
     let displayName = dragonData.name;
     if (dragonData.stage === 0) {
-        displayName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[dragonData.type]) ? window.EGG_TYPE_NAMES[dragonData.type] : "알";
+        displayName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[dragonData.type]) ? window.EGG_TYPE_NAMES[dragonData.type] : "미확인 알";
     }
     if(dragonNameUI) dragonNameUI.innerText = displayName;
 
@@ -71,23 +71,22 @@ function renderNest() {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    dragonDisplay.innerHTML = `
-        <img src="${imgSrc}" class="main-dragon-img" 
-            onerror="handleImgError(this)">
-    `;
-    
-    const imgEl = dragonDisplay.querySelector('img');
-    if(dragonData.isShiny && imgEl) {
-        imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
-    }
-
-    if(imgEl) {
-        if (!isMaxLevel) {
-            imgEl.style.cursor = "pointer";
-            imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
-        } else {
-            imgEl.style.cursor = "default";
-            imgEl.onclick = () => showAlert("이 용은 성장을 마쳤습니다.");
+    if(dragonDisplay) {
+        dragonDisplay.innerHTML = `<img src="${imgSrc}" onerror="handleImgError(this)">`;
+        
+        const imgEl = dragonDisplay.querySelector('img');
+        if(dragonData.isShiny && imgEl) {
+            imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
+        }
+        
+        if(imgEl) {
+            if (!isMaxLevel) {
+                imgEl.style.cursor = "pointer";
+                imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
+            } else {
+                imgEl.style.cursor = "default";
+                imgEl.onclick = () => showAlert("이 용은 성장을 마쳤습니다.");
+            }
         }
     }
 }
@@ -95,8 +94,7 @@ function renderNest() {
 // TOUCH 버튼 핸들러
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons[player.currentDragonIndex];
-    const imgEl = dragonDisplay.querySelector('img');
-    
+    const imgEl = dragonDisplay ? dragonDisplay.querySelector('img') : null;
     if (dragonData && imgEl) {
         handleDragonClick(dragonData, imgEl);
     }
@@ -127,7 +125,9 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
+        // 부화/진화 처리
         if (oldStage === 0 && dragon.stage === 1) {
+            if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
                 player.discovered.push(dragon.id);
             }
@@ -136,10 +136,16 @@ function handleDragonClick(dragon, imgEl) {
             showAlert(`${dragon.name} 성장!`);
         }
 
-        const gain = 50; 
+        if(!player.maxStages) player.maxStages = {};
+        if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
+            player.maxStages[dragon.id] = dragon.stage;
+        }
+
+        const xpReward = [0, 50, 100, 300, 1000];
+        const gain = xpReward[dragon.stage] || 50;
         if(window.gainExp) window.gainExp(gain);
         
-        // [중요] 진화 즉시 전체 UI(사이드바 포함) 갱신
+        // [중요] UI 강제 갱신으로 진화 반영
         window.renderCaveUI(); 
         if(window.saveGame) window.saveGame();
     }
@@ -171,30 +177,23 @@ function renderCaveInventory() {
     });
 }
 
-function generateUID() {
-    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-}
-
+// ... hatchEggInternal 등 알 생성 로직은 기존과 동일 ...
+function generateUID() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
-
     let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); 
     let pEpic = RARITY_DATA.epic.prob + bonusProb;
     let pHeroic = RARITY_DATA.heroic.prob;
     let pRare = RARITY_DATA.rare.prob;
-    
     if(isShinyEgg) { pLegend += 2; pEpic += 5; pHeroic += 20; }
-
     const rand = Math.random() * 100;
     let rarity = 'common';
-
     if (rand < pLegend) rarity = 'legend';
     else if (rand < pLegend + pEpic) rarity = 'epic';
     else if (rand < pLegend + pEpic + pHeroic) rarity = 'heroic';
     else if (rand < pLegend + pEpic + pHeroic + pRare) rarity = 'rare';
     else rarity = 'common';
-
     const candidates = [];
     if(typeof DRAGON_DEX !== 'undefined') {
         for (const key in DRAGON_DEX) {
@@ -208,7 +207,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
             }
         }
     }
-
     if (candidates.length === 0 && targetType) {
         for (const key in DRAGON_DEX) {
             if (DRAGON_DEX[key].type === targetType) {
@@ -219,10 +217,8 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
     if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
-    
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
-
     player.myDragons.push({
         uId: generateUID(), 
         id: resultDragon.id,
@@ -233,14 +229,11 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         clicks: 0, 
         name: resultDragon.name 
     });
-    
     if(!player.maxStages) player.maxStages = {};
     if(typeof player.maxStages[resultDragon.id] === 'undefined') {
         player.maxStages[resultDragon.id] = 0;
     }
-
     if(window.renderCaveUI) window.renderCaveUI();
     if(window.saveGame) window.saveGame();
 }
-
 window.hatchEggInternal = hatchEggInternal;
