@@ -1,17 +1,33 @@
 /* =========================================
-   css/style.css (CSS 드래곤 삭제 및 최적화)
+   css/style.css (수정완료: 모바일 뷰포트 & 터치 최적화)
    ========================================= */
 
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+* { 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+    user-select: none; 
+    -webkit-user-select: none; /* Safari 지원 */
+    -webkit-touch-callout: none; /* iOS 롱탭 메뉴 방지 */
+}
 
 body, html {
-    margin: 0; padding: 0; width: 100%; height: 100%;
+    margin: 0; padding: 0; 
+    width: 100%; 
+    /* [수정] 모바일 브라우저 주소창 대응 (100dvh) */
+    height: 100dvh; 
     background: radial-gradient(circle at center, #3a2e4d 0%, #1a1025 100%);
     font-family: 'Nanum Gothic', sans-serif;
     overflow: hidden;
     color: #fff;
+    /* [수정] 당겨서 새로고침 방지 */
+    overscroll-behavior: none; 
+}
+
+/* [추가] 터치 반응 속도 향상 (300ms 딜레이 제거) */
+button, .btn-stone, .btn-square, .slot-item, .book-slot-custom, .shop-item button, .profile-frame, .equip-slot {
+    touch-action: manipulation;
 }
 
 .full-screen {
@@ -37,7 +53,6 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     gap: 15px;
 }
 
-/* 세로형 패널 (도감/상점) */
 .bg-vertical {
     width: 95%; height: 90%; max-width: 450px;
     background: url('../assets/images/ui/panel_book.png') no-repeat center center !important;
@@ -57,7 +72,7 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     color: #ffd700; font-size: 1.1rem; font-weight: bold;
     display: flex; justify-content: center; align-items: center;
     cursor: pointer; text-shadow: 1px 1px 2px #000;
-    gap: 5px; /* 이미지와 텍스트 사이 간격 */
+    gap: 5px; 
 }
 .btn-stone:active { transform: scale(0.95); filter: brightness(0.8); }
 
@@ -81,6 +96,8 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     width: 80%; height: 40px;
     background: rgba(0,0,0,0.5); border: 2px solid #888; border-radius: 5px;
     color: white; font-size: 1.2rem; text-align: center;
+    /* 입력창은 선택 가능해야 함 */
+    user-select: text; -webkit-user-select: text; 
 }
 
 #screen-prologue { background: #000 !important; z-index: 9999 !important; }
@@ -94,6 +111,8 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     display: flex; align-items: center; justify-content: space-between;
     padding: 15px 30px 30px 30px;
     z-index: 100;
+    /* 노치 대응 여유 공간 */
+    padding-top: env(safe-area-inset-top); 
 }
 
 .profile-frame {
@@ -119,10 +138,20 @@ p, span, div { color: #eee; text-shadow: 1px 1px 1px #000; }
     background: #111; border-top: 2px solid #333;
     display: flex; justify-content: space-around; align-items: center;
     z-index: 100;
+    /* 하단 홈바 대응 */
+    padding-bottom: env(safe-area-inset-bottom);
+    height: calc(80px + env(safe-area-inset-bottom));
 }
 .nav-icon { width: 32px; height: 32px; object-fit: contain; }
 
-#game-view { position: absolute; top: 90px; bottom: 80px; width: 100%; overflow: hidden; }
+#game-view { 
+    position: absolute; 
+    top: 90px; /* 헤더 높이 */
+    top: calc(90px + env(safe-area-inset-top)); 
+    bottom: 80px; /* 내비 높이 */
+    bottom: calc(80px + env(safe-area-inset-bottom));
+    width: 100%; overflow: hidden; 
+}
 .tab-content { width: 100%; height: 100%; padding: 10px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; }
 
 /* 내 정보 */
