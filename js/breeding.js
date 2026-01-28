@@ -1,5 +1,5 @@
 // ==========================================
-// js/breeding.js (수정완료: 자가 교배 방지 & 안전한 ID 생성)
+// js/breeding.js (수정완료: 새로운 모달 디자인 적용)
 // ==========================================
 
 let selectedParents = { 1: null, 2: null }; 
@@ -9,8 +9,12 @@ function openBreedingModal() {
     selectedParents = { 1: null, 2: null };
     updateParentSlots();
     
+    // 리스트 초기화 및 숨김
     const listDiv = document.getElementById('breeding-select-list');
-    if(listDiv) listDiv.classList.add('hidden');
+    if(listDiv) {
+        listDiv.classList.add('hidden');
+        listDiv.innerHTML = "";
+    }
     
     const modal = document.getElementById('breeding-modal');
     modal.classList.remove('hidden');
@@ -28,19 +32,26 @@ function updateParentSlots() {
         const slotEl = document.getElementById(`parent-slot-${i}`);
         const pIndex = selectedParents[i];
         
+        // 슬롯 스타일 초기화 (기존 book-slot 클래스 활용하되 테두리 제거)
+        slotEl.style.border = "none";
+        slotEl.className = "new-slot-item"; // 새로운 슬롯 스타일 적용
+
         if (pIndex !== null) {
             const dragon = player.myDragons[pIndex];
             let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
             
             slotEl.innerHTML = `
-                <img src="${imgSrc}" style="width:60px; height:60px; object-fit:contain;" 
+                <img src="${imgSrc}" style="width:80%; height:80%; object-fit:contain;" 
                 onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">
-                <div style="font-size:0.6rem; color:#fff; text-shadow:1px 1px 1px #000;">${dragon.name}</div>
+                <div style="position:absolute; bottom:-20px; width:100%; text-align:center; font-size:0.7rem; color:#fff; text-shadow:1px 1px 1px #000; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${dragon.name}
+                </div>
             `;
-            slotEl.style.border = "2px solid #ff9ff3";
+            // 선택된 효과
+            slotEl.classList.add('active');
         } else {
             slotEl.innerHTML = `<span style="font-size:2rem; color:#555;">+</span>`;
-            slotEl.style.border = "2px solid #555";
+            slotEl.classList.remove('active');
         }
     }
 }
@@ -51,30 +62,29 @@ function selectParent(slotNum) {
     listDiv.innerHTML = "";
     listDiv.classList.remove('hidden');
 
-    // [수정] 반대쪽 슬롯에 이미 선택된 용의 인덱스 파악
+    // [변경] 리스트를 그리드 형태로 표시 (인벤토리처럼)
+    listDiv.style.display = "grid";
+    listDiv.style.gridTemplateColumns = "repeat(4, 1fr)";
+    listDiv.style.gap = "5px";
+
     const otherSlot = slotNum === 1 ? 2 : 1;
     const otherIndex = selectedParents[otherSlot];
 
     let count = 0;
     player.myDragons.forEach((dragon, index) => {
-        // [수정] 이미 선택된 용은 리스트에서 제외 (자가 교배 방지)
+        // 이미 선택된 용 제외
         if (index === otherIndex) return;
 
         // 성체(3단계) 이상만 교배 가능
         if (dragon.stage >= 3) {
             const div = document.createElement('div');
-            div.className = "breeding-list-item"; 
-            div.style.display = "flex";
-            div.style.alignItems = "center";
-            div.style.borderBottom = "1px solid rgba(255,255,255,0.1)";
-            div.style.padding = "8px";
+            div.className = "new-slot-item"; 
             div.style.cursor = "pointer";
             
             let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
             div.innerHTML = `
-                <img src="${imgSrc}" style="width:40px; height:40px; margin-right:10px; object-fit:contain;"
+                <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;"
                 onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">
-                <span>${dragon.name} (Lv.${dragon.stage})</span>
             `;
             
             div.onclick = () => {
@@ -88,7 +98,8 @@ function selectParent(slotNum) {
     });
 
     if (count === 0) {
-        listDiv.innerHTML = "<p style='padding:10px; text-align:center; color:#aaa;'>교배 가능한 성체 용이 없습니다.<br><small>(성장기까지 키운 후, 서로 다른 두 마리가 필요합니다)</small></p>";
+        listDiv.style.display = "block"; // 메시지 표시를 위해 블록으로 변경
+        listDiv.innerHTML = "<p style='padding:10px; text-align:center; color:#aaa; font-size:0.8rem;'>교배 가능한 성체가 없습니다.<br>(성장기까지 키운 후 시도하세요)</p>";
     }
 }
 
@@ -113,6 +124,7 @@ function tryBreeding() {
             player.gold -= cost;
             processBreeding(p1, p2);
             closeBreedingModal();
+            // 중앙 UI 갱신 (재화 감소 반영)
             if(window.updateUI) window.updateUI(); 
         }
     );
@@ -121,10 +133,9 @@ function tryBreeding() {
 function processBreeding(parent1, parent2) {
     // 50% 확률로 부모 중 하나의 속성을 따라감
     const targetType = Math.random() < 0.5 ? parent1.type : parent2.type;
-    
-    // [수정] 알 획득 시 안전한 ID 생성 로직은 addItem 내부나 hatchEgg에서 처리되므로 여기선 ID만 전달
     const eggId = `egg_${targetType}`;
     
+    // 인벤토리에 알 추가
     addItem(eggId, 1, true); 
 
     const eggName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[targetType]) ? window.EGG_TYPE_NAMES[targetType] : "알";
@@ -132,22 +143,23 @@ function processBreeding(parent1, parent2) {
 
     let msg = `
         <div style="text-align:center;">
-            <h3>교배 성공!</h3>
+            <h3 style="color:#f1c40f; margin-bottom:10px;">교배 성공!</h3>
             
-            <img src="${eggImgSrc}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
-                 onerror="handleImgError(this, '${targetType}', 0)">
+            <div style="display:inline-block; padding:10px; background:rgba(255,255,255,0.1); border-radius:10px;">
+                <img src="${eggImgSrc}" style="width:80px; height:80px; object-fit:contain;"
+                     onerror="handleImgError(this, '${targetType}', 0)">
+            </div>
             
-            <br>사랑의 결실로 <b>[${eggName}]</b>을(를) 얻었습니다!
-            <br><span style="color:#aaa; font-size:0.8rem;">(인벤토리로 지급됨)</span>
+            <br><br>사랑의 결실로 <b>[${eggName}]</b>을(를)<br>얻었습니다!
         </div>
     `;
     
     // 10% 확률로 보너스
     if (Math.random() < 0.1) {
         player.gem += 1;
-        msg += `<br><br><b style="color:#3498db">축하합니다!<br>보석 1개를 추가로 발견했습니다!</b>`;
+        msg += `<br><br><b style="color:#3498db">✨ 보너스: 보석 1개 발견! ✨</b>`;
     }
 
     showAlert(msg);
-    saveGame();
+    if(window.saveGame) window.saveGame();
 }
