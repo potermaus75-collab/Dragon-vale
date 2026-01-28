@@ -19,14 +19,16 @@
     <section id="screen-start" class="full-screen active">
         <div class="title-area">
             <h1>DRAGON<br>CHRONICLES</h1>
+            
             <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
+                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-bottom: 5px;">로딩 준비 중...</p>
                 <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
                     <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
                 </div>
-                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">로딩 중...</p>
             </div>
+
             <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
-               onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ loadGame(); startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
+               onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ if(window.loadGame) window.loadGame(); if(window.startGame) window.startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
                터치하여 시작
             </p>
         </div>
@@ -48,22 +50,19 @@
     </section>
 
     <section id="screen-game" class="full-screen hidden">
+        
         <main id="game-view">
             
             <div id="tab-dragon" class="tab-content">
                 <div class="nest-layout-container">
                     
                     <div class="nest-header-area">
-                        <div style="flex: 1;"></div> 
-                        <div class="header-currency-wrap">
-                            <div class="currency-box gold-box">
-                                <span id="ui-gold">0</span>
-                            </div>
-                            <div class="currency-box gem-box">
-                                <span id="ui-gem">0</span>
-                            </div>
+                        <div class="currency-slot gold-slot">
+                            💰 <span id="ui-gold">0</span>
                         </div>
-                        <div style="width: 50px;"></div> 
+                        <div class="currency-slot gem-slot">
+                            💎 <span id="ui-gem">0</span>
+                        </div>
                     </div>
 
                     <div class="nest-body-area">
@@ -103,10 +102,21 @@
             </div>
 
             <div id="tab-info" class="tab-content hidden default-layout">
-                <div class="panel-box" style="width:95%;">
+                <div class="panel-box" style="width:95%; height:90%;">
                     <h3>내 정보</h3>
-                    <div class="inventory-section">
-                        <h4>가방</h4>
+                    <div class="profile-card">
+                        <div class="silhouette-body">
+                            <div class="sil-head"></div><div class="sil-torso"></div>
+                            <div class="sil-arm-l"></div><div class="sil-arm-r"></div>
+                            <div class="sil-leg-l"></div><div class="sil-leg-r"></div>
+                        </div>
+                        <div class="equip-slot head" onclick="unequipItem('head')"><span>머리</span></div>
+                        <div class="equip-slot body" onclick="unequipItem('body')"><span>갑옷</span></div>
+                        <div class="equip-slot arm" onclick="unequipItem('arm')"><span>무기</span></div>
+                        <div class="equip-slot leg" onclick="unequipItem('leg')"><span>신발</span></div>
+                    </div>
+                    <div class="inventory-section" style="width:100%; flex:1; margin-top:10px;">
+                        <h4>장비 가방</h4>
                         <div id="inventory-grid" class="grid-4"></div>
                     </div>
                 </div>
@@ -115,20 +125,14 @@
             <div id="tab-explore" class="tab-content hidden">
                  <div id="explore-map-view" class="explore-layout">
                     <div class="nest-header-area">
-                        <div style="flex: 1;"></div>
-                        <div class="header-currency-wrap">
-                            <div class="currency-box gold-box"><span id="ui-gold-map">0</span></div>
-                            <div class="currency-box gem-box"><span id="ui-gem-map">0</span></div>
-                        </div>
-                        <div style="width: 50px;"></div>
+                        <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
+                        <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
                     </div>
-                    
                     <div class="map-container-wrapper">
                         <div class="map-board">
                             <div id="map-icons-layer"></div>
                         </div>
                     </div>
-                    
                     <div class="map-bottom-area">
                         <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>
                             지역을 선택하세요
@@ -155,11 +159,21 @@
             </div>
 
             <div id="tab-book" class="tab-content hidden default-layout">
-                <div class="book-bg bg-vertical"><h3>용 도감</h3><div class="book-slider-container"><div class="book-slider-track" id="book-track"></div></div></div>
+                <div class="book-bg bg-vertical">
+                    <h3>용 도감</h3>
+                    <div class="book-slider-container">
+                        <div class="book-slider-track" id="book-track"></div>
+                    </div>
+                </div>
             </div>
 
             <div id="tab-shop" class="tab-content hidden default-layout">
-                <div class="shop-bg bg-vertical"><h3>상점</h3><div class="scroll-area"><div id="shop-list" class="list-row"></div></div></div>
+                <div class="shop-bg bg-vertical">
+                    <h3>상점</h3>
+                    <div class="scroll-area">
+                        <div id="shop-list" class="list-row"></div>
+                    </div>
+                </div>
             </div>
 
         </main>
@@ -176,7 +190,7 @@
     <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000;">
         <div class="panel-box">
             <h3 id="modal-title">알림</h3>
-            <div id="modal-text" style="text-align:center; margin:20px 0;">내용</div>
+            <div id="modal-text" style="text-align:center; margin:20px 0; white-space: pre-line;">내용</div>
             <div id="modal-btn-alert" class="hidden"><button class="btn-stone" onclick="closeModal()">확인</button></div>
             <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px;">
                 <button class="btn-stone" id="btn-confirm-yes">예</button>
