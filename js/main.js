@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (최신 수정판: 도감 오류 수정 포함)
+// js/main.js (UI 리뉴얼: 도감/상점 슬라이드 적용)
 // ==========================================
 
 // [시스템] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
@@ -19,6 +19,14 @@ window.handleImgError = function(imgEl, dragonType, dragonStage) {
 let userNickname = "Guest";
 let prologueIndex = 0;
 
+// 도감용 변수
+let currentBookPage = 0;
+const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
+const CATEGORY_NAMES = {
+    "fire": "🔥 불의 장", "water": "💧 물의 장", "forest": "🌿 숲의 장",
+    "electric": "⚡ 번개의 장", "metal": "🛡️ 강철의 장", "light": "✨ 빛의 장", "dark": "🌑 어둠의 장"
+};
+
 const PROLOGUE_DATA = [
     { text: "옛날 옛적, 용들이 하늘을 지배하던 시대...\n(터치하여 계속)" },
     { text: "하지만 대전쟁 이후 용들은 모두 사라졌다." },
@@ -28,23 +36,13 @@ const PROLOGUE_DATA = [
 
 const UI_ASSETS = [
     "assets/images/ui/panel_main.png",
+    "assets/images/ui/panel_book.png", // [신규]
     "assets/images/ui/panel_banner.png",
     "assets/images/ui/panel_vertical.png",
+    "assets/images/ui/frame_book_slot.png", // [신규]
+    "assets/images/ui/nest_front.png",
     "assets/images/ui/btn_rect.png",
-    "assets/images/ui/btn_square.png",
-    "assets/images/ui/frame_profile.png",
-    "assets/images/ui/bar_rune.png",
-    "assets/images/ui/tab_info.png",
-    "assets/images/ui/tab_dragon.png",
-    "assets/images/ui/tab_explore.png",
-    "assets/images/ui/tab_book.png",
-    "assets/images/ui/tab_shop.png",
-    "assets/images/ui/icon_gold.png",
-    "assets/images/ui/icon_gem.png",
-    "assets/images/ui/icon_move.png",
-    "assets/images/ui/icon_home.png",
-    "assets/images/ui/icon_gift.png",
-    "assets/images/ui/icon_question.png"
+    "assets/images/ui/btn_square.png"
 ];
 
 function preloadAssets() {
@@ -179,7 +177,10 @@ function switchTab(tabName) {
         renderInventory();
     }
     if (tabName === 'shop') renderShop();
-    if (tabName === 'book') renderBook(); 
+    if (tabName === 'book') {
+        currentBookPage = 0; // 도감 열 때 첫 페이지로 초기화
+        renderBook(); 
+    }
     if (tabName === 'dragon') {
         updateCurrency();
         if(window.updateUI) window.updateUI(); 
@@ -215,86 +216,227 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
+// [리뉴얼] 도감 렌더링 (스와이프 페이지 방식)
 function renderBook() {
-    const grid = document.getElementById('book-grid');
-    if(!grid) return;
-    grid.innerHTML = "";
+    const bookContent = document.querySelector('#tab-book .book-bg');
+    
+    // [UI 개선] 세로형 배경 클래스 교체
+    if(bookContent) {
+        bookContent.className = 'bg-vertical'; // style.css에 추가한 클래스 사용
+        bookContent.innerHTML = `
+            <h3>📜 용 도감</h3>
+            <div class="book-slider-container">
+                <div class="book-slider-track" id="book-track"></div>
+            </div>
+            <p style="font-size:0.8rem; color:#aaa; margin-top:5px;">⮕ 좌우로 넘겨 속성을 확인하세요 ⬅</p>
+        `;
+    }
+
+    const track = document.getElementById('book-track');
+    if(!track) return;
+    
     if(!player.discovered) player.discovered = [];
-    if(typeof DRAGON_DEX === 'undefined') return;
 
-    Object.keys(DRAGON_DEX).forEach(dragonId => {
-        const dragonInfo = DRAGON_DEX[dragonId];
-        const isFound = player.discovered.includes(dragonId); 
-
-        const div = document.createElement('div');
-        div.className = `book-slot ${isFound ? 'found' : ''}`;
+    // 속성별 페이지 생성
+    BOOK_CATEGORIES.forEach(category => {
+        const pageDiv = document.createElement('div');
+        pageDiv.className = 'book-page';
         
-        const rarityColor = RARITY_DATA[dragonInfo.rarity].color;
-        if(isFound) div.style.borderColor = rarityColor;
+        // 페이지 제목
+        pageDiv.innerHTML = `<div class="book-page-title">${CATEGORY_NAMES[category] || category}</div>`;
+        
+        // 그리드 생성
+        const gridDiv = document.createElement('div');
+        gridDiv.className = 'grid-4';
+        gridDiv.style.width = "100%";
 
-        if (isFound) {
-            const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
-            let displayImg = "assets/images/dragon/stage_egg.png";
-            if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
+        // 해당 속성의 용 필터링
+        const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === category);
+        
+        dragonKeys.forEach(dragonId => {
+            const dragonInfo = DRAGON_DEX[dragonId];
+            const isFound = player.discovered.includes(dragonId);
+            
+            const slot = document.createElement('div');
+            // [UI 개선] 새로운 도감 슬롯 클래스 적용
+            slot.className = `book-slot-custom ${isFound ? '' : 'unknown'}`;
+            
+            if (isFound) {
+                const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
+                let displayImg = "assets/images/dragon/stage_egg.png";
+                if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
+                
+                slot.innerHTML = `<img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">`;
+                slot.onclick = () => showDragonDetailModal(dragonId, dragonInfo);
+            } else {
+                slot.innerHTML = `<span style="font-size:1.5rem; color:#555;">?</span>`;
+            }
+            gridDiv.appendChild(slot);
+        });
 
-            div.innerHTML = `
-                <img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">
-                <div style="font-weight:bold; color:${rarityColor}; font-size:0.7rem;">${dragonInfo.name}</div>
-            `;
-            div.onclick = () => { showDragonDetailModal(dragonId, dragonInfo, rarityColor); };
-        } else {
-            div.innerHTML = `
-                <img src="assets/images/ui/icon_question.png" class="book-img" style="opacity:0.3; filter:grayscale(1);">
-                <div style="font-size:0.7rem;">???</div>
-            `;
+        if(dragonKeys.length === 0) {
+            gridDiv.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#555;'>데이터 없음</p>";
         }
-        grid.appendChild(div);
+
+        pageDiv.appendChild(gridDiv);
+        track.appendChild(pageDiv);
     });
+
+    // 스와이프 이벤트 등록
+    addSwipeListener(document.querySelector('.book-slider-container'), 
+        () => moveBookPage(1),  // 왼쪽으로 밀면 다음 페이지
+        () => moveBookPage(-1)  // 오른쪽으로 밀면 이전 페이지
+    );
+
+    updateBookSlider();
 }
 
-// [수정] 도감 상세 보기: 고룡(Stage 4) 실루엣 제어
-function showDragonDetailModal(dragonId, info, color) {
+function moveBookPage(dir) {
+    const next = currentBookPage + dir;
+    if (next >= 0 && next < BOOK_CATEGORIES.length) {
+        currentBookPage = next;
+        updateBookSlider();
+    }
+}
+
+function updateBookSlider() {
+    const track = document.getElementById('book-track');
+    if(track) {
+        track.style.transform = `translateX(-${currentBookPage * 100}%)`;
+    }
+}
+
+// [리뉴얼] 상세 정보 모달 (단계별 슬라이드 방식)
+function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
     
-    // [핵심 로직] 전설/에픽만 5단계(고룡)까지 표시, 나머지는 4단계(성룡)까지만 표시
+    // 표시할 최대 단계 설정 (전설/에픽은 5단계, 그외 4단계)
     const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
-    const loopLimit = isHighTier ? 5 : 4;
+    const totalStages = isHighTier ? 5 : 4;
     
-    let stagesHtml = `<div style="display:flex; justify-content:center; align-items:flex-end; margin:15px 0; gap:10px;">`;
-    
-    for(let i=0; i < loopLimit; i++) {
-        const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
+    // 슬라이더 HTML 생성
+    let slidesHtml = "";
+    for(let i=0; i < totalStages; i++) {
         const isUnknown = i > maxStage;
+        const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
         
-        // 미발견 시 흐리게 처리
-        const style = isUnknown ? 
-            "filter: brightness(0); opacity: 0.3; width:40px; height:40px;" : 
-            "width:50px; height:50px; object-fit:contain;";
-        
-        stagesHtml += `
-            <div style="text-align:center;">
-                <img src="${imgSrc}" style="${style}" onerror="handleImgError(this, '${info.type}', ${i})"><br>
-                <span style="font-size:0.6rem; color:#888;">${stageNames[i]}</span>
-            </div>
-        `;
-    }
-    stagesHtml += `</div>`;
+        let contentHtml = "";
+        if (isUnknown) {
+            contentHtml = `
+                <img src="${imgSrc}" class="detail-img-large" style="filter:brightness(0); opacity:0.3;" onerror="handleImgError(this, '${info.type}', ${i})">
+                <div class="detail-stage-name">??? (미발견)</div>
+            `;
+        } else {
+            contentHtml = `
+                <img src="${imgSrc}" class="detail-img-large" onerror="handleImgError(this, '${info.type}', ${i})">
+                <div class="detail-stage-name">${stageNames[i]}</div>
+            `;
+        }
 
-    showAlert(`
-        <div style="text-align:center;">
-            <b style="font-size:1.2rem; color:${color};">${info.name}</b>
+        slidesHtml += `<div class="detail-stage-view">${contentHtml}</div>`;
+    }
+
+    const rarityColor = RARITY_DATA[info.rarity].color;
+
+    // 모달 내용 구성
+    const modalContent = `
+        <div style="text-align:center; width:100%;">
+            <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
             <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[info.rarity].name}]</span>
-            <hr style="border:0.5px solid #444; margin:10px 0;">
-            ${stagesHtml}
-            <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem;">
+            
+            <div class="detail-slider-container">
+                <div class="detail-slider-track" id="detail-track" style="width:${totalStages * 100}%">
+                    ${slidesHtml}
+                </div>
+            </div>
+            <div class="swipe-hint">⮕ 좌우로 스와이프하여 성장 모습 확인 ⬅</div>
+
+            <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
                 ${info.desc}
             </div>
         </div>
-    `);
+    `;
+
+    showAlert(modalContent);
+
+    // [중요] 모달이 렌더링된 후 슬라이드 로직 적용
+    setTimeout(() => {
+        const track = document.getElementById('detail-track');
+        if (!track) return;
+        
+        let currentStage = Math.min(maxStage, totalStages - 1); // 현재 도달한 단계부터 보여줌
+        
+        // 초기 위치 설정
+        const updateDetailSlider = () => {
+            // detail-stage-view의 width는 track의 (100 / totalStages)% 임
+            // 하지만 CSS에서 view width를 100%로 잡고, track width를 넓혔으므로
+            // translateX 계산은 (currentStage * (100 / totalStages))% 가 되어야 함.
+            track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`;
+        };
+        updateDetailSlider();
+
+        // 슬라이더 뷰들 스타일 조정 (JS 동적 계산)
+        const views = track.querySelectorAll('.detail-stage-view');
+        views.forEach(v => { v.style.width = `${100 / totalStages}%`; });
+
+        // 스와이프 리스너 등록
+        const container = document.querySelector('.detail-slider-container');
+        addSwipeListener(container, 
+            () => { // Left Swipe (Next)
+                if(currentStage < totalStages - 1) {
+                    currentStage++;
+                    updateDetailSlider();
+                }
+            },
+            () => { // Right Swipe (Prev)
+                if(currentStage > 0) {
+                    currentStage--;
+                    updateDetailSlider();
+                }
+            }
+        );
+    }, 100);
 }
 
+// [유틸] 스와이프 감지 함수
+function addSwipeListener(el, onLeft, onRight) {
+    if(!el) return;
+    let startX = 0;
+    let endX = 0;
+    
+    el.addEventListener('touchstart', e => {
+        startX = e.changedTouches[0].screenX;
+    }, {passive: true});
+    
+    el.addEventListener('touchend', e => {
+        endX = e.changedTouches[0].screenX;
+        handleGesture();
+    }, {passive: true});
+
+    function handleGesture() {
+        const threshold = 50; // 최소 이동 거리
+        if (startX - endX > threshold) {
+            if(onLeft) onLeft();
+        } else if (endX - startX > threshold) {
+            if(onRight) onRight();
+        }
+    }
+}
+
+// [리뉴얼] 상점 렌더링 (세로형 배경 적용)
 function renderShop() {
+    const shopContent = document.querySelector('#tab-shop .shop-bg');
+    if(shopContent) {
+        shopContent.className = 'bg-vertical'; // 세로형 배경
+        shopContent.innerHTML = `
+            <h3>상점</h3>
+            <div class="scroll-area" style="width:100%; margin-top:10px;">
+                <div id="shop-list" class="list-row"></div>
+            </div>
+        `;
+    }
+
     const list = document.getElementById('shop-list');
     if(!list) return;
     list.innerHTML = "";
