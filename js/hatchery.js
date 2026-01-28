@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (수정완료: 새로운 UI 디자인 대응)
+// js/hatchery.js (완전한 코드: 생략 없음)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -12,17 +12,17 @@ window.renderCaveUI = function() {
     renderEggList();     
     renderNest();        
     renderCaveInventory(); 
-    updateUpgradeBtnState(); // 버튼 상태 갱신
+    updateUpgradeBtnState(); 
 };
 
-// [수정] 알 목록 렌더링 (새로운 슬롯 스타일 적용)
+// [UI] 알 목록 렌더링 (사이드바)
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
     
     player.myDragons.forEach((dragon, index) => {
         const div = document.createElement('div');
-        // 'new-slot-item' 클래스 사용, 선택된 알은 'active' 추가
+        // 선택된 알은 active 클래스 추가
         div.className = `new-slot-item ${index === player.currentDragonIndex ? 'active' : ''}`;
         
         let iconSrc = "assets/images/dragon/stage_egg.png";
@@ -32,29 +32,28 @@ function renderEggList() {
         
         div.onclick = () => {
             player.currentDragonIndex = index;
-            window.renderCaveUI(); // 즉시 갱신
+            window.renderCaveUI(); 
         };
         eggListArea.appendChild(div);
     });
 }
 
-// [수정] 둥지(중앙 화면) 렌더링
+// [UI] 둥지 화면 렌더링 (중앙)
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
 
+    // 이름 표시
     let displayName = dragonData.name;
     if (dragonData.stage === 0) {
-        displayName = EGG_TYPE_NAMES[dragonData.type] || "미확인 알";
+        displayName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[dragonData.type]) ? window.EGG_TYPE_NAMES[dragonData.type] : "미확인 알";
     }
-    
-    // 상단 타이틀 바 갱신
     if(dragonNameUI) dragonNameUI.innerText = displayName;
 
-    // 진행도(게이지) 업데이트
+    // 성장 게이지 계산
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
     
-    // 등급별 최대 레벨 제한 확인
+    // 등급별 최대 레벨 제한 (일반~서사: 3단계 / 에픽~전설: 4단계)
     const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
     const maxStageLimit = isHighTier ? 4 : 3; 
     const isMaxLevel = dragonData.stage >= maxStageLimit;
@@ -69,24 +68,31 @@ function renderNest() {
     
     if(progressBar) progressBar.style.width = `${percent}%`;
 
-    // 드래곤 이미지 표시
+    // 게이지 텍스트 갱신 (예: 50 / 100)
+    const gaugeText = document.querySelector('.gauge-text');
+    if(gaugeText) {
+        gaugeText.innerText = isMaxLevel ? "MAX" : `${Math.floor(dragonData.clicks)} / ${max}`;
+    }
+
+    // 드래곤 이미지
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
     if (window.getDragonImage) {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    // 새로운 HTML 구조에 맞춰 이미지 렌더링
+    // HTML 구조에 이미지 삽입
     dragonDisplay.innerHTML = `
         <img src="${imgSrc}" class="main-dragon-img" 
             onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">
     `;
     
+    // 이로치(Shiny) 효과 적용
     const imgEl = dragonDisplay.querySelector('img');
     if(dragonData.isShiny && imgEl) {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
 
-    // 이미지 클릭 이벤트 연결
+    // 클릭 이벤트 연결
     if(imgEl) {
         if (!isMaxLevel) {
             imgEl.style.cursor = "pointer";
@@ -98,64 +104,95 @@ function renderNest() {
     }
 }
 
-// [추가] TOUCH 버튼 핸들러 (HTML의 onclick="handleTouchBtn()"에서 호출)
+// [Logic] TOUCH 버튼 핸들러 (HTML onclick 연결)
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     const imgEl = dragonDisplay.querySelector('img');
     
     if (dragonData && imgEl) {
-        // 이미지 클릭과 동일한 효과
         handleDragonClick(dragonData, imgEl);
     }
 };
 
+// [Logic] 드래곤 클릭 시 성장 처리
 function handleDragonClick(dragon, imgEl) {
-    // 애니메이션 효과
+    // 애니메이션 리셋 및 실행
     imgEl.classList.remove('click-anim');
-    void imgEl.offsetWidth; // 리플로우 강제
+    void imgEl.offsetWidth; 
     imgEl.classList.add('click-anim');
 
+    // 최대 레벨 체크
     const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
     const maxStageLimit = isHighTier ? 4 : 3;
 
     if (dragon.stage >= maxStageLimit) return; 
 
+    // 클릭당 경험치 계산
     const max = DRAGON_DATA.reqClicks[dragon.stage];
     const clickPower = 1 + (player.nestLevel || 0);
     dragon.clicks += clickPower;
     
+    // 게이지 즉시 반영
     const percent = Math.min(100, (dragon.clicks / max) * 100);
     if(progressBar) progressBar.style.width = `${percent}%`;
+    
+    const gaugeText = document.querySelector('.gauge-text');
+    if(gaugeText) gaugeText.innerText = `${Math.floor(dragon.clicks)} / ${max}`;
 
+    // 레벨업 조건 달성
     if (dragon.clicks >= max) {
         const oldStage = dragon.stage;
         dragon.stage++;
         dragon.clicks = 0;
         
-        // 부화/진화 처리 로직 (기존과 동일)
+        // 부화 (0 -> 1) 처리 및 도감 등록
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
                 player.discovered.push(dragon.id);
             }
-            showAlert(`알을 깨고 <b>${dragon.name}</b>이(가) 태어났습니다!`);
+
+            let babyImg = "assets/images/dragon/stage_baby.png";
+            if(window.getDragonImage) babyImg = window.getDragonImage(dragon.id, 1);
+
+            showAlert(`
+                <div style="text-align:center;">
+                    <h3>부화 성공!</h3>
+                    <img src="${babyImg}" style="width:100px; height:100px; object-fit:contain; margin:10px 0;"
+                         onerror="handleImgError(this, '${dragon.type}', 1)">
+                    <br>알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!
+                </div>
+            `);
+        } else {
+            // 일반 성장 (1->2, 2->3 등)
+            let evolvedImg = "assets/images/dragon/stage_adult.png";
+            if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
+
+            showAlert(`
+                <div style="text-align:center;">
+                    <img src="${evolvedImg}" style="width:100px;" onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})"><br>
+                    축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!
+                </div>
+            `);
         }
 
+        // 최대 성장 기록 업데이트
         if(!player.maxStages) player.maxStages = {};
         if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
             player.maxStages[dragon.id] = dragon.stage;
         }
 
+        // 경험치 보상
         const xpReward = [0, 50, 100, 300, 1000];
         const gain = xpReward[dragon.stage] || 50;
         if(window.gainExp) window.gainExp(gain);
         
-        renderNest(); // 모습 갱신
+        renderNest(); 
         if(window.saveGame) window.saveGame();
     }
 }
 
-// [수정] 둥지 강화 재료 (하단 패널) 렌더링
+// [UI] 둥지 강화 재료 렌더링 (하단 패널)
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -167,14 +204,13 @@ function renderCaveInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            // 재료 타입만 표시 (material) - 데이터상 nest_wood 등
-            // 혹은 기존처럼 equip이 아닌 것들을 표시하되, 스타일을 새롭게 적용
+            // 장비가 아닌 아이템(재료, 물약 등)만 표시
             if(item && item.type !== 'equip') {
                 const div = document.createElement('div');
-                div.className = 'new-slot-item'; // 새 스타일 클래스
+                div.className = 'new-slot-item'; 
                 div.innerHTML = `
                     <img src="${item.img}" onerror="this.src='assets/images/ui/icon_question.png'">
-                    <span style="position:absolute; bottom:2px; right:4px; font-size:0.7rem; color:#fff; text-shadow:1px 1px 1px #000;">${player.inventory[id]}</span>
+                    <span class="count-badge">${player.inventory[id]}</span>
                 `;
                 div.onclick = () => useItem(id); 
                 grid.appendChild(div);
@@ -183,39 +219,36 @@ function renderCaveInventory() {
     });
 }
 
-// [수정] 업그레이드 버튼 상태 업데이트
+// [UI] 업그레이드 버튼 상태 (이미지 버튼 투명도 조절)
 function updateUpgradeBtnState() {
     const upgradeBtn = document.getElementById('btn-upgrade-nest');
     if (!upgradeBtn) return;
 
-    // 이벤트 리스너 연결 (중복 방지 처리 필요하지만, 간단히 덮어쓰기)
     upgradeBtn.onclick = () => { if(window.upgradeNest) window.upgradeNest(); };
 
     const currentLv = player.nestLevel || 0;
     if (currentLv < NEST_UPGRADE_COST.length) {
-        const cost = NEST_UPGRADE_COST[currentLv];
-        upgradeBtn.innerText = `강화 (${cost})`;
-        upgradeBtn.style.opacity = 1;
+        upgradeBtn.style.opacity = 1; 
+        upgradeBtn.style.filter = "none";
         upgradeBtn.disabled = false;
     } else {
-        upgradeBtn.innerText = "MAX";
         upgradeBtn.style.opacity = 0.5;
+        upgradeBtn.style.filter = "grayscale(1)";
         upgradeBtn.disabled = true;
     }
 }
 
-// 알 생성 유틸리티 (기존 유지)
+// [Util] 고유 ID 생성
 function generateUID() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-// 알 획득 로직 (기존 유지)
+// [Logic] 알 획득 및 드래곤 생성 (외부 호출용)
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
-    // ... (기존 로직과 동일, 데이터 처리 부분) ...
-    // 생략 없이 전체 코드 필요시 이전 hatchery.js의 hatchEggInternal 로직 그대로 사용
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
 
+    // 등급 확률 계산
     let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); 
     let pEpic = RARITY_DATA.epic.prob + bonusProb;
     let pHeroic = RARITY_DATA.heroic.prob;
@@ -232,6 +265,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     else if (rand < pLegend + pEpic + pHeroic + pRare) rarity = 'rare';
     else rarity = 'common';
 
+    // 대상 드래곤 후보군 추리기
     const candidates = [];
     if(typeof DRAGON_DEX !== 'undefined') {
         for (const key in DRAGON_DEX) {
@@ -246,6 +280,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
 
+    // 후보가 없으면(확률상) 해당 타입의 아무 등급이나 가져옴
     if (candidates.length === 0 && targetType) {
         for (const key in DRAGON_DEX) {
             if (DRAGON_DEX[key].type === targetType) {
@@ -255,11 +290,13 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
             }
         }
     }
+    // 그래도 없으면 기본 용
     if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
     
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
+    // 플레이어 데이터에 추가
     player.myDragons.push({
         uId: generateUID(), 
         id: resultDragon.id,
