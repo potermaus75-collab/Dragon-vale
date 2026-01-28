@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (수정완료: ID 충돌 방지 & 안전 로직)
+// js/hatchery.js (수정완료: 등급별 진화 제한 강화)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -97,18 +97,20 @@ function renderNest() {
     }
 
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
-    let maxLevelLimit = 4; 
+    
+    // [수정] 최대 레벨 제한 로직 강화
+    // 0:알, 1:유아기, 2:성장기, 3:성룡(성체), 4:고룡
+    // 일반/희귀/서사는 3단계(성룡)가 끝. 에픽/전설만 4단계(고룡) 가능.
     const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
-    if (!isHighTier) maxLevelLimit = 3; 
+    const maxStageLimit = isHighTier ? 4 : 3; 
 
-    const isMaxLevel = dragonData.stage >= maxLevelLimit;
+    // 현재 스테이지가 한계치 이상이면 MAX 처리
+    const isMaxLevel = dragonData.stage >= maxStageLimit;
     
     let percent = 0;
     if (isMaxLevel) {
         percent = 100;
-        if(!isHighTier && dragonData.stage === 3) {
-             dragonNameUI.innerText += " (MAX)";
-        }
+        dragonNameUI.innerText += " (MAX)";
     } else {
         percent = (dragonData.clicks / max) * 100;
     }
@@ -130,12 +132,15 @@ function renderNest() {
         imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
     }
 
-    if(imgEl && !isMaxLevel) {
-        imgEl.style.cursor = "pointer";
-        imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
-    } else if (imgEl && isMaxLevel) {
-        imgEl.style.cursor = "default";
-        imgEl.onclick = () => showAlert("이 용은 더 이상 성장할 수 없습니다.");
+    if(imgEl) {
+        if (!isMaxLevel) {
+            imgEl.style.cursor = "pointer";
+            imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
+        } else {
+            imgEl.style.cursor = "default";
+            // MAX 레벨 클릭 시 메시지
+            imgEl.onclick = () => showAlert("이 용은 성장을 마쳤습니다.");
+        }
     }
 }
 
@@ -144,11 +149,14 @@ function handleDragonClick(dragon, imgEl) {
     void imgEl.offsetWidth; 
     imgEl.classList.add('click-anim');
 
-    let maxLevelLimit = 4; 
+    // [수정] 클릭 시에도 동일한 제한 로직 적용
     const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
-    if (!isHighTier) maxLevelLimit = 3; 
+    const maxStageLimit = isHighTier ? 4 : 3;
 
-    if (dragon.stage >= maxLevelLimit) return; 
+    // 이미 최대 단계라면 경험치 증가 차단
+    if (dragon.stage >= maxStageLimit) {
+        return; 
+    }
 
     const max = DRAGON_DATA.reqClicks[dragon.stage];
     const clickPower = 1 + (player.nestLevel || 0);
@@ -242,7 +250,6 @@ function renderEggList() {
     });
 }
 
-// [수정] 랜덤 고유 ID 생성 유틸리티
 function generateUID() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
@@ -281,7 +288,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
 
-    // 조건에 맞는 용이 없으면 해당 타입 아무거나, 그것도 없으면 기본용
     if (candidates.length === 0 && targetType) {
         for (const key in DRAGON_DEX) {
             if (DRAGON_DEX[key].type === targetType) {
@@ -297,7 +303,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
     player.myDragons.push({
-        uId: generateUID(), // [수정] 충돌 방지 ID 적용
+        uId: generateUID(), 
         id: resultDragon.id,
         type: resultDragon.type,
         isShiny: isShiny,
