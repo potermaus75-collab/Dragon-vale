@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (이모지 제거 및 최신 로직 반영)
+// js/hatchery.js (Nest Rendering Logic: 생략 없음)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -7,25 +7,14 @@ const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
 
-const EGG_TYPE_NAMES = {
-    "fire": "불타는 알",
-    "water": "촉촉한 알",
-    "forest": "싱그러운 알",
-    "electric": "찌릿한 알",
-    "metal": "단단한 알",
-    "light": "찬란한 알",
-    "dark": "불길한 알",
-    "random": "미지의 알"
-};
-window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
-
-function updateCaveUI() {
+// [중요] 전역 UI 업데이트 함수 노출 (main.js에서 호출)
+window.renderCaveUI = function() {
     renderEggList();     
     renderNest();        
     renderCaveInventory(); 
     renderUpgradeBtn(); 
     renderBreedingBtn(); 
-}
+};
 
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
@@ -37,6 +26,7 @@ function renderCaveInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
+            // 장비(equip)가 아닌 소비/재료 아이템만 표시
             if(item && item.type !== 'equip') {
                 hasItem = true;
                 const div = document.createElement('div');
@@ -82,7 +72,7 @@ function renderBreedingBtn() {
         breedBtn.className = 'btn-stone';
         breedBtn.style.marginTop = '5px';
         breedBtn.style.color = '#ff9ff3'; 
-        // [수정] 이모지 대신 텍스트만 사용 (아이콘 이미지가 있다면 img 태그 사용 권장)
+        // [수정] 이모지 제거 (텍스트만 표시)
         breedBtn.innerHTML = `교배하기`;
         
         breedBtn.onclick = () => {
@@ -100,6 +90,7 @@ function renderNest() {
     let displayStage = DRAGON_DATA.stages[dragonData.stage];
     let displayName = dragonData.name;
 
+    // 알 단계에서는 정체를 숨김 (EGG_TYPE_NAMES는 data.js에 있음)
     if (dragonData.stage === 0) {
         displayName = EGG_TYPE_NAMES[dragonData.type] || "미확인 알";
         displayStage = "알";
@@ -131,7 +122,6 @@ function renderNest() {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
     }
 
-    // 둥지 레이어링 유지
     dragonDisplay.innerHTML = `
         <img src="${imgSrc}" class="main-dragon-img" 
             onerror="handleImgError(this, '${dragonData.type}', ${dragonData.stage})">
@@ -175,7 +165,7 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
-        // 부화 (0 -> 1)
+        // 부화 (0 -> 1) 시 도감 등록
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
@@ -210,7 +200,7 @@ function handleDragonClick(dragon, imgEl) {
         if(window.gainExp) window.gainExp(gain);
         renderNest(); 
         
-        // 성장 (1 -> 2...)
+        // 성장 메시지 (0 -> 1이 아닌 경우만)
         if (oldStage !== 0) {
             let evolvedImg = "assets/images/dragon/stage_adult.png";
             if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
@@ -244,6 +234,7 @@ function renderEggList() {
         if(window.getDragonImage) iconSrc = window.getDragonImage(dragon.id, dragon.stage);
 
         let listName = dragon.name;
+        // 알 단계에서는 정체 숨김 (EGG_TYPE_NAMES 사용)
         if(dragon.stage === 0) listName = EGG_TYPE_NAMES[dragon.type] || "미확인 알";
 
         div.innerHTML = `
@@ -252,7 +243,8 @@ function renderEggList() {
         `;
         div.onclick = () => {
             player.currentDragonIndex = index;
-            renderEggList(); renderNest();
+            // 리스트 클릭 시 둥지 UI 즉시 갱신
+            window.renderCaveUI(); 
         };
         eggListArea.appendChild(div);
     });
@@ -322,9 +314,9 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         player.maxStages[resultDragon.id] = 0;
     }
 
-    updateCaveUI();
+    // 알 생성 후 UI 갱신 및 저장
+    if(window.renderCaveUI) window.renderCaveUI();
     if(window.saveGame) window.saveGame();
 }
 
-window.updateUI = updateCaveUI; 
 window.hatchEggInternal = hatchEggInternal;
