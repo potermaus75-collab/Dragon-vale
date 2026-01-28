@@ -1,5 +1,5 @@
 // ==========================================
-// js/breeding.js (이모지 제거 및 이미지화)
+// js/breeding.js (최종: 중앙 UI 연동)
 // ==========================================
 
 let selectedParents = { 1: null, 2: null }; 
@@ -108,7 +108,8 @@ function tryBreeding() {
             player.gold -= cost;
             processBreeding(p1, p2);
             closeBreedingModal();
-            updateCurrency(); 
+            // [중요] 중앙 UI 갱신 호출
+            if(window.updateUI) window.updateUI(); 
         }
     );
 }
