@@ -20,10 +20,10 @@
         <div class="title-area">
             <h1>DRAGON<br>CHRONICLES</h1>
             <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
-                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-bottom: 5px;">로딩 준비 중...</p>
                 <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
                     <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
                 </div>
+                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">로딩 중...</p>
             </div>
             <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
                onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ loadGame(); startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
@@ -48,23 +48,25 @@
     </section>
 
     <section id="screen-game" class="full-screen hidden">
-        
         <main id="game-view">
             
             <div id="tab-dragon" class="tab-content">
                 <div class="nest-layout-container">
                     
                     <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">
-                            💰 <span id="ui-gold">0</span>
+                        <div style="flex: 1;"></div> 
+                        <div class="header-currency-wrap">
+                            <div class="currency-box gold-box">
+                                <span id="ui-gold">0</span>
+                            </div>
+                            <div class="currency-box gem-box">
+                                <span id="ui-gem">0</span>
+                            </div>
                         </div>
-                        <div class="currency-slot gem-slot">
-                            💎 <span id="ui-gem">0</span>
-                        </div>
+                        <div style="width: 50px;"></div> 
                     </div>
 
                     <div class="nest-body-area">
-                        
                         <div class="nest-sidebar-left">
                             <div class="sidebar-header-text">알 목록</div>
                             <div id="my-egg-list" class="sidebar-list-content"></div>
@@ -113,14 +115,20 @@
             <div id="tab-explore" class="tab-content hidden">
                  <div id="explore-map-view" class="explore-layout">
                     <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
-                        <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
+                        <div style="flex: 1;"></div>
+                        <div class="header-currency-wrap">
+                            <div class="currency-box gold-box"><span id="ui-gold-map">0</span></div>
+                            <div class="currency-box gem-box"><span id="ui-gem-map">0</span></div>
+                        </div>
+                        <div style="width: 50px;"></div>
                     </div>
+                    
                     <div class="map-container-wrapper">
                         <div class="map-board">
                             <div id="map-icons-layer"></div>
                         </div>
                     </div>
+                    
                     <div class="map-bottom-area">
                         <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>
                             지역을 선택하세요
