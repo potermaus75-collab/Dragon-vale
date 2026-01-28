@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (CSS 드래곤 폴백 적용)
+// js/explore.js (이모지 제거 및 아이콘화)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -134,7 +134,8 @@ function updateMoveUI() {
     const moveBtn = document.getElementById('btn-move');
     const returnBtn = document.getElementById('btn-return');
 
-    counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle"> 남은 이동: ${movesLeft}`;
+    // [수정] 이모지 -> 이미지 아이콘
+    counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle" onerror="this.style.display='none'"> 남은 이동: ${movesLeft}`;
     
     if (movesLeft <= 0) {
         document.getElementById('event-msg').innerText = "날이 저물었습니다. 귀환하세요.";
@@ -142,16 +143,16 @@ function updateMoveUI() {
         moveBtn.style.opacity = 0.5;
         moveBtn.innerHTML = "이동 불가";
 
-        returnBtn.innerHTML = "<img src='assets/images/ui/icon_gift.png' style='width:20px;vertical-align:middle'> 보상 받기";
+        returnBtn.innerHTML = "<img src='assets/images/ui/icon_gift.png' style='width:20px;vertical-align:middle' onerror='this.style.display=\"none\"'> 보상 받기";
         returnBtn.classList.remove('sub');
         returnBtn.style.color = "#2ecc71";
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
         moveBtn.style.opacity = window.isExploreActive ? 1 : 0.5;
-        moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
+        moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle' onerror='this.style.display=\"none\"'> 이동";
         
-        returnBtn.innerHTML = "<img src='assets/images/ui/icon_home.png' style='width:20px;vertical-align:middle'> 중도 포기";
+        returnBtn.innerHTML = "<img src='assets/images/ui/icon_home.png' style='width:20px;vertical-align:middle' onerror='this.style.display=\"none\"'> 중도 포기";
         returnBtn.classList.add('sub');
         returnBtn.style.color = "#aaa"; 
         returnBtn.onclick = () => finishExplore(false);
@@ -168,22 +169,24 @@ function processRandomEvent() {
     else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
         const typeRoll = Math.random();
         
+        // [수정] 이모지 -> 이미지 아이콘
         if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
             addTempLoot("gold", goldAmt);
-             msgArea.innerHTML = `<img src="assets/images/ui/icon_gold.png" style="width:20px; vertical-align:middle"> <b style="color:#f1c40f">${goldAmt} 골드</b>를 주웠습니다!`;
+             msgArea.innerHTML = `<img src="assets/images/ui/icon_gold.png" style="width:20px; vertical-align:middle" onerror="this.style.display='none'"> <b style="color:#f1c40f">${goldAmt} 골드</b>를 주웠습니다!`;
         } else if (typeRoll < 0.9) { 
              const woodAmt = Math.floor(Math.random() * 2) + 1;
              addTempLoot("nest_wood", woodAmt);
-             msgArea.innerHTML = `🔍 둥지 재료를 ${woodAmt}개 발견했습니다!`;
+             msgArea.innerHTML = `<img src="assets/images/item/material_wood.png" style="width:20px; vertical-align:middle" onerror="this.style.display='none'"> 둥지 재료를 ${woodAmt}개 발견했습니다!`;
         } else { 
              const gemAmt = 1;
              addTempLoot("gem", gemAmt);
-             msgArea.innerHTML = `<img src="assets/images/ui/icon_gem.png" style="width:20px; vertical-align:middle"> <b style="color:#3498db">반짝이는 보석</b>을 발견했습니다!`;
+             msgArea.innerHTML = `<img src="assets/images/ui/icon_gem.png" style="width:20px; vertical-align:middle" onerror="this.style.display='none'"> <b style="color:#3498db">반짝이는 보석</b>을 발견했습니다!`;
         }
     } 
     else {
-        msgArea.innerHTML = `<div style="color:red; font-weight:bold; animation: blinker 0.2s infinite;">⚠️ 경고: 용의 기운이 느껴집니다! ⚠️</div>`;
+        // [수정] 이모지 제거, 애니메이션 강조
+        msgArea.innerHTML = `<div style="color:#ff6b6b; font-weight:bold; animation: blinker 0.2s infinite;">경고: 용의 기운이 느껴집니다!</div>`;
         encounterNest();
     }
 }
@@ -199,7 +202,6 @@ function encounterNest() {
     
     const nestImg = (typeof ITEM_DB !== 'undefined' && ITEM_DB[eggId]) ? ITEM_DB[eggId].img : "assets/images/dragon/stage_egg.png";
 
-    // [수정] 둥지 알 이미지에 onerror 적용 (stage 0)
     setTimeout(() => {
         showConfirm(
             `<div style="text-align:center;">
@@ -251,13 +253,13 @@ function wakeParentDragon(eggId) {
     document.getElementById('explore-bg').style.backgroundColor = "#500"; 
     document.getElementById('event-msg').innerText = "크아앙! 부모 용 출현!";
     
-    const regionType = REGION_DATA[currentRegionId].type; // 부모 용의 속성 확인
+    const regionType = REGION_DATA[currentRegionId].type; 
 
     setTimeout(() => {
         const atk = player.stats ? player.stats.atk : 10;
         const winChance = Math.min(90, 30 + atk); 
 
-        // [수정] 부모 용 이미지에 onerror 적용 (stage 3: 성룡)
+        // [수정] 이모지 제거 및 부모 용 이미지 표시
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
                 <img src="assets/images/dragon/stage_adult.png" style="width:100px; filter: drop-shadow(0 0 5px red);"
@@ -317,7 +319,7 @@ function finishExplore(success = true) {
         if(moveBtn) {
             moveBtn.disabled = false;
             moveBtn.style.opacity = 1;
-            moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle'> 이동";
+            moveBtn.innerHTML = "<img src='assets/images/ui/icon_move.png' style='width:20px;vertical-align:middle' onerror='this.style.display=\"none\"'> 이동";
         }
         document.getElementById('explore-bg').style.backgroundColor = "#222";
         document.getElementById('explore-bg').style.backgroundImage = "none";
@@ -353,13 +355,13 @@ function claimTempLoot() {
         if (item.id === 'gold') {
             player.gold += item.count;
             html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
-                        <img src="assets/images/ui/icon_gold.png" style="width:20px; margin-right:5px;">
+                        <img src="assets/images/ui/icon_gold.png" style="width:20px; margin-right:5px;" onerror="this.style.display='none'">
                         <span style="color:#f1c40f">${item.count} 골드</span>
                      </div>`;
         } else if (item.id === 'gem') {
             player.gem += item.count;
             html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
-                        <img src="assets/images/ui/icon_gem.png" style="width:20px; margin-right:5px;">
+                        <img src="assets/images/ui/icon_gem.png" style="width:20px; margin-right:5px;" onerror="this.style.display='none'">
                         <span style="color:#3498db">${item.count} 보석</span>
                      </div>`;
         } else {
@@ -369,7 +371,7 @@ function claimTempLoot() {
             
             addItem(item.id, item.count);
             html += `<div style="margin-bottom:5px; display:flex; align-items:center;">
-                        <img src="${itemImg}" style="width:24px; margin-right:5px;">
+                        <img src="${itemImg}" style="width:24px; margin-right:5px;" onerror="this.src='assets/images/ui/icon_question.png'">
                         <span>${itemName} x${item.count}</span>
                      </div>`;
         }
