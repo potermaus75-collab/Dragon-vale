@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (Nest Rendering Logic: 생략 없음)
+// js/hatchery.js (수정완료: ID 충돌 방지 & 안전 로직)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -7,7 +7,7 @@ const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
 
-// [중요] 전역 UI 업데이트 함수 노출 (main.js에서 호출)
+// 전역 UI 업데이트
 window.renderCaveUI = function() {
     renderEggList();     
     renderNest();        
@@ -26,7 +26,6 @@ function renderCaveInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            // 장비(equip)가 아닌 소비/재료 아이템만 표시
             if(item && item.type !== 'equip') {
                 hasItem = true;
                 const div = document.createElement('div');
@@ -72,7 +71,6 @@ function renderBreedingBtn() {
         breedBtn.className = 'btn-stone';
         breedBtn.style.marginTop = '5px';
         breedBtn.style.color = '#ff9ff3'; 
-        // [수정] 이모지 제거 (텍스트만 표시)
         breedBtn.innerHTML = `교배하기`;
         
         breedBtn.onclick = () => {
@@ -90,7 +88,6 @@ function renderNest() {
     let displayStage = DRAGON_DATA.stages[dragonData.stage];
     let displayName = dragonData.name;
 
-    // 알 단계에서는 정체를 숨김 (EGG_TYPE_NAMES는 data.js에 있음)
     if (dragonData.stage === 0) {
         displayName = EGG_TYPE_NAMES[dragonData.type] || "미확인 알";
         displayStage = "알";
@@ -165,7 +162,7 @@ function handleDragonClick(dragon, imgEl) {
         dragon.stage++;
         dragon.clicks = 0;
         
-        // 부화 (0 -> 1) 시 도감 등록
+        // 부화 처리
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered) player.discovered = [];
             if(!player.discovered.includes(dragon.id)) {
@@ -175,7 +172,6 @@ function handleDragonClick(dragon, imgEl) {
             let babyImg = "assets/images/dragon/stage_baby.png";
             if(window.getDragonImage) babyImg = window.getDragonImage(dragon.id, 1);
 
-            // [수정] 이모지 제거
             showAlert(`
                 <div style="text-align:center;">
                     <h3>부화 성공!</h3>
@@ -200,12 +196,10 @@ function handleDragonClick(dragon, imgEl) {
         if(window.gainExp) window.gainExp(gain);
         renderNest(); 
         
-        // 성장 메시지 (0 -> 1이 아닌 경우만)
         if (oldStage !== 0) {
             let evolvedImg = "assets/images/dragon/stage_adult.png";
             if(window.getDragonImage) evolvedImg = window.getDragonImage(dragon.id, dragon.stage);
 
-            // [수정] 이모지 제거
             showAlert(`
                 <div style="text-align:center;">
                     <img src="${evolvedImg}" style="width:100px;" onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})"><br>
@@ -234,7 +228,6 @@ function renderEggList() {
         if(window.getDragonImage) iconSrc = window.getDragonImage(dragon.id, dragon.stage);
 
         let listName = dragon.name;
-        // 알 단계에서는 정체 숨김 (EGG_TYPE_NAMES 사용)
         if(dragon.stage === 0) listName = EGG_TYPE_NAMES[dragon.type] || "미확인 알";
 
         div.innerHTML = `
@@ -243,11 +236,15 @@ function renderEggList() {
         `;
         div.onclick = () => {
             player.currentDragonIndex = index;
-            // 리스트 클릭 시 둥지 UI 즉시 갱신
             window.renderCaveUI(); 
         };
         eggListArea.appendChild(div);
     });
+}
+
+// [수정] 랜덤 고유 ID 생성 유틸리티
+function generateUID() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
@@ -284,6 +281,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
 
+    // 조건에 맞는 용이 없으면 해당 타입 아무거나, 그것도 없으면 기본용
     if (candidates.length === 0 && targetType) {
         for (const key in DRAGON_DEX) {
             if (DRAGON_DEX[key].type === targetType) {
@@ -299,7 +297,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
     player.myDragons.push({
-        uId: Date.now(), 
+        uId: generateUID(), // [수정] 충돌 방지 ID 적용
         id: resultDragon.id,
         type: resultDragon.type,
         isShiny: isShiny,
@@ -314,7 +312,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         player.maxStages[resultDragon.id] = 0;
     }
 
-    // 알 생성 후 UI 갱신 및 저장
     if(window.renderCaveUI) window.renderCaveUI();
     if(window.saveGame) window.saveGame();
 }
