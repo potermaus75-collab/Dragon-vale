@@ -1,5 +1,5 @@
 // ==========================================
-// js/data.js (수정완료: window 객체 노출 추가)
+// js/data.js (데이터 통합 관리: 생략 없음)
 // ==========================================
 
 // [시스템 1] 등급 데이터
@@ -93,7 +93,7 @@ const ITEM_DB = {
 // 상점 목록
 const SHOP_LIST = ["potion_s", "nest_wood", "egg_random", "egg_shiny", "sword_wood", "helm_leather", "armor_cloth", "boots_leather"];
 
-// [중요] 수정 사항: 다른 JS 파일에서 접근할 수 있도록 window 객체에 할당
+// 전역 노출
 window.RARITY_DATA = RARITY_DATA;
 window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
 window.DRAGON_DATA = DRAGON_DATA;
