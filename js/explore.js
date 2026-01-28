@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (이미지화 및 최적화 완료)
+// js/explore.js (최종: 중앙 UI 연동 및 데이터 의존성 제거)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -22,7 +22,7 @@ function renderMap() {
         enterBtn.innerText = "지역을 선택하세요";
     }
 
-    // REGION_DATA는 data.js에서 로드됨
+    // REGION_DATA는 data.js에서 가져옴
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
         const isLocked = player.level < region.levelReq;
@@ -135,7 +135,6 @@ function updateMoveUI() {
     const moveBtn = document.getElementById('btn-move');
     const returnBtn = document.getElementById('btn-return');
 
-    // [수정] 아이콘 이미지 사용
     counter.innerHTML = `<img src="assets/images/ui/icon_move.png" style="width:16px; vertical-align:middle" onerror="this.style.display='none'"> 남은 이동: ${movesLeft}`;
     
     if (movesLeft <= 0) {
@@ -329,9 +328,9 @@ function finishExplore(success = true) {
             if(window.gainExp) window.gainExp(xpGain);
         }
 
-        // [중요] 탐험 종료 시 전역 UI 업데이트
+        // [중요] 탐험 종료 시 전체 UI 갱신 (인벤토리 등 반영)
         if(window.updateUI) window.updateUI();
-        if(typeof saveGame === 'function') saveGame();
+        if(window.saveGame) window.saveGame();
     };
 
     if (success && lootMsg) {
