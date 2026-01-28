@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (최종: 지도 UI 연동)
+// js/explore.js (최종: 버튼 버그 수정)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,10 +9,9 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
-// [UI] 초기화 및 지도 렌더링
 window.initExploreTab = function() {
     renderMap();
-    updateMapCurrency(); // 상단 재화 표시
+    updateMapCurrency(); 
 };
 
 function updateMapCurrency() {
@@ -23,61 +22,43 @@ function updateMapCurrency() {
 }
 
 function renderMap() {
-    const container = document.getElementById('map-icons-layer');
+    const list = document.getElementById('map-icons-layer');
     const enterBtn = document.getElementById('btn-enter-region');
     
-    if(!container) return;
-    container.innerHTML = "";
+    if(!list) return; 
+    list.innerHTML = "";
     
-    // 버튼 초기화
     if(enterBtn) {
         enterBtn.disabled = true;
         enterBtn.innerText = "지역을 선택하세요";
         enterBtn.style.color = "#888";
     }
 
-    // REGION_DATA를 순회하며 지도 위에 아이콘 배치
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
-        div.className = `map-icon loc-${region.type}`; // CSS 클래스로 위치 지정
+        div.className = `map-icon loc-${region.type}`; 
         
-        // 레벨 제한 확인
         if (player.level < region.levelReq) {
             div.classList.add('locked');
-            // 잠긴 지역 클릭 시 알림
-            div.onclick = () => {
-                showAlert(`[${region.name}] 접근 불가\n(Lv.${region.levelReq} 이상 필요)`);
-            };
+            div.onclick = () => showAlert(`[${region.name}] 접근 불가\n(Lv.${region.levelReq} 이상 필요)`);
         } else {
-            // 해금된 지역 클릭 시 선택
-            div.onclick = () => {
-                selectRegion(region.id, div);
-            };
+            div.onclick = () => selectRegion(region.id, div);
         }
-        
-        container.appendChild(div);
+        list.appendChild(div);
     });
 }
 
 function selectRegion(id, element) {
     selectedRegionId = id;
-    const region = REGION_DATA.find(r => r.id === id);
-    
-    // 모든 아이콘 선택 해제
     document.querySelectorAll('.map-icon').forEach(icon => icon.classList.remove('selected'));
-    // 현재 아이콘 선택
     element.classList.add('selected');
     
-    // 버튼 활성화
     const enterBtn = document.getElementById('btn-enter-region');
     if(enterBtn) {
         enterBtn.disabled = false;
-        enterBtn.innerText = "진입하기"; // 이미지에 텍스트가 있으면 비워도 됨
-        enterBtn.style.color = "#5dade2"; // 텍스트 색상 복구
+        enterBtn.innerText = "진입하기";
+        enterBtn.style.color = "#5dade2";
     }
-    
-    // 선택 시 간단한 토스트 메시지나 효과음 가능
-    console.log(`Region selected: ${region.name}`);
 }
 
 function enterSelectedRegion() {
@@ -89,21 +70,19 @@ function enterSelectedRegion() {
     startExplore(selectedRegionId);
 }
 
-// [화면 전환] 지도 <-> 탐험 진행
 function toggleExploreView(viewName) {
     const mapDiv = document.getElementById('explore-map-view');
     const runDiv = document.getElementById('explore-run-view');
     if(viewName === 'map') {
         mapDiv.classList.remove('hidden');
         runDiv.classList.add('hidden');
-        updateMapCurrency(); // 돌아올 때 재화 갱신
+        updateMapCurrency();
     } else {
         mapDiv.classList.add('hidden');
         runDiv.classList.remove('hidden');
     }
 }
 
-// [로직] 탐험 시작
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
@@ -115,8 +94,6 @@ function startExplore(regionId) {
     
     const region = REGION_DATA[regionId];
     const bgElem = document.getElementById('explore-bg');
-    
-    // 탐험 배경 설정
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
@@ -125,7 +102,6 @@ function startExplore(regionId) {
     
     document.getElementById('region-title').innerText = region.name;
     document.getElementById('event-msg').innerHTML = "탐험을 시작합니다.";
-    
     updateMoveUI();
 }
 
@@ -163,6 +139,7 @@ function updateMoveUI() {
 
         returnBtn.innerText = "보상 받기";
         returnBtn.style.color = "#2ecc71";
+        // [중요] 여기서 finishExplore(true)를 호출할 때 클릭이 막히지 않도록 확인
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
@@ -175,15 +152,13 @@ function updateMoveUI() {
     }
 }
 
-// [이벤트] 랜덤 인카운터
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
 
-    if (roll < ENCOUNTER_RATES.NOTHING) {
+    if (roll < 20) {
         msgArea.innerHTML = "조용합니다...";
-    } 
-    else if (roll < ENCOUNTER_RATES.NOTHING + ENCOUNTER_RATES.RESOURCE) {
+    } else if (roll < 85) {
         const typeRoll = Math.random();
         if (typeRoll < 0.6) { 
             const goldAmt = Math.floor(Math.random() * 50) + 10;
@@ -197,14 +172,12 @@ function processRandomEvent() {
              addTempLoot("gem", 1);
              msgArea.innerHTML = `<span style="color:#3498db">보석</span> 발견!`;
         }
-    } 
-    else {
+    } else {
         msgArea.innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">용의 기운이 느껴집니다!</span>`;
         encounterNest();
     }
 }
 
-// 둥지 발견
 function encounterNest() {
     const moveBtn = document.getElementById('btn-move');
     if(moveBtn) moveBtn.disabled = true;
@@ -310,8 +283,8 @@ function fightParent(winChance, eggId) {
 }
 
 function finishExplore(success = true) {
-    if (!window.isExploreActive) return;
-    window.isExploreActive = false; 
+    // [수정] 보상 받기 버튼 클릭 시 이미 active가 아니어도 진행 가능하도록 조건 완화
+    // window.isExploreActive = false; (이미 false일 수 있음)
 
     const lootMsg = claimTempLoot();
     
@@ -334,20 +307,28 @@ function finishExplore(success = true) {
     };
 
     if (success && lootMsg) {
-        showAlert(`[탐험 완료]<br>${lootMsg}`, onComplete);
+        showAlert(`<div style="text-align:center"><b>[탐험 완료]</b><br>마을에 무사히 도착했습니다.<br><br>${lootMsg}</div>`, onComplete);
     } else if (!success) {
         showAlert("빈손으로 돌아왔습니다.", onComplete);
         clearTempLoot();
-        player.exploreState = null; 
+        player.exploreState = null;
         if(window.saveGame) window.saveGame(true);
     } else {
         showAlert("마을로 돌아왔습니다.", onComplete);
     }
+    
+    // 상태 초기화
+    window.isExploreActive = false;
+}
+
+function addTempLoot(itemId, count = 1) {
+    tempLoot.push({ id: itemId, count: count });
 }
 
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
     let html = "<div style='background:rgba(0,0,0,0.3); padding:5px; border-radius:5px; text-align:left; font-size:0.8rem;'>";
+    
     tempLoot.forEach(item => {
         if (item.id === 'gold') {
             player.gold += item.count;
@@ -361,12 +342,13 @@ function claimTempLoot() {
             html += `<div>${itemData.name} x${item.count}</div>`;
         }
     });
+    
     html += "</div>";
     tempLoot = [];
     return html;
 }
 
-// [복구] 새로고침 시 탐험 복원 로직
+// [복구]
 window.restoreExploration = function() {
     if (!player.exploreState) return;
     const state = player.exploreState;
@@ -375,23 +357,21 @@ window.restoreExploration = function() {
     tempLoot = state.loot || [];
     window.isExploreActive = true;
 
-    // 강제 화면 전환
+    const tabExplore = document.getElementById('tab-explore');
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    document.getElementById('tab-explore').classList.remove('hidden');
+    tabExplore.classList.remove('hidden');
     document.getElementById('explore-map-view').classList.add('hidden');
     document.getElementById('explore-run-view').classList.remove('hidden');
 
     const region = REGION_DATA[currentRegionId];
-    document.getElementById('region-title').innerText = region.name;
-    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
-    
-    // 배경 복구
     const bgElem = document.getElementById('explore-bg');
     if (region.bg) {
         bgElem.style.backgroundImage = `url('${region.bg}')`;
         bgElem.style.backgroundSize = "cover";
         bgElem.style.backgroundPosition = "center";
     }
+    document.getElementById('region-title').innerText = region.name;
+    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
     updateMoveUI();
 };
 
