@@ -1,5 +1,5 @@
 // ==========================================
-// js/dragon.js (도감 이름 및 파일명 원상복구)
+// js/dragon.js (호환성 확인 완료)
 // ==========================================
 
 const DRAGON_DEX = {
@@ -63,7 +63,7 @@ const DRAGON_DEX = {
     "metal_e2": { name: "메카 드래곤", type: "metal", rarity: "epic", desc: "고대 과학 기술의 정점입니다." },
     "metal_l1": { name: "오리하르콘", type: "metal", rarity: "legend", desc: "전설 속의 금속으로 태어났습니다." },
 
-    // ✨ 빛 속성 (기존 유지)
+    // ✨ 빛 속성
     "light_c1": { name: "반딧불 용", type: "light", rarity: "common", desc: "꼬리에서 희미한 빛이 납니다." },
     "light_c2": { name: "양초 용", type: "light", rarity: "common", desc: "머리 위에 촛불이 켜져 있습니다." },
     "light_c3": { name: "프리즘", type: "light", rarity: "common", desc: "몸이 투명해 무지개 빛을 냅니다." },
@@ -75,7 +75,7 @@ const DRAGON_DEX = {
     "light_e2": { name: "솔라리스", type: "light", rarity: "epic", desc: "태양의 힘을 품고 있습니다." },
     "light_l1": { name: "루시퍼", type: "light", rarity: "legend", desc: "가장 찬란하게 빛나는 새벽의 별입니다." },
 
-    // 🌑 어둠 속성 (기존 유지)
+    // 🌑 어둠 속성
     "dark_c1": { name: "그림자 용", type: "dark", rarity: "common", desc: "그림자 속에 숨어 있습니다." },
     "dark_c2": { name: "박쥐 용", type: "dark", rarity: "common", desc: "동굴 천장에 매달려 잡니다." },
     "dark_c3": { name: "잉크 용", type: "dark", rarity: "common", desc: "검은 액체를 뱉습니다." },
@@ -88,7 +88,6 @@ const DRAGON_DEX = {
     "dark_l1": { name: "디아블로", type: "dark", rarity: "legend", desc: "공포의 군주라 불립니다." }
 };
 
-// [중요] PDF 파일명 규칙 적용
 const IMG_MAPPING = {
     // 🔥 불
     "fire_c1": "fire_lizard", "fire_c2": "fire_ash", "fire_c3": "fire_spark",
@@ -120,13 +119,13 @@ const IMG_MAPPING = {
     "metal_h1": "metal_silver", "metal_h2": "metal_gold",
     "metal_e1": "metal_titan", "metal_e2": "metal_mecha",
     "metal_l1": "metal_ori",
-    // ✨ 빛 (기존 규칙 유지)
+    // ✨ 빛
     "light_c1": "light_firefly", "light_c2": "light_candle", "light_c3": "light_prism",
     "light_r1": "light_wing", "light_r2": "light_flash",
     "light_h1": "light_angel", "light_h2": "light_valkyrie",
     "light_e1": "light_seraphim", "light_e2": "light_solaris",
     "light_l1": "light_lucifer",
-    // 🌑 어둠 (기존 규칙 유지)
+    // 🌑 어둠
     "dark_c1": "dark_shadow", "dark_c2": "dark_bat", "dark_c3": "dark_ink",
     "dark_r1": "dark_nightmare", "dark_r2": "dark_phantom",
     "dark_h1": "dark_vampire", "dark_h2": "dark_reaper",
