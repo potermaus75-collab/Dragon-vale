@@ -19,14 +19,12 @@
     <section id="screen-start" class="full-screen active">
         <div class="title-area">
             <h1>DRAGON<br>CHRONICLES</h1>
-            
             <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
                 <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-bottom: 5px;">로딩 준비 중...</p>
                 <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
                     <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
                 </div>
             </div>
-
             <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
                onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ loadGame(); startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
                터치하여 시작
@@ -55,53 +53,29 @@
             
             <div id="tab-dragon" class="tab-content">
                 <div class="nest-layout-container">
-                    
                     <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">
-                            💰 <span id="ui-gold">0</span>
-                        </div>
-                        <div class="currency-slot gem-slot">
-                            💎 <span id="ui-gem">0</span>
-                        </div>
+                        <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
+                        <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
                         <button class="btn-menu-hamburger">≡</button>
                     </div>
-
                     <div class="nest-body-area">
-                        
                         <div class="nest-sidebar-left">
                             <div class="sidebar-header-text">알 목록</div>
-                            <div id="my-egg-list" class="sidebar-list-content">
-                                </div>
+                            <div id="my-egg-list" class="sidebar-list-content"></div>
                         </div>
-
                         <div class="nest-right-column">
-                            
                             <div class="nest-center-stage">
-                                <div class="dragon-name-box">
-                                    <span id="dragon-name-ui">이름 없음</span>
-                                </div>
-                                
-                                <div class="dragon-visual-area">
-                                     <div id="dragon-display"></div>
-                                </div>
-
+                                <div class="dragon-name-box"><span id="dragon-name-ui">이름 없음</span></div>
+                                <div class="dragon-visual-area"><div id="dragon-display"></div></div>
                                 <div class="nest-controls">
-                                    <div class="gauge-box">
-                                        <div id="progress-fill" class="gauge-fill"></div>
-                                        <span class="gauge-text">0 / 100</span>
-                                    </div>
+                                    <div class="gauge-box"><div id="progress-fill" class="gauge-fill"></div><span class="gauge-text">0 / 100</span></div>
                                     <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
                                 </div>
                             </div>
-
                             <div class="nest-bottom-panel">
                                 <div class="panel-label">인벤토리</div>
-                                <div class="panel-content-row">
-                                    <div id="cave-inventory-grid" class="material-scroll-row">
-                                        </div>
-                                    </div>
+                                <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -110,19 +84,55 @@
             <div id="tab-info" class="tab-content hidden default-layout">
                 <div class="panel-box" style="width:95%;">
                     <h3>내 정보</h3>
-                    <div class="inventory-section">
-                        <h4>가방</h4>
-                        <div id="inventory-grid" class="grid-4"></div>
+                    <div class="inventory-section"><h4>가방</h4><div id="inventory-grid" class="grid-4"></div></div>
+                </div>
+            </div>
+
+            <div id="tab-explore" class="tab-content hidden">
+                
+                <div id="explore-map-view" class="explore-layout">
+                    <div class="nest-header-area">
+                        <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
+                        <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
+                    </div>
+
+                    <div class="map-container-wrapper">
+                        <div class="map-title-text">정도</div> 
+                        
+                        <div class="map-board">
+                            <div id="map-icons-layer"></div>
+                        </div>
+                    </div>
+
+                    <div class="map-bottom-area">
+                        <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>
+                            지역을 선택하세요
+                        </button>
+                    </div>
+                </div>
+
+                <div id="explore-run-view" class="hidden explore-layout">
+                    <div class="nest-header-area"></div> <div class="run-display-frame">
+                        <div class="run-bg-area" id="explore-bg">
+                            <div class="run-info-overlay">
+                                <h3 id="region-title">지역 이름</h3>
+                                <p id="move-counter">남은 이동: 10</p>
+                                <div id="event-msg">탐험을 시작합니다.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="run-controls">
+                        <button id="btn-move" class="btn-stone" onclick="moveForward()">앞으로 이동</button>
+                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기하기</button>
                     </div>
                 </div>
             </div>
-            <div id="tab-explore" class="tab-content hidden default-layout">
-                 <div id="explore-map-view" style="width:100%; height:100%;"><div class="map-frame"><div class="map-view"><div id="region-list"></div></div></div></div>
-                 <div id="explore-run-view" class="hidden"><div class="map-frame" id="explore-bg"><div style="background:rgba(0,0,0,0.5); padding:10px;"><h3 id="region-title">지역</h3><p id="move-counter">이동: 10</p><p id="event-msg">...</p></div></div><div style="display:flex; justify-content:center; gap:10px; margin-top:10px;"><button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button><button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button></div></div>
-            </div>
+
             <div id="tab-book" class="tab-content hidden default-layout">
                 <div class="book-bg bg-vertical"><h3>용 도감</h3><div class="book-slider-container"><div class="book-slider-track" id="book-track"></div></div></div>
             </div>
+
             <div id="tab-shop" class="tab-content hidden default-layout">
                 <div class="shop-bg bg-vertical"><h3>상점</h3><div class="scroll-area"><div id="shop-list" class="list-row"></div></div></div>
             </div>
