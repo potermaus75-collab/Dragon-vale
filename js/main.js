@@ -1,19 +1,13 @@
 // ==========================================
-// js/main.js (UI 리뉴얼: 스와이프 감도 조절 및 3열 그리드 적용)
+// js/main.js (이모지 -> 이미지 교체 및 로직 최적화)
 // ==========================================
 
-// [시스템] 이미지 로드 실패 시 CSS 용으로 대체하는 핸들러
+// [수정] 이미지 로드 실패 시 무조건 물음표 박스로 대체 (CSS 생성 로직 삭제)
 window.handleImgError = function(imgEl, dragonType, dragonStage) {
-    imgEl.onerror = null; // 무한루프 방지
-    imgEl.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"; // 투명 이미지
-    
-    if (typeof dragonStage === 'undefined') dragonStage = 0;
-    
-    imgEl.classList.add('css-dragon');
-    imgEl.classList.add(`type-${dragonType}`);
-    imgEl.classList.add(`stage-${dragonStage}`);
-    
+    imgEl.onerror = null; 
+    imgEl.src = "assets/images/ui/icon_question.png"; 
     imgEl.style.objectFit = "contain";
+    // 기존의 .css-dragon 클래스 추가 로직 삭제됨
 };
 
 let userNickname = "Guest";
@@ -22,9 +16,11 @@ let prologueIndex = 0;
 // 도감용 변수
 let currentBookPage = 0;
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
+
+// [수정] 이모지 제거, 텍스트만 남김 (아이콘은 별도로 렌더링)
 const CATEGORY_NAMES = {
-    "fire": "🔥 불의 장", "water": "💧 물의 장", "forest": "🌿 숲의 장",
-    "electric": "⚡ 번개의 장", "metal": "🛡️ 강철의 장", "light": "✨ 빛의 장", "dark": "🌑 어둠의 장"
+    "fire": "불의 장", "water": "물의 장", "forest": "숲의 장",
+    "electric": "번개의 장", "metal": "강철의 장", "light": "빛의 장", "dark": "어둠의 장"
 };
 
 const PROLOGUE_DATA = [
@@ -42,7 +38,11 @@ const UI_ASSETS = [
     "assets/images/ui/frame_book_slot.png", 
     "assets/images/ui/nest_front.png",
     "assets/images/ui/btn_rect.png",
-    "assets/images/ui/btn_square.png"
+    "assets/images/ui/btn_square.png",
+    "assets/images/ui/icon_question.png",
+    // 추가된 아이콘 에셋들 (필요 시 파일 추가)
+    "assets/images/ui/icon_arrow_left.png",
+    "assets/images/ui/icon_arrow_right.png"
 ];
 
 function preloadAssets() {
@@ -178,7 +178,7 @@ function switchTab(tabName) {
     }
     if (tabName === 'shop') renderShop();
     if (tabName === 'book') {
-        currentBookPage = 0; // 도감 열 때 첫 페이지로 초기화
+        currentBookPage = 0; 
         renderBook(); 
     }
     if (tabName === 'dragon') {
@@ -216,18 +216,22 @@ function renderInventory() {
     if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// [리뉴얼] 도감 렌더링 (스와이프 페이지 방식)
 function renderBook() {
     const bookContent = document.querySelector('#tab-book .book-bg');
     
     if(bookContent) {
         bookContent.className = 'bg-vertical'; 
+        // [수정] 안내 문구 이모지 제거 (화살표 이미지 사용 권장)
         bookContent.innerHTML = `
-            <h3>📜 용 도감</h3>
+            <h3>용 도감</h3>
             <div class="book-slider-container">
                 <div class="book-slider-track" id="book-track"></div>
             </div>
-            <p style="font-size:0.8rem; color:#aaa; margin-top:5px;">⮕ 좌우로 넘겨 속성을 확인하세요 ⬅</p>
+            <div style="display:flex; justify-content:center; align-items:center; gap:10px; margin-top:5px;">
+                 <img src="assets/images/ui/icon_arrow_left.png" style="width:16px; height:16px;" onerror="this.style.display='none'">
+                 <span style="font-size:0.8rem; color:#aaa;">좌우로 넘겨 속성을 확인하세요</span>
+                 <img src="assets/images/ui/icon_arrow_right.png" style="width:16px; height:16px;" onerror="this.style.display='none'">
+            </div>
         `;
     }
 
@@ -236,15 +240,20 @@ function renderBook() {
     
     if(!player.discovered) player.discovered = [];
 
-    // 속성별 페이지 생성
     BOOK_CATEGORIES.forEach(category => {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
         
-        // 페이지 제목
-        pageDiv.innerHTML = `<div class="book-page-title">${CATEGORY_NAMES[category] || category}</div>`;
+        // [수정] 이모지 대신 속성 아이콘 표시 (icon_fire.png 등)
+        const typeIcon = `assets/images/ui/icon_${category}.png`;
         
-        // [수정 포인트] 3열 그리드 사용 (grid-4 -> grid-3)
+        pageDiv.innerHTML = `
+            <div class="book-page-title-row">
+                <img src="${typeIcon}" class="book-type-icon" onerror="this.style.display='none'">
+                <h4 class="book-page-title">${CATEGORY_NAMES[category] || category}</h4>
+            </div>
+        `;
+        
         const gridDiv = document.createElement('div');
         gridDiv.className = 'grid-3'; 
         gridDiv.style.width = "100%";
@@ -266,7 +275,7 @@ function renderBook() {
                 slot.innerHTML = `<img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">`;
                 slot.onclick = () => showDragonDetailModal(dragonId, dragonInfo);
             } else {
-                slot.innerHTML = `<span style="font-size:1.5rem; color:#555;">?</span>`;
+                slot.innerHTML = `<img src="assets/images/ui/icon_question.png" style="width:20px; opacity:0.3;">`;
             }
             gridDiv.appendChild(slot);
         });
@@ -279,7 +288,6 @@ function renderBook() {
         track.appendChild(pageDiv);
     });
 
-    // 스와이프 이벤트 등록
     addSwipeListener(document.querySelector('.book-slider-container'), 
         () => moveBookPage(1),  
         () => moveBookPage(-1)  
@@ -303,7 +311,6 @@ function updateBookSlider() {
     }
 }
 
-// [리뉴얼] 상세 정보 모달 (단계별 슬라이드 방식)
 function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
@@ -344,7 +351,12 @@ function showDragonDetailModal(dragonId, info) {
                     ${slidesHtml}
                 </div>
             </div>
-            <div class="swipe-hint">⮕ 좌우로 스와이프하여 성장 모습 확인 ⬅</div>
+            
+            <div style="display:flex; justify-content:center; align-items:center; gap:5px; margin-top:5px;">
+                <img src="assets/images/ui/icon_arrow_left.png" style="width:12px;" onerror="this.style.display='none'">
+                <span style="font-size:0.7rem; color:#888;">좌우로 스와이프하여 성장 모습 확인</span>
+                <img src="assets/images/ui/icon_arrow_right.png" style="width:12px;" onerror="this.style.display='none'">
+            </div>
 
             <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
                 ${info.desc}
@@ -386,8 +398,7 @@ function showDragonDetailModal(dragonId, info) {
     }, 100);
 }
 
-// [수정] 스와이프 감지 함수 (쿨다운 추가)
-let isSwipeCooldown = false; // 전역 혹은 클로저 변수 사용
+let isSwipeCooldown = false; 
 
 function addSwipeListener(el, onLeft, onRight) {
     if(!el) return;
@@ -400,24 +411,18 @@ function addSwipeListener(el, onLeft, onRight) {
     
     el.addEventListener('touchend', e => {
         endX = e.changedTouches[0].screenX;
-        
-        // [수정 포인트] 쿨다운 중이면 무시
         if (isSwipeCooldown) return;
-        
         handleGesture();
     }, {passive: true});
 
     function handleGesture() {
-        const threshold = 60; // 감도 약간 둔하게 (50 -> 60)
-        
+        const threshold = 60; 
         if (startX - endX > threshold) {
-            // 왼쪽으로 밀기
             if(onLeft) {
                 onLeft();
                 triggerCooldown();
             }
         } else if (endX - startX > threshold) {
-            // 오른쪽으로 밀기
             if(onRight) {
                 onRight();
                 triggerCooldown();
@@ -427,15 +432,14 @@ function addSwipeListener(el, onLeft, onRight) {
 
     function triggerCooldown() {
         isSwipeCooldown = true;
-        setTimeout(() => { isSwipeCooldown = false; }, 500); // 0.5초 쿨다운
+        setTimeout(() => { isSwipeCooldown = false; }, 500);
     }
 }
 
-// [리뉴얼] 상점 렌더링 (세로형 배경 적용)
 function renderShop() {
     const shopContent = document.querySelector('#tab-shop .shop-bg');
     if(shopContent) {
-        shopContent.className = 'bg-vertical'; // 세로형 배경
+        shopContent.className = 'bg-vertical'; 
         shopContent.innerHTML = `
             <h3>상점</h3>
             <div class="scroll-area" style="width:100%; margin-top:10px;">
