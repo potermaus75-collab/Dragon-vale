@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (최종 수정: 누락된 함수 복구 완료)
+// js/hatchery.js (최종: 알 도감 등록 방지 로직 적용)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -9,13 +9,13 @@ const eggListArea = document.getElementById('my-egg-list');
 
 // 전역 UI 업데이트
 window.renderCaveUI = function() {
-    syncBookData(); // 도감 동기화
+    syncBookData(); // 렌더링 전 데이터 동기화
     renderEggList();     
     renderNest();        
     renderCaveInventory(); 
 };
 
-// [자가 복구] 도감 데이터 강제 동기화
+// [자가 복구 & 동기화]
 function syncBookData() {
     if (!player.myDragons) return;
     if (!player.discovered) player.discovered = [];
@@ -24,10 +24,14 @@ function syncBookData() {
     let isUpdated = false;
 
     player.myDragons.forEach(dragon => {
-        if (!player.discovered.includes(dragon.id)) {
+        // [수정됨] "알(stage 0)"은 도감에 자동 등록하지 않음!
+        // 단, 부화(stage > 0)했거나, 이미 발견된 리스트에 있다면 건너뜀.
+        if (dragon.stage > 0 && !player.discovered.includes(dragon.id)) {
             player.discovered.push(dragon.id);
             isUpdated = true;
         }
+
+        // 최대 성장 단계는 항상 갱신
         const currentRec = player.maxStages[dragon.id] || 0;
         if (dragon.stage > currentRec) {
             player.maxStages[dragon.id] = dragon.stage;
@@ -35,6 +39,7 @@ function syncBookData() {
         }
     });
 
+    // 변경사항이 있을 때만 저장
     if (isUpdated && window.saveGame) {
         window.saveGame(true);
     }
@@ -117,7 +122,7 @@ function renderNest() {
     }
 }
 
-// 터치 버튼
+// TOUCH 버튼
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     const imgEl = dragonDisplay ? dragonDisplay.querySelector('img') : null;
@@ -126,7 +131,7 @@ window.handleTouchBtn = function() {
     }
 };
 
-// 클릭 로직
+// 클릭 및 진화 로직
 function handleDragonClick(dragon, imgEl) {
     imgEl.classList.remove('click-anim');
     void imgEl.offsetWidth; 
@@ -146,17 +151,13 @@ function handleDragonClick(dragon, imgEl) {
     const gaugeText = document.querySelector('.gauge-text');
     if(gaugeText) gaugeText.innerText = `${Math.floor(dragon.clicks)} / ${max}`;
 
+    // 진화 조건 달성
     if (dragon.clicks >= max) {
         const oldStage = dragon.stage;
         dragon.stage++;
         dragon.clicks = 0;
         
-        // 도감 업데이트
-        if(!player.maxStages) player.maxStages = {};
-        if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
-            player.maxStages[dragon.id] = dragon.stage;
-        }
-
+        // [중요] 부화(0->1) 시점에만 도감에 등록!
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered.includes(dragon.id)) {
                 player.discovered.push(dragon.id);
@@ -164,6 +165,11 @@ function handleDragonClick(dragon, imgEl) {
             showAlert(`알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!`);
         } else {
             showAlert(`축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!`);
+        }
+
+        if(!player.maxStages) player.maxStages = {};
+        if(!player.maxStages[dragon.id] || player.maxStages[dragon.id] < dragon.stage) {
+            player.maxStages[dragon.id] = dragon.stage;
         }
 
         const xpReward = [0, 50, 100, 300, 1000];
@@ -205,7 +211,7 @@ function renderCaveInventory() {
 
 function generateUID() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 
-// [복구된 핵심 함수] 알 생성 로직
+// 알 생성 함수
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
@@ -270,13 +276,11 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         player.maxStages[resultDragon.id] = 0;
     }
 
-    // 새 드래곤 선택
     player.currentDragonIndex = player.myDragons.length - 1;
 
-    syncBookData(); // 도감 동기화
+    syncBookData(); 
     if(window.renderCaveUI) window.renderCaveUI();
     if(window.saveGame) window.saveGame();
 }
 
-// 전역 노출 필수
 window.hatchEggInternal = hatchEggInternal;
