@@ -1,5 +1,5 @@
 // ==========================================
-// js/breeding.js (완전한 코드: UI 디자인 통일)
+// js/breeding.js (완전한 코드: 그리드 UI 적용)
 // ==========================================
 
 let selectedParents = { 1: null, 2: null }; 
@@ -9,6 +9,7 @@ function openBreedingModal() {
     selectedParents = { 1: null, 2: null };
     updateParentSlots();
     
+    // 리스트 초기화
     const listDiv = document.getElementById('breeding-select-list');
     if(listDiv) {
         listDiv.classList.add('hidden');
@@ -31,7 +32,6 @@ function updateParentSlots() {
         const slotEl = document.getElementById(`parent-slot-${i}`);
         const pIndex = selectedParents[i];
         
-        // 새로운 슬롯 스타일 클래스 적용
         slotEl.className = "new-slot-item"; 
         slotEl.style.border = "none"; 
 
@@ -41,14 +41,13 @@ function updateParentSlots() {
             
             slotEl.innerHTML = `
                 <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;" 
-                onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">
+                onerror="handleImgError(this)">
                 <div style="position:absolute; bottom:-20px; width:100%; text-align:center; font-size:0.7rem; color:#fff; text-shadow:1px 1px 1px #000; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
                     ${dragon.name}
                 </div>
             `;
             slotEl.classList.add('active');
         } else {
-            // 빈 슬롯은 + 표시 대신 비워두거나 아이콘 처리 (여기선 심플하게 비움)
             slotEl.innerHTML = `<span style="font-size:2rem; color:#555;">+</span>`;
             slotEl.classList.remove('active');
         }
@@ -61,7 +60,7 @@ function selectParent(slotNum) {
     listDiv.innerHTML = "";
     listDiv.classList.remove('hidden');
 
-    // 리스트를 그리드(4열)로 표시
+    // 그리드 스타일 적용
     listDiv.style.display = "grid";
     listDiv.style.gridTemplateColumns = "repeat(4, 1fr)";
     listDiv.style.gap = "5px";
@@ -77,13 +76,13 @@ function selectParent(slotNum) {
         // 성체(3단계) 이상만 교배 가능
         if (dragon.stage >= 3) {
             const div = document.createElement('div');
-            div.className = "new-slot-item"; // 공통 스타일 재사용
+            div.className = "new-slot-item"; 
             div.style.cursor = "pointer";
             
             let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
             div.innerHTML = `
                 <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;"
-                onerror="handleImgError(this, '${dragon.type}', ${dragon.stage})">
+                onerror="handleImgError(this)">
             `;
             
             div.onclick = () => {
@@ -98,7 +97,7 @@ function selectParent(slotNum) {
 
     if (count === 0) {
         listDiv.style.display = "block"; 
-        listDiv.innerHTML = "<p style='padding:10px; text-align:center; color:#aaa; font-size:0.8rem; grid-column: 1/-1;'>교배 가능한 성체가 없습니다.<br>(성장기까지 키운 후 시도하세요)</p>";
+        listDiv.innerHTML = "<p style='padding:10px; text-align:center; color:#aaa; font-size:0.8rem;'>교배 가능한 성체가 없습니다.<br>(성장기까지 키운 후 시도하세요)</p>";
     }
 }
 
@@ -123,7 +122,6 @@ function tryBreeding() {
             player.gold -= cost;
             processBreeding(p1, p2);
             closeBreedingModal();
-            // UI 갱신 (메인 화면 재화 등)
             if(window.updateUI) window.updateUI(); 
         }
     );
@@ -144,7 +142,7 @@ function processBreeding(parent1, parent2) {
             <h3 style="color:#f1c40f; margin-bottom:10px;">교배 성공!</h3>
             <div style="display:inline-block; padding:10px; background:rgba(255,255,255,0.1); border-radius:10px;">
                 <img src="${eggImgSrc}" style="width:80px; height:80px; object-fit:contain;"
-                     onerror="handleImgError(this, '${targetType}', 0)">
+                     onerror="handleImgError(this)">
             </div>
             <br><br>사랑의 결실로 <b>[${eggName}]</b>을(를)<br>얻었습니다!
         </div>
