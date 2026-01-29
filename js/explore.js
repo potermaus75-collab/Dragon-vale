@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (최종 수정: 보상 버튼 버그 해결)
+// js/explore.js (최종 수정: 지도 연동 및 버튼 버그 해결)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,6 +9,7 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
+// 탐험 탭 초기화 (지도 그리기)
 window.initExploreTab = function() {
     renderMap();
     updateMapCurrency(); 
@@ -21,21 +22,26 @@ function updateMapCurrency() {
     if(gemUI) gemUI.innerText = player.gem;
 }
 
+// 지도에 아이콘 배치
 function renderMap() {
-    const list = document.getElementById('map-icons-layer');
+    const container = document.getElementById('map-icons-layer');
     const enterBtn = document.getElementById('btn-enter-region');
     
-    if(!list) return; 
-    list.innerHTML = "";
+    if(!container) return; 
+    container.innerHTML = "";
     
+    // 버튼 초기화
     if(enterBtn) {
         enterBtn.disabled = true;
         enterBtn.innerText = "지역을 선택하세요";
         enterBtn.style.color = "#888";
     }
 
+    if(typeof REGION_DATA === 'undefined') return;
+
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
+        // CSS 클래스로 위치 지정 (loc-fire, loc-water 등)
         div.className = `map-icon loc-${region.type}`; 
         
         if (player.level < region.levelReq) {
@@ -44,15 +50,18 @@ function renderMap() {
         } else {
             div.onclick = () => selectRegion(region.id, div);
         }
-        list.appendChild(div);
+        container.appendChild(div);
     });
 }
 
 function selectRegion(id, element) {
     selectedRegionId = id;
+    // 기존 선택 해제
     document.querySelectorAll('.map-icon').forEach(icon => icon.classList.remove('selected'));
+    // 신규 선택
     element.classList.add('selected');
     
+    // 버튼 활성화
     const enterBtn = document.getElementById('btn-enter-region');
     if(enterBtn) {
         enterBtn.disabled = false;
@@ -70,6 +79,7 @@ function enterSelectedRegion() {
     startExplore(selectedRegionId);
 }
 
+// 화면 전환 (지도 <-> 진행)
 function toggleExploreView(viewName) {
     const mapDiv = document.getElementById('explore-map-view');
     const runDiv = document.getElementById('explore-run-view');
@@ -83,6 +93,7 @@ function toggleExploreView(viewName) {
     }
 }
 
+// 탐험 시작
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
@@ -115,6 +126,7 @@ function moveForward() {
 
     movesLeft--;
     const bg = document.getElementById('explore-bg');
+    // 애니메이션 리셋
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
     bg.classList.add('walking-anim');
@@ -139,7 +151,7 @@ function updateMoveUI() {
 
         returnBtn.innerText = "보상 받기";
         returnBtn.style.color = "#2ecc71";
-        // [수정] 보상 받기 클릭 시 플래그 체크를 우회하여 바로 실행
+        // [중요] 버튼 클릭 이벤트 재설정
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
@@ -152,6 +164,7 @@ function updateMoveUI() {
     }
 }
 
+// 이벤트 처리 (기존 로직 유지)
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
@@ -236,16 +249,12 @@ function tryStealLoop(eggId) {
 
 function wakeParentDragon(eggId) {
     document.getElementById('event-msg').innerText = "부모 용 출현!";
-    const regionType = REGION_DATA[currentRegionId].type; 
-
     setTimeout(() => {
         const atk = player.stats ? player.stats.atk : 10;
         const winChance = Math.min(90, 30 + atk); 
-
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
-                <b>부모 용에게 들켰습니다!</b><br>
-                (승률: ${winChance}%) 싸우시겠습니까?
+                <b>부모 용에게 들켰습니다!</b><br>(승률: ${winChance}%) 싸우시겠습니까?
             </div>`,
             () => fightParent(winChance, eggId),
             () => tryFlee()
@@ -283,7 +292,6 @@ function fightParent(winChance, eggId) {
 }
 
 function finishExplore(success = true) {
-    // 탐험 종료 처리
     window.isExploreActive = false; 
 
     const lootMsg = claimTempLoot();
@@ -342,6 +350,34 @@ function claimTempLoot() {
     tempLoot = [];
     return html;
 }
+
+// [복구] 새로고침 대비
+window.restoreExploration = function() {
+    if (!player.exploreState) return;
+    const state = player.exploreState;
+    currentRegionId = state.regionId;
+    movesLeft = state.moves;
+    tempLoot = state.loot || [];
+    window.isExploreActive = true;
+
+    // 강제 화면 전환
+    const tabExplore = document.getElementById('tab-explore');
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+    tabExplore.classList.remove('hidden');
+    document.getElementById('explore-map-view').classList.add('hidden');
+    document.getElementById('explore-run-view').classList.remove('hidden');
+
+    const region = REGION_DATA[currentRegionId];
+    const bgElem = document.getElementById('explore-bg');
+    if (region.bg) {
+        bgElem.style.backgroundImage = `url('${region.bg}')`;
+        bgElem.style.backgroundSize = "cover";
+        bgElem.style.backgroundPosition = "center";
+    }
+    document.getElementById('region-title').innerText = region.name;
+    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
+    updateMoveUI();
+};
 
 window.initExploreTab = initExploreTab;
 window.enterSelectedRegion = enterSelectedRegion;
