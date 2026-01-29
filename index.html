@@ -26,7 +26,7 @@
                 <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">로딩 중...</p>
             </div>
             <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
-               onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ if(window.loadGame) window.loadGame(); if(window.startGame) window.startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
+               onclick="tryStartGame()">
                터치하여 시작
             </p>
         </div>
@@ -133,17 +133,12 @@
 
             <div id="tab-book" class="tab-content hidden">
                 <div class="book-layout-container">
-                    
                     <div class="book-header-box">
                         <span class="book-header-text">도감</span>
                     </div>
-
-                    <div class="book-tab-bar" id="book-tab-bar">
-                        </div>
-
+                    <div class="book-tab-bar" id="book-tab-bar"></div>
                     <div class="book-content-wrapper">
-                        <div id="book-grid-area">
-                            </div>
+                        <div id="book-grid-area"></div>
                     </div>
                 </div>
             </div>
@@ -162,7 +157,7 @@
             <button class="nav-item" onclick="switchTab('book')"><img src="assets/images/ui_new/icon_book.png"></button>
             <button class="nav-item" onclick="switchTab('dragon')"><img src="assets/images/ui_new/icon_bag.png"></button>
             <button class="nav-item" onclick="switchTab('explore')"><img src="assets/images/ui_new/icon_map.png"></button>
-            <button class="nav-item"><img src="assets/images/ui_new/icon_setting.png"></button>
+            <button class="nav-item" onclick="switchTab('shop')"><img src="assets/images/ui_new/icon_setting.png"></button>
         </nav>
     </section>
 
