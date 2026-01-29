@@ -1,5 +1,5 @@
 // ==========================================
-// js/data.js (데이터 통합 관리: 생략 없음)
+// js/data.js (완전한 전체 코드)
 // ==========================================
 
 // [시스템 1] 등급 데이터
@@ -27,13 +27,8 @@ const EGG_TYPE_NAMES = {
 const DRAGON_DATA = {
     stages: ["알", "유아기", "성장기", "성룡", "고룡"],
     reqClicks: [20, 50, 150, 500],
-    stageImages: [
-        "assets/images/dragon/stage_egg.png",
-        "assets/images/dragon/stage_baby.png",
-        "assets/images/dragon/stage_adult.png", 
-        "assets/images/dragon/stage_adult.png",
-        "assets/images/dragon/stage_elder.png"
-    ]
+    // 이미지는 dragon.js의 getDragonImage에서 처리하므로 여기선 참조용
+    stageImages: []
 };
 
 // [시스템 4] 프롤로그
@@ -44,7 +39,7 @@ const PROLOGUE_DATA = [
     { text: "이제 당신의 이야기가 시작된다." }
 ];
 
-// [시스템 5] 탐험 지역
+// [시스템 5] 탐험 지역 데이터
 const REGION_DATA = [
     { id: 0, name: "푸른 숲", levelReq: 1, type: "forest", desc: "풀 속성 용이 서식합니다.", bg: "assets/images/bg/forest.jpg" },
     { id: 1, name: "깊은 바다", levelReq: 1, type: "water", desc: "물 속성 용이 서식합니다.", bg: "assets/images/bg/sea.jpg" },
@@ -55,7 +50,7 @@ const REGION_DATA = [
     { id: 6, name: "지하 심연", levelReq: 30, type: "dark", desc: "어둠 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/abyss.jpg" }
 ];
 
-// 확률 및 비용 데이터
+// 확률 및 비용
 const ENCOUNTER_RATES = {
     NOTHING: 20,
     RESOURCE: 65, 
@@ -93,7 +88,7 @@ const ITEM_DB = {
 // 상점 목록
 const SHOP_LIST = ["potion_s", "nest_wood", "egg_random", "egg_shiny", "sword_wood", "helm_leather", "armor_cloth", "boots_leather"];
 
-// 전역 노출
+// 전역 변수로 노출 (다른 JS 파일에서 접근 가능하도록)
 window.RARITY_DATA = RARITY_DATA;
 window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
 window.DRAGON_DATA = DRAGON_DATA;
