@@ -1,8 +1,7 @@
 // ==========================================
-// js/main.js (최종: 상점 렌더링 최적화 및 정리)
+// js/main.js (최종: 내 정보 UI 리메이크 적용)
 // ==========================================
 
-// 이미지 에러 처리 (전역 사용)
 window.handleImgError = function(imgEl) {
     imgEl.onerror = null; 
     imgEl.src = "assets/images/ui/icon_question.png"; 
@@ -14,7 +13,6 @@ let prologueIndex = 0;
 let currentTab = 'dragon'; 
 let currentBookPage = 0; 
 
-// 도감 카테고리
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
 const CATEGORY_ICONS = {
     "fire": "icon_type_fire.png", "water": "icon_type_water.png", "forest": "icon_type_forest.png",
@@ -32,7 +30,6 @@ const UI_ASSETS = [
     "assets/images/ui_new/frame_tab_bar.png"
 ];
 
-// 에셋 프리로딩
 function preloadAssets() {
     let loadedCount = 0;
     const totalCount = UI_ASSETS.length;
@@ -67,12 +64,9 @@ function preloadAssets() {
 
 window.onload = function() { preloadAssets(); };
 
-// 게임 시작 시도
 window.tryStartGame = function() {
     const startScreen = document.getElementById('screen-start');
     if(startScreen) startScreen.classList.add('hidden');
-    
-    // 저장 데이터 확인
     if (localStorage.getItem('dragonSaveData')) {
         if(window.loadGame) window.loadGame();
         startGame();
@@ -87,7 +81,6 @@ function submitName() {
     userNickname = input.value;
     if(typeof player !== 'undefined') player.nickname = userNickname;
     if(window.saveGame) window.saveGame();
-    
     document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
     const prologue = document.getElementById('screen-prologue');
     prologue.classList.remove('hidden'); prologue.classList.add('active');
@@ -101,11 +94,7 @@ function renderPrologue() {
 
 function nextPrologueCut() {
     prologueIndex++;
-    if (window.PROLOGUE_DATA && prologueIndex >= PROLOGUE_DATA.length) { 
-        startGame(); 
-    } else { 
-        renderPrologue(); 
-    }
+    if (window.PROLOGUE_DATA && prologueIndex >= PROLOGUE_DATA.length) { startGame(); } else { renderPrologue(); }
 }
 
 function startGame() {
@@ -116,28 +105,21 @@ function startGame() {
     switchTab('dragon'); 
 }
 
-// 탭 전환
 function switchTab(tabName) {
     if (window.isExploreActive && tabName !== 'explore') { showAlert("탐험 중에는 이동할 수 없습니다."); return; }
-    
     currentTab = tabName; 
     document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
     const selected = document.getElementById(`tab-${tabName}`);
     if(selected) selected.classList.remove('hidden');
-    
-    // 내비게이션 투명도 조절
     document.querySelectorAll('.nav-item').forEach(btn => btn.style.opacity = "0.5");
     const navs = document.querySelectorAll('.nav-item');
     const tabMap = {'info':0, 'book':1, 'dragon':2, 'explore':3, 'shop':4};
     if(navs[tabMap[tabName]]) navs[tabMap[tabName]].style.opacity = "1";
-    
     updateUI();
 }
 
-// UI 업데이트
 window.updateUI = function() {
     if(window.updateCurrency) updateCurrency(); 
-    
     if (currentTab === 'dragon' && window.renderCaveUI) window.renderCaveUI(); 
     else if (currentTab === 'info' && typeof renderInventory === 'function') renderInventory();
     else if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
@@ -145,33 +127,64 @@ window.updateUI = function() {
     else if (currentTab === 'explore' && window.initExploreTab) window.initExploreTab();
 };
 
+// [UI 업데이트] 내 정보 탭 렌더링 (리메이크)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
     grid.innerHTML = "";
-    if(!player.inventory) return;
-    Object.keys(player.inventory).forEach(id => {
-        if(player.inventory[id] > 0) {
-            const item = ITEM_DB[id];
-            if(item && item.type === 'equip') {
-                const div = document.createElement('div');
-                div.className = 'slot-item';
-                div.onclick = () => useItem(id); 
-                div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="handleImgError(this)"><span style="position:absolute; bottom:0; right:2px;">x${player.inventory[id]}</span>`;
-                grid.appendChild(div);
+
+    if(player.inventory) {
+        Object.keys(player.inventory).forEach(id => {
+            if(player.inventory[id] > 0) {
+                const item = ITEM_DB[id];
+                if(item) {
+                    const div = document.createElement('div');
+                    div.className = 'inven-slot';
+                    div.onclick = () => useItem(id); 
+                    div.innerHTML = `
+                        <img src="${item.img}" onerror="handleImgError(this)">
+                        <span class="item-count">${player.inventory[id]}</span>
+                    `;
+                    grid.appendChild(div);
+                }
             }
+        });
+    }
+
+    updateEquipSlots();
+
+    if(document.getElementById('stat-atk-display')) {
+        document.getElementById('stat-atk-display').innerText = player.stats.atk;
+    }
+    if(document.getElementById('stat-def-display')) {
+        document.getElementById('stat-def-display').innerText = player.stats.def;
+    }
+}
+
+function updateEquipSlots() {
+    const slots = ['head', 'body', 'arm', 'leg'];
+    slots.forEach(slot => {
+        const displayId = `equip-display-${slot}`;
+        const container = document.getElementById(displayId);
+        if(!container) return;
+
+        container.innerHTML = ""; 
+        const itemId = player.equipment[slot];
+        
+        if(itemId && ITEM_DB[itemId]) {
+            const img = document.createElement('img');
+            img.src = ITEM_DB[itemId].img;
+            img.className = 'equipped-item-img';
+            img.onerror = function() { this.src = "assets/images/ui/icon_question.png"; };
+            container.appendChild(img);
         }
     });
 }
 
-// 상점 렌더링 (최적화됨)
 function renderShop() {
     const list = document.getElementById('shop-list');
     if(!list) return;
-    
-    // 기존 내용을 지우고 목록만 다시 생성
     list.innerHTML = "";
-    
     if (typeof SHOP_LIST === 'undefined') return;
 
     SHOP_LIST.forEach(id => {
@@ -213,7 +226,6 @@ function buyItem(id) {
     } else { showAlert(`${currencyName}이 부족합니다.`); }
 }
 
-// 도감 렌더링
 function renderBook() {
     const tabBar = document.getElementById('book-tab-bar');
     if (tabBar) {
@@ -254,6 +266,22 @@ function renderBook() {
         if(dragonKeys.length === 0) {
             gridArea.innerHTML = "<p style='grid-column:span 5; text-align:center; color:#555;'>데이터 없음</p>";
         }
+    }
+
+    const bookContent = document.querySelector('.book-content-wrapper');
+    if(bookContent) {
+        addSwipeListener(bookContent, 
+            () => moveBookPage(1),  
+            () => moveBookPage(-1)  
+        );
+    }
+}
+
+function moveBookPage(dir) {
+    const next = currentBookPage + dir;
+    if (next >= 0 && next < BOOK_CATEGORIES.length) {
+        currentBookPage = next;
+        renderBook(); 
     }
 }
 
@@ -299,10 +327,8 @@ function showDragonDetailModal(dragonId, info) {
         const updateDetailSlider = () => { track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`; };
         updateDetailSlider();
         
-        // 슬라이더 뷰 사이즈 조정
         track.querySelectorAll('.detail-stage-view').forEach(v => { v.style.width = `${100 / totalStages}%`; });
         
-        // 터치 슬라이드
         const container = document.querySelector('.detail-slider-container');
         addSwipeListener(container, 
             () => { if(currentStage < totalStages - 1) { currentStage++; updateDetailSlider(); } },
@@ -311,7 +337,6 @@ function showDragonDetailModal(dragonId, info) {
     }, 100);
 }
 
-// 스와이프 리스너
 let isSwipeCooldown = false;
 function addSwipeListener(el, onLeft, onRight) {
     if(!el) return;
@@ -326,7 +351,6 @@ function addSwipeListener(el, onLeft, onRight) {
     function triggerCooldown() { isSwipeCooldown = true; setTimeout(() => { isSwipeCooldown = false; }, 500); }
 }
 
-// 공통 알림/확인창 함수
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
