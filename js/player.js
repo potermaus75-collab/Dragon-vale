@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (완전한 전체 코드: 데이터 복구 시스템 탑재)
+// js/player.js (완전한 전체 코드: 데이터 복구 탑재)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -10,6 +10,7 @@ const INITIAL_PLAYER_STATE = {
     gem: 10, 
     inventory: {}, 
     myDragons: [
+        // 초기 지급 드래곤 (데이터 증발 시 복구용)
         { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common", uId: "init_001" } 
     ],
     currentDragonIndex: 0,
@@ -21,8 +22,6 @@ const INITIAL_PLAYER_STATE = {
     
     nestLevel: 0,
     nickname: "Guest",
-    
-    // 탐험 상태 저장 (새로고침 방지용)
     exploreState: null 
 };
 
@@ -31,14 +30,13 @@ let tempLoot = [];
 let isProcessing = false; 
 let saveTimeout = null;   
 
-// [유틸] 객체 깊은 병합 (데이터 유실 방지)
+// [유틸] 객체 깊은 병합 (기존 데이터 구조 유지)
 function deepMerge(target, source) {
     if (typeof target !== 'object' || target === null) return source;
     if (typeof source !== 'object' || source === null) return target;
 
     for (const key in source) {
         if (Array.isArray(source[key])) {
-            // 배열은 덮어쓰기 (의도치 않은 중복 방지)
             target[key] = source[key];
         } else if (typeof source[key] === 'object' && source[key] !== null) {
             if (!target[key]) target[key] = {};
@@ -50,11 +48,9 @@ function deepMerge(target, source) {
     return target;
 }
 
-// UI 상단의 재화 및 레벨 정보 갱신
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
-    // 지도 화면의 재화 UI도 갱신
     const goldUIMap = document.getElementById('ui-gold-map');
     const gemUIMap = document.getElementById('ui-gem-map');
 
@@ -75,7 +71,6 @@ function updateCurrency() {
     recalcStats();
 }
 
-// 경험치 획득 및 레벨업 처리
 function gainExp(amount) {
     if(typeof player.exp === 'undefined') player.exp = 0;
     if(!player.maxExp) player.maxExp = 100;
@@ -101,7 +96,6 @@ function gainExp(amount) {
     updateCurrency();
 }
 
-// 장비 스탯 재계산
 function recalcStats() {
     let baseAtk = 10;
     let baseDef = 5;
@@ -122,21 +116,16 @@ function recalcStats() {
     if(defUI) defUI.innerText = player.stats.def;
 }
 
-// 아이템 획득
 function addItem(itemId, count = 1, force = false) {
     if (window.ITEM_DB && !ITEM_DB[itemId] && !force) return;
     if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
 
-// 임시 전리품 추가 (탐험용)
 function addTempLoot(itemId, count = 1) {
     tempLoot.push({ id: itemId, count: count });
 }
 
-function clearTempLoot() { tempLoot = []; }
-
-// 아이템 사용 로직
 function useItem(itemId) {
     if (isProcessing) return; 
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
@@ -158,9 +147,7 @@ function useItem(itemId) {
             () => { isProcessing = false; }
         );
     } else if (item.type === "egg") {
-        const targetType = item.dragonType || 'fire';
         isProcessing = true;
-        
         showConfirm(
             `<div style="text-align:center">
                 <img src="${item.img}" style="width:64px;" onerror="handleImgError(this)">
@@ -169,6 +156,7 @@ function useItem(itemId) {
             () => {
                 player.inventory[itemId]--; 
                 const isShiny = (itemId === 'egg_shiny');
+                // 알 획득 로직 호출 (hatchery.js)
                 if(window.hatchEggInternal) window.hatchEggInternal(isShiny, item.dragonType || null);
                 
                 if(window.updateUI) window.updateUI();
@@ -184,45 +172,11 @@ function useItem(itemId) {
             if(dragon) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
-                // UI 갱신 (hatchery.js의 renderNest 호출)
                 if(window.renderCaveUI) window.renderCaveUI();
-                
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
             } else { isProcessing = false; }
         }
         if(window.updateUI) window.updateUI();
-    }
-}
-
-// 둥지 강화 (구현 유지, 버튼은 삭제되었으나 로직 보존)
-function upgradeNest() {
-    if (isProcessing) return;
-    const nextLevel = (player.nestLevel || 0) + 1;
-    if (nextLevel > NEST_UPGRADE_COST.length) {
-        showAlert("이미 최고 레벨입니다!");
-        return;
-    }
-    const cost = NEST_UPGRADE_COST[player.nestLevel || 0];
-    const userWood = player.inventory['nest_wood'] || 0;
-    
-    isProcessing = true;
-    if (userWood >= cost) {
-        showConfirm(
-            `<div style="text-align:center">
-                <img src="assets/images/item/material_wood.png" style="width:40px;" onerror="this.src='assets/images/ui/icon_question.png'">
-                <br><b>둥지 강화?</b><br>소모: ${cost} 재료
-            </div>`,
-            () => {
-                player.inventory['nest_wood'] -= cost;
-                player.nestLevel = (player.nestLevel || 0) + 1;
-                showAlert(`<b>둥지 강화 성공! (Lv.${player.nestLevel})</b>`, () => { isProcessing = false; });
-                if(window.updateUI) window.updateUI();
-                saveGame();
-            },
-            () => { isProcessing = false; }
-        );
-    } else {
-        showAlert(`재료가 부족합니다. (보유: ${userWood}/${cost})`, () => { isProcessing = false; });
     }
 }
 
@@ -247,16 +201,13 @@ function unequipItem(slot) {
     }
 }
 
-// 저장 기능 (디바운싱 적용)
 function saveGame(immediate = false) {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
-    
     if (immediate) {
         if (saveTimeout) clearTimeout(saveTimeout);
         executeSave();
         return;
     }
-
     if (saveTimeout) clearTimeout(saveTimeout);
     saveTimeout = setTimeout(executeSave, 1000);
 }
@@ -267,7 +218,6 @@ function executeSave() {
     console.log("게임 저장 완료");
 }
 
-// 불러오기 (데이터 복구 로직 포함)
 function loadGame() {
     const saved = localStorage.getItem('dragonSaveData');
     if (saved) {
@@ -275,23 +225,22 @@ function loadGame() {
             const parsedData = JSON.parse(saved);
             const savedPlayer = parsedData.player;
 
-            // 깊은 병합으로 구조 유지
             player = deepMerge(JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE)), savedPlayer);
 
-            // [중요] 드래곤 데이터 증발 시 자동 복구
+            // [핵심] 알 없음 버그 방지 (데이터가 비었으면 초기화)
             if (!player.myDragons || player.myDragons.length === 0) {
-                console.warn("데이터 손상 감지: 드래곤이 없습니다. 초기 드래곤을 지급합니다.");
+                console.warn("데이터 손상 감지: 드래곤 복구 중...");
                 player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
             }
 
-            if(typeof player.exp === 'undefined') player.exp = 0;
-            if(!player.maxExp) player.maxExp = 100;
-
+            if(!player.inventory) player.inventory = {};
+            if(!player.equipment) player.equipment = { head: null, body: null, arm: null, leg: null };
+            
             if(player.nickname && typeof userNickname !== 'undefined') {
                 userNickname = player.nickname;
             }
         } catch(e) {
-            console.error("로드 실패, 데이터를 초기화합니다.", e);
+            console.error("로드 실패, 초기화합니다.", e);
             player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
         }
     }
@@ -303,6 +252,5 @@ window.saveGame = saveGame;
 window.loadGame = loadGame;
 window.addItem = addItem;
 window.useItem = useItem;
-window.upgradeNest = upgradeNest;
 window.equipItem = equipItem;
 window.unequipItem = unequipItem;
