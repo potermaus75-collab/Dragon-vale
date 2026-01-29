@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (최종: 자동 화면 전환 추가)
+// js/player.js (최종: 중복 제거 및 정리)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -20,6 +20,7 @@ let tempLoot = [];
 let isProcessing = false; 
 let saveTimeout = null;   
 
+// 데이터 병합 (불러오기 시 사용)
 function deepMerge(target, source) {
     if (typeof target !== 'object' || target === null) return source;
     if (typeof source !== 'object' || source === null) return target;
@@ -33,6 +34,7 @@ function deepMerge(target, source) {
     return target;
 }
 
+// 재화 및 스탯 UI 업데이트
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
@@ -42,6 +44,7 @@ function updateCurrency() {
     if(gemUI) gemUI.innerText = player.gem;
     if(goldUIMap) goldUIMap.innerText = player.gold;
     if(gemUIMap) gemUIMap.innerText = player.gem;
+    
     const levelUI = document.getElementById('ui-level');
     const expBar = document.getElementById('ui-exp-fill');
     if(levelUI) levelUI.innerText = `Lv.${player.level}`;
@@ -93,7 +96,7 @@ function addItem(itemId, count = 1, force = false) {
 function addTempLoot(itemId, count = 1) { tempLoot.push({ id: itemId, count: count }); }
 function clearTempLoot() { tempLoot = []; }
 
-// [수정] 아이템 사용 로직 개선
+// 아이템 사용
 function useItem(itemId) {
     if (isProcessing) return; 
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
@@ -115,18 +118,12 @@ function useItem(itemId) {
                 player.inventory[itemId]--; 
                 const isShiny = (itemId === 'egg_shiny');
                 
-                // 알 생성 함수 호출 (누락 주의!)
                 if(window.hatchEggInternal) {
                     window.hatchEggInternal(isShiny, item.dragonType || null);
-                    // [UX 개선] 둥지 탭으로 자동 이동
                     if(window.switchTab) window.switchTab('dragon');
-                } else {
-                    console.error("hatchEggInternal function missing!");
                 }
                 
                 if(window.updateUI) window.updateUI();
-                
-                // 알림 띄우고 처리 종료
                 showAlert("둥지에 알을 놓았습니다!", () => { isProcessing = false; });
             },
             () => { isProcessing = false; }
@@ -145,10 +142,6 @@ function useItem(itemId) {
         }
         if(window.updateUI) window.updateUI();
     }
-}
-
-function upgradeNest() {
-    // ... 기존 로직 (버튼 삭제됨) ...
 }
 
 function equipItem(itemId, slot) {
@@ -170,6 +163,7 @@ function unequipItem(slot) {
     }
 }
 
+// 저장/불러오기
 function saveGame(immediate = false) {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
     if (immediate) { if (saveTimeout) clearTimeout(saveTimeout); executeSave(); return; }
@@ -201,11 +195,11 @@ function loadGame() {
     }
 }
 
+// 전역 노출
 window.gainExp = gainExp;
 window.saveGame = saveGame;
 window.loadGame = loadGame;
 window.addItem = addItem;
 window.useItem = useItem;
-window.upgradeNest = upgradeNest;
 window.equipItem = equipItem;
 window.unequipItem = unequipItem;
