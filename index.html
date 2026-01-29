@@ -80,22 +80,30 @@
             </div>
 
             <div id="tab-info" class="tab-content hidden default-layout">
-                <div class="panel-box" style="width:95%; height:90%;">
-                    <h3>내 정보</h3>
-                    <div class="profile-card">
-                        <div class="silhouette-body">
-                            <div class="sil-head"></div><div class="sil-torso"></div>
-                            <div class="sil-arm-l"></div><div class="sil-arm-r"></div>
-                            <div class="sil-leg-l"></div><div class="sil-leg-r"></div>
+                <div class="profile-container">
+                    <div class="stat-board">
+                        <div class="stat-row">
+                            <span class="stat-icon">⚔️</span>
+                            <span class="stat-val" id="stat-atk-display">10</span>
                         </div>
-                        <div class="equip-slot head" onclick="unequipItem('head')"><span>머리</span></div>
-                        <div class="equip-slot body" onclick="unequipItem('body')"><span>갑옷</span></div>
-                        <div class="equip-slot arm" onclick="unequipItem('arm')"><span>무기</span></div>
-                        <div class="equip-slot leg" onclick="unequipItem('leg')"><span>신발</span></div>
+                        <div class="stat-row">
+                            <span class="stat-icon">🛡️</span>
+                            <span class="stat-val" id="stat-def-display">5</span>
+                        </div>
                     </div>
-                    <div class="inventory-section" style="width:100%; flex:1; margin-top:10px;">
-                        <h4>장비 가방</h4>
-                        <div id="inventory-grid" class="grid-4"></div>
+                    <div class="char-view-area">
+                        <div class="char-pedestal"></div>
+                        <div class="char-body"></div>
+                        <div class="equip-slot-round slot-head" onclick="unequipItem('head')"><div id="equip-display-head"></div></div>
+                        <div class="equip-slot-round slot-body" onclick="unequipItem('body')"><div id="equip-display-body"></div></div>
+                        <div class="equip-slot-round slot-weapon" onclick="unequipItem('arm')"><div id="equip-display-arm"></div></div>
+                        <div class="equip-slot-round slot-shoes" onclick="unequipItem('leg')"><div id="equip-display-leg"></div></div>
+                    </div>
+                </div>
+                <div class="inventory-container">
+                    <div class="inven-header">가방</div>
+                    <div class="inven-scroll-view">
+                        <div id="inventory-grid" class="inven-grid"></div>
                     </div>
                 </div>
             </div>
