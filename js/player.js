@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (수정완료: 깊은 복사 & 탐험 상태 저장)
+// js/player.js (완전한 전체 코드: 데이터 복구 시스템 탑재)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -22,7 +22,7 @@ const INITIAL_PLAYER_STATE = {
     nestLevel: 0,
     nickname: "Guest",
     
-    // [추가] 탐험 상태 저장 (새로고침 꼼수 방지)
+    // 탐험 상태 저장 (새로고침 방지용)
     exploreState: null 
 };
 
@@ -31,14 +31,14 @@ let tempLoot = [];
 let isProcessing = false; 
 let saveTimeout = null;   
 
-// [추가] 객체 깊은 병합 유틸리티 (데이터 유실 방지)
+// [유틸] 객체 깊은 병합 (데이터 유실 방지)
 function deepMerge(target, source) {
     if (typeof target !== 'object' || target === null) return source;
     if (typeof source !== 'object' || source === null) return target;
 
     for (const key in source) {
         if (Array.isArray(source[key])) {
-            // 배열은 대체 (혹은 전략에 따라 합치기 가능하지만 여기선 대체가 안전)
+            // 배열은 덮어쓰기 (의도치 않은 중복 방지)
             target[key] = source[key];
         } else if (typeof source[key] === 'object' && source[key] !== null) {
             if (!target[key]) target[key] = {};
@@ -50,11 +50,18 @@ function deepMerge(target, source) {
     return target;
 }
 
+// UI 상단의 재화 및 레벨 정보 갱신
 function updateCurrency() {
     const goldUI = document.getElementById('ui-gold');
     const gemUI = document.getElementById('ui-gem');
+    // 지도 화면의 재화 UI도 갱신
+    const goldUIMap = document.getElementById('ui-gold-map');
+    const gemUIMap = document.getElementById('ui-gem-map');
+
     if(goldUI) goldUI.innerText = player.gold;
     if(gemUI) gemUI.innerText = player.gem;
+    if(goldUIMap) goldUIMap.innerText = player.gold;
+    if(gemUIMap) gemUIMap.innerText = player.gem;
     
     const levelUI = document.getElementById('ui-level');
     const expBar = document.getElementById('ui-exp-fill');
@@ -68,6 +75,7 @@ function updateCurrency() {
     recalcStats();
 }
 
+// 경험치 획득 및 레벨업 처리
 function gainExp(amount) {
     if(typeof player.exp === 'undefined') player.exp = 0;
     if(!player.maxExp) player.maxExp = 100;
@@ -93,13 +101,14 @@ function gainExp(amount) {
     updateCurrency();
 }
 
+// 장비 스탯 재계산
 function recalcStats() {
     let baseAtk = 10;
     let baseDef = 5;
     
     ['head', 'body', 'arm', 'leg'].forEach(slot => {
         const itemId = player.equipment[slot];
-        if(itemId && ITEM_DB[itemId] && ITEM_DB[itemId].stat) {
+        if(itemId && window.ITEM_DB && ITEM_DB[itemId] && ITEM_DB[itemId].stat) {
             if(slot === 'arm') baseAtk += ITEM_DB[itemId].stat;
             else baseDef += ITEM_DB[itemId].stat;
         }
@@ -113,30 +122,21 @@ function recalcStats() {
     if(defUI) defUI.innerText = player.stats.def;
 }
 
+// 아이템 획득
 function addItem(itemId, count = 1, force = false) {
-    if (!ITEM_DB[itemId] && !force) return;
+    if (window.ITEM_DB && !ITEM_DB[itemId] && !force) return;
     if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
 
+// 임시 전리품 추가 (탐험용)
 function addTempLoot(itemId, count = 1) {
     tempLoot.push({ id: itemId, count: count });
 }
 
-function claimTempLoot() {
-    if (tempLoot.length === 0) return "";
-    let html = "";
-    tempLoot.forEach(item => {
-        if (item.id === 'gold') player.gold += item.count;
-        else if (item.id === 'gem') player.gem += item.count;
-        else addItem(item.id, item.count);
-    });
-    tempLoot = [];
-    return "보상을 수령했습니다.";
-}
-
 function clearTempLoot() { tempLoot = []; }
 
+// 아이템 사용 로직
 function useItem(itemId) {
     if (isProcessing) return; 
     if (!player.inventory[itemId] || player.inventory[itemId] <= 0) return;
@@ -163,17 +163,15 @@ function useItem(itemId) {
         
         showConfirm(
             `<div style="text-align:center">
-                <img src="${item.img}" style="width:64px;" onerror="handleImgError(this, '${targetType}', 0)">
+                <img src="${item.img}" style="width:64px;" onerror="handleImgError(this)">
                 <br><b>${item.name}</b>을(를) 둥지에 놓겠습니까?
             </div>`, 
             () => {
                 player.inventory[itemId]--; 
-                
                 const isShiny = (itemId === 'egg_shiny');
                 if(window.hatchEggInternal) window.hatchEggInternal(isShiny, item.dragonType || null);
                 
                 if(window.updateUI) window.updateUI();
-                
                 showAlert("둥지에 알을 놓았습니다.<br>탭해서 깨워보세요!", () => { isProcessing = false; });
             },
             () => { isProcessing = false; }
@@ -186,6 +184,9 @@ function useItem(itemId) {
             if(dragon) {
                 const effect = item.effect || 10;
                 dragon.clicks += effect;
+                // UI 갱신 (hatchery.js의 renderNest 호출)
+                if(window.renderCaveUI) window.renderCaveUI();
+                
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
             } else { isProcessing = false; }
         }
@@ -193,6 +194,7 @@ function useItem(itemId) {
     }
 }
 
+// 둥지 강화 (구현 유지, 버튼은 삭제되었으나 로직 보존)
 function upgradeNest() {
     if (isProcessing) return;
     const nextLevel = (player.nestLevel || 0) + 1;
@@ -245,6 +247,7 @@ function unequipItem(slot) {
     }
 }
 
+// 저장 기능 (디바운싱 적용)
 function saveGame(immediate = false) {
     player.nickname = (typeof userNickname !== 'undefined') ? userNickname : player.nickname;
     
@@ -264,6 +267,7 @@ function executeSave() {
     console.log("게임 저장 완료");
 }
 
+// 불러오기 (데이터 복구 로직 포함)
 function loadGame() {
     const saved = localStorage.getItem('dragonSaveData');
     if (saved) {
@@ -271,8 +275,14 @@ function loadGame() {
             const parsedData = JSON.parse(saved);
             const savedPlayer = parsedData.player;
 
-            // [수정] Deep Merge를 사용하여 기존 데이터 구조 유지하면서 저장된 값 불러오기
+            // 깊은 병합으로 구조 유지
             player = deepMerge(JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE)), savedPlayer);
+
+            // [중요] 드래곤 데이터 증발 시 자동 복구
+            if (!player.myDragons || player.myDragons.length === 0) {
+                console.warn("데이터 손상 감지: 드래곤이 없습니다. 초기 드래곤을 지급합니다.");
+                player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
+            }
 
             if(typeof player.exp === 'undefined') player.exp = 0;
             if(!player.maxExp) player.maxExp = 100;
@@ -281,9 +291,18 @@ function loadGame() {
                 userNickname = player.nickname;
             }
         } catch(e) {
-            console.error("로드 실패", e);
+            console.error("로드 실패, 데이터를 초기화합니다.", e);
             player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
         }
     }
 }
+
+// 전역 노출
 window.gainExp = gainExp;
+window.saveGame = saveGame;
+window.loadGame = loadGame;
+window.addItem = addItem;
+window.useItem = useItem;
+window.upgradeNest = upgradeNest;
+window.equipItem = equipItem;
+window.unequipItem = unequipItem;
