@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (최종: 알 증발 해결)
+// js/hatchery.js (완전한 전체 코드: 버그 수정됨)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -14,7 +14,7 @@ window.renderCaveUI = function() {
     renderCaveInventory(); 
 };
 
-// 알 목록 (사이드바)
+// 알 목록 (왼쪽 사이드바)
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
@@ -35,7 +35,7 @@ function renderEggList() {
     });
 }
 
-// 둥지 화면
+// 둥지 화면 (중앙)
 function renderNest() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     if (!dragonData) return;
@@ -91,7 +91,7 @@ function renderNest() {
     }
 }
 
-// TOUCH 버튼 핸들러
+// 터치 버튼 핸들러
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons[player.currentDragonIndex];
     const imgEl = dragonDisplay ? dragonDisplay.querySelector('img') : null;
@@ -100,6 +100,7 @@ window.handleTouchBtn = function() {
     }
 };
 
+// 드래곤 클릭 로직 (성장)
 function handleDragonClick(dragon, imgEl) {
     imgEl.classList.remove('click-anim');
     void imgEl.offsetWidth; 
@@ -137,13 +138,13 @@ function handleDragonClick(dragon, imgEl) {
         const gain = xpReward[dragon.stage] || 50;
         if(window.gainExp) window.gainExp(gain);
         
-        // UI 즉시 갱신
+        // [중요] 전체 UI 강제 갱신
         window.renderCaveUI(); 
         if(window.saveGame) window.saveGame();
     }
 }
 
-// 인벤토리 렌더링
+// 둥지 인벤토리 (하단)
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -173,7 +174,7 @@ function generateUID() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
 }
 
-// [핵심] 알 획득 로직 (화면 자동 전환 포함)
+// 알 생성 및 획득 로직
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
@@ -239,7 +240,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         player.maxStages[resultDragon.id] = 0;
     }
 
-    // [중요 수정] 방금 얻은 알로 화면을 자동 전환 (알 증발 착각 방지)
+    // [중요] 새로 얻은 드래곤으로 화면 즉시 전환
     player.currentDragonIndex = player.myDragons.length - 1;
 
     if(window.renderCaveUI) window.renderCaveUI();
