@@ -19,14 +19,12 @@
     <section id="screen-start" class="full-screen active">
         <div class="title-area">
             <h1>DRAGON<br>CHRONICLES</h1>
-            
             <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
-                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-bottom: 5px;">로딩 준비 중...</p>
                 <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
                     <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
                 </div>
+                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">로딩 중...</p>
             </div>
-
             <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
                onclick="document.getElementById('screen-start').classList.add('hidden'); if(localStorage.getItem('dragonSaveData')){ if(window.loadGame) window.loadGame(); if(window.startGame) window.startGame(); } else { document.getElementById('screen-setup').classList.remove('hidden'); }">
                터치하여 시작
@@ -50,51 +48,31 @@
     </section>
 
     <section id="screen-game" class="full-screen hidden">
-        
         <main id="game-view">
             
             <div id="tab-dragon" class="tab-content">
                 <div class="nest-layout-container">
-                    
                     <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">
-                            💰 <span id="ui-gold">0</span>
-                        </div>
-                        <div class="currency-slot gem-slot">
-                            💎 <span id="ui-gem">0</span>
-                        </div>
+                        <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
+                        <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
                     </div>
-
                     <div class="nest-body-area">
                         <div class="nest-sidebar-left">
                             <div class="sidebar-header-text">알 목록</div>
                             <div id="my-egg-list" class="sidebar-list-content"></div>
                         </div>
-
                         <div class="nest-right-column">
                             <div class="nest-center-stage">
-                                <div class="dragon-name-box">
-                                    <span id="dragon-name-ui">이름 없음</span>
-                                </div>
-                                
-                                <div class="dragon-visual-area">
-                                     <div id="dragon-display"></div>
-                                </div>
-
+                                <div class="dragon-name-box"><span id="dragon-name-ui">이름 없음</span></div>
+                                <div class="dragon-visual-area"><div id="dragon-display"></div></div>
                                 <div class="nest-controls">
-                                    <div class="gauge-box">
-                                        <div id="progress-fill" class="gauge-fill"></div>
-                                        <span class="gauge-text">0 / 100</span>
-                                    </div>
+                                    <div class="gauge-box"><div id="progress-fill" class="gauge-fill"></div><span class="gauge-text">0 / 100</span></div>
                                     <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
                                 </div>
                             </div>
-
                             <div class="nest-bottom-panel">
                                 <div class="panel-label">인벤토리</div>
-                                <div class="panel-content-row">
-                                    <div id="cave-inventory-grid" class="material-scroll-row"></div>
-                                </div>
+                                <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
                             </div>
                         </div>
                     </div>
@@ -129,17 +107,12 @@
                         <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
                     </div>
                     <div class="map-container-wrapper">
-                        <div class="map-board">
-                            <div id="map-icons-layer"></div>
-                        </div>
+                        <div class="map-board"><div id="map-icons-layer"></div></div>
                     </div>
                     <div class="map-bottom-area">
-                        <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>
-                            지역을 선택하세요
-                        </button>
+                        <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>지역을 선택하세요</button>
                     </div>
                 </div>
-
                 <div id="explore-run-view" class="hidden explore-layout">
                     <div class="nest-header-area"></div>
                     <div class="run-display-frame">
@@ -158,11 +131,19 @@
                 </div>
             </div>
 
-            <div id="tab-book" class="tab-content hidden default-layout">
-                <div class="book-bg bg-vertical">
-                    <h3>용 도감</h3>
-                    <div class="book-slider-container">
-                        <div class="book-slider-track" id="book-track"></div>
+            <div id="tab-book" class="tab-content hidden">
+                <div class="book-layout-container">
+                    
+                    <div class="book-header-box">
+                        <span class="book-header-text">도감</span>
+                    </div>
+
+                    <div class="book-tab-bar" id="book-tab-bar">
+                        </div>
+
+                    <div class="book-content-wrapper">
+                        <div id="book-grid-area">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -170,9 +151,7 @@
             <div id="tab-shop" class="tab-content hidden default-layout">
                 <div class="shop-bg bg-vertical">
                     <h3>상점</h3>
-                    <div class="scroll-area">
-                        <div id="shop-list" class="list-row"></div>
-                    </div>
+                    <div class="scroll-area"><div id="shop-list" class="list-row"></div></div>
                 </div>
             </div>
 
