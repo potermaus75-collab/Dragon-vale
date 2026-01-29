@@ -1,9 +1,9 @@
 // ==========================================
-// js/main.js (완전한 코드: 생략 없음)
+// js/main.js (완전한 전체 코드)
 // ==========================================
 
 // 이미지 로드 에러 처리
-window.handleImgError = function(imgEl, dragonType, dragonStage) {
+window.handleImgError = function(imgEl) {
     imgEl.onerror = null; 
     imgEl.src = "assets/images/ui/icon_question.png"; 
     imgEl.style.objectFit = "contain";
@@ -12,20 +12,17 @@ window.handleImgError = function(imgEl, dragonType, dragonStage) {
 let userNickname = "Guest";
 let prologueIndex = 0;
 let currentTab = 'dragon'; 
-
 let currentBookPage = 0;
+
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
 const CATEGORY_NAMES = {
     "fire": "불의 장", "water": "물의 장", "forest": "숲의 장",
     "electric": "번개의 장", "metal": "강철의 장", "light": "빛의 장", "dark": "어둠의 장"
 };
 
-// [새 UI 적용] 리소스 목록
+// 로딩할 이미지 목록
 const UI_ASSETS = [
-    // 공용
     "assets/images/ui/icon_question.png",
-    
-    // NEW UI (동굴 테마)
     "assets/images/ui_new/bg_cave.png",
     "assets/images/ui_new/frame_header.png",
     "assets/images/ui_new/frame_sidebar.png",
@@ -37,27 +34,12 @@ const UI_ASSETS = [
     "assets/images/ui_new/slot_box_active.png",
     "assets/images/ui_new/bar_bg.png",
     "assets/images/ui_new/bar_fill.png",
-    "assets/images/ui_new/btn_touch.png",
-    "assets/images/ui_new/btn_upgrade.png",
-    
-    // 아이콘
-    "assets/images/ui_new/icon_home.png",
-    "assets/images/ui_new/icon_book.png",
-    "assets/images/ui_new/icon_bag.png",
-    "assets/images/ui_new/icon_map.png",
-    "assets/images/ui_new/icon_setting.png"
+    "assets/images/ui_new/btn_touch.png"
 ];
 
-// 에셋 프리로딩
 function preloadAssets() {
-    let imagesToLoad = [...UI_ASSETS];
-    if (typeof ITEM_DB !== 'undefined') {
-        for (let key in ITEM_DB) { if (ITEM_DB[key].img) imagesToLoad.push(ITEM_DB[key].img); }
-    }
-    imagesToLoad = [...new Set(imagesToLoad)];
-
     let loadedCount = 0;
-    const totalCount = imagesToLoad.length;
+    const totalCount = UI_ASSETS.length;
     
     const textEl = document.getElementById('loading-text');
     const barEl = document.getElementById('loading-bar-fill');
@@ -66,19 +48,20 @@ function preloadAssets() {
 
     if (totalCount === 0) { completeLoading(); return; }
 
-    imagesToLoad.forEach(src => {
-        const img = new Image();
-        img.src = src;
-        img.onload = () => { loadedCount++; updateProgress(); };
-        img.onerror = () => { loadedCount++; updateProgress(); };
-    });
-
-    function updateProgress() {
+    function checkDone() {
+        loadedCount++;
         const percent = Math.floor((loadedCount / totalCount) * 100);
         if(textEl) textEl.innerText = `로딩 중... ${percent}%`;
         if(barEl) barEl.style.width = `${percent}%`;
         if (loadedCount >= totalCount) { setTimeout(completeLoading, 300); }
     }
+
+    UI_ASSETS.forEach(src => {
+        const img = new Image();
+        img.onload = checkDone;
+        img.onerror = checkDone; 
+        img.src = src;
+    });
 
     function completeLoading() {
         if(textEl) textEl.innerText = "로딩 완료!";
@@ -94,44 +77,42 @@ function preloadAssets() {
 
 window.onload = function() { preloadAssets(); };
 
-function showScreen(screenId) {
-    document.querySelectorAll('.full-screen').forEach(el => {
-        el.classList.remove('active');
-        el.classList.add('hidden');
-    });
-    const target = document.getElementById(screenId);
-    if(target) {
-        target.classList.remove('hidden');
-        target.classList.add('active');
-        target.style.display = "flex"; 
-    }
-}
+// 안전한 게임 시작 함수
+window.tryStartGame = function() {
+    const startScreen = document.getElementById('screen-start');
+    if(startScreen) startScreen.classList.add('hidden');
 
-// 시작 화면 클릭 처리 (HTML 인라인 이벤트 대체 가능하지만 안전장치로 유지)
-/* index.html의 onclick에서 처리하므로 중복 방지 위해 조건부 실행 */
-const startScreen = document.getElementById('screen-start');
-if(startScreen) {
-    // startScreen.addEventListener('click', ...) // HTML 인라인으로 이동함
-}
+    if (localStorage.getItem('dragonSaveData')) {
+        if(window.loadGame) window.loadGame();
+        startGame();
+    } else {
+        document.getElementById('screen-setup').classList.remove('hidden');
+    }
+};
 
 function submitName() {
     const input = document.getElementById('input-nickname');
     if (input.value.trim() === "") return showAlert("이름을 입력해주세요!");
     userNickname = input.value;
-    player.nickname = userNickname; // 즉시 저장
-    saveGame();
-    showScreen('screen-prologue');
+    if(typeof player !== 'undefined') player.nickname = userNickname;
+    
+    if(window.saveGame) window.saveGame();
+    
+    document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
+    const prologue = document.getElementById('screen-prologue');
+    prologue.classList.remove('hidden');
+    prologue.classList.add('active');
     renderPrologue();
 }
 
 function renderPrologue() {
     const textEl = document.getElementById('prologue-text');
-    textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
+    if(window.PROLOGUE_DATA) textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
 }
 
 function nextPrologueCut() {
     prologueIndex++;
-    if (prologueIndex >= PROLOGUE_DATA.length) {
+    if (window.PROLOGUE_DATA && prologueIndex >= PROLOGUE_DATA.length) {
         startGame();
     } else {
         renderPrologue();
@@ -139,100 +120,70 @@ function nextPrologueCut() {
 }
 
 function startGame() {
-    showScreen('screen-game');
-    if (player.exploreState) {
-        currentTab = 'explore';
-        updateUI();
-        if(window.restoreExploration) window.restoreExploration();
-    } else {
-        switchTab('dragon'); 
-    }
+    document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
+    const gameScreen = document.getElementById('screen-game');
+    gameScreen.classList.remove('hidden');
+    gameScreen.classList.add('active');
+    gameScreen.style.display = "flex";
+
+    // 둥지 탭으로 시작
+    switchTab('dragon'); 
 }
 
-// [탭 전환] 둥지 탭 외에는 default-layout 스타일 적용
 function switchTab(tabName) {
-    if ((window.isExploreActive || player.exploreState) && tabName !== 'explore') {
-        showAlert("탐험 중에는 다른 메뉴로 이동할 수 없습니다!");
+    if (window.isExploreActive && tabName !== 'explore') {
+        showAlert("탐험 중에는 이동할 수 없습니다.");
         return;
     }
-
     currentTab = tabName; 
 
-    // 모든 탭 숨기기
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.add('hidden');
-    });
-    
-    // 선택된 탭 보이기
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
     const selected = document.getElementById(`tab-${tabName}`);
     if(selected) selected.classList.remove('hidden');
 
-    // 하단 업그레이드 패널 제어 (둥지 탭 전용)
-    const upgradePanel = document.getElementById('panel-upgrade-area');
-    if(upgradePanel) {
-        // 새 HTML 구조에서는 panel-upgrade-area가 tab-dragon 내부에 포함되어 있을 수 있음.
-        // 만약 분리되어 있다면 여기서 제어.
-    }
+    // 네비게이션 활성화 표시
+    document.querySelectorAll('.nav-item').forEach(btn => btn.style.opacity = "0.5");
+    
+    // 현재 탭 버튼 찾기 (간략화)
+    const navs = document.querySelectorAll('.nav-item');
+    const tabMap = {'info':0, 'book':1, 'dragon':2, 'explore':3, 'shop':4};
+    if(navs[tabMap[tabName]]) navs[tabMap[tabName]].style.opacity = "1";
 
     updateUI();
 }
 
-// [UI 업데이트 중앙 제어]
 window.updateUI = function() {
     if(window.updateCurrency) updateCurrency(); 
 
-    if (currentTab === 'dragon') {
-        if(window.renderCaveUI) window.renderCaveUI(); 
-    } 
-    else if (currentTab === 'info') {
-        if(typeof renderInventory === 'function') renderInventory();
-    }
-    else if (currentTab === 'shop') {
-        if(typeof renderShop === 'function') renderShop();
-    }
-    else if (currentTab === 'book') {
-        if(currentBookPage === 0) renderBook(); 
-    }
-    else if (currentTab === 'explore') {
-        if (!player.exploreState && window.initExploreTab) window.initExploreTab();
-    }
+    if (currentTab === 'dragon' && window.renderCaveUI) window.renderCaveUI(); 
+    else if (currentTab === 'info' && typeof renderInventory === 'function') renderInventory();
+    else if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
+    else if (currentTab === 'book' && typeof renderBook === 'function') renderBook(); 
+    else if (currentTab === 'explore' && window.initExploreTab) window.initExploreTab();
 };
 
-// 인벤토리 렌더링 (정보 탭용)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
     grid.innerHTML = "";
-    if(!player.inventory) player.inventory = {};
-
-    const itemIds = Object.keys(player.inventory);
-    let hasItem = false;
-
-    itemIds.forEach(id => {
+    if(!player.inventory) return;
+    Object.keys(player.inventory).forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
-            // 장비 아이템만 표시
             if(item && item.type === 'equip') {
-                hasItem = true;
                 const div = document.createElement('div');
                 div.className = 'slot-item';
                 div.onclick = () => useItem(id); 
-                div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'"><span style="position:absolute; bottom:2px; right:2px; font-size:0.7rem;">x${player.inventory[id]}</span>`;
+                div.innerHTML = `<img src="${item.img}" class="item-img-lg" onerror="handleImgError(this)"><span style="position:absolute; bottom:0; right:2px;">x${player.inventory[id]}</span>`;
                 grid.appendChild(div);
             }
         }
     });
-
-    if(!hasItem) grid.innerHTML = "<p style='grid-column:span 4; text-align:center; color:#888; font-size:0.8rem;'>장비 없음</p>";
 }
 
-// 도감 렌더링
 function renderBook() {
-    // 배경 설정이 CSS .bg-vertical로 처리됨
     const track = document.getElementById('book-track');
     if(!track) return;
-    
-    // 이미 렌더링된 상태라면 초기화 필요 (트랙 비우기)
     track.innerHTML = "";
 
     if(!player.discovered) player.discovered = [];
@@ -240,7 +191,6 @@ function renderBook() {
     BOOK_CATEGORIES.forEach(category => {
         const pageDiv = document.createElement('div');
         pageDiv.className = 'book-page';
-        
         const typeIcon = `assets/images/ui/icon_${category}.png`;
         
         pageDiv.innerHTML = `
@@ -259,7 +209,6 @@ function renderBook() {
         dragonKeys.forEach(dragonId => {
             const dragonInfo = DRAGON_DEX[dragonId];
             const isFound = player.discovered.includes(dragonId);
-            
             const slot = document.createElement('div');
             slot.className = `book-slot-custom ${isFound ? '' : 'unknown'}`;
             
@@ -268,7 +217,7 @@ function renderBook() {
                 let displayImg = "assets/images/dragon/stage_egg.png";
                 if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
                 
-                slot.innerHTML = `<img src="${displayImg}" class="book-img" onerror="handleImgError(this, '${dragonInfo.type}', ${maxStage})">`;
+                slot.innerHTML = `<img src="${displayImg}" class="book-img" onerror="handleImgError(this)">`;
                 slot.onclick = () => showDragonDetailModal(dragonId, dragonInfo);
             } else {
                 slot.innerHTML = `<img src="assets/images/ui/icon_question.png" style="width:20px; opacity:0.3;">`;
@@ -288,7 +237,6 @@ function renderBook() {
         () => moveBookPage(1),  
         () => moveBookPage(-1)  
     );
-
     updateBookSlider();
 }
 
@@ -302,16 +250,12 @@ function moveBookPage(dir) {
 
 function updateBookSlider() {
     const track = document.getElementById('book-track');
-    if(track) {
-        track.style.transform = `translateX(-${currentBookPage * 100}%)`;
-    }
+    if(track) track.style.transform = `translateX(-${currentBookPage * 100}%)`;
 }
 
-// 상세 정보 모달
 function showDragonDetailModal(dragonId, info) {
     const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
     const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
-    
     const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
     const totalStages = isHighTier ? 5 : 4;
     
@@ -319,140 +263,76 @@ function showDragonDetailModal(dragonId, info) {
     for(let i=0; i < totalStages; i++) {
         const isUnknown = i > maxStage;
         const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
-        
         let contentHtml = "";
         if (isUnknown) {
-            contentHtml = `
-                <img src="${imgSrc}" class="detail-img-large" style="filter:brightness(0); opacity:0.3;" onerror="handleImgError(this, '${info.type}', ${i})">
-                <div class="detail-stage-name">??? (미발견)</div>
-            `;
+            contentHtml = `<img src="${imgSrc}" class="detail-img-large" style="filter:brightness(0); opacity:0.3;" onerror="handleImgError(this)"><div class="detail-stage-name">??? (미발견)</div>`;
         } else {
-            contentHtml = `
-                <img src="${imgSrc}" class="detail-img-large" onerror="handleImgError(this, '${info.type}', ${i})">
-                <div class="detail-stage-name">${stageNames[i]}</div>
-            `;
+            contentHtml = `<img src="${imgSrc}" class="detail-img-large" onerror="handleImgError(this)"><div class="detail-stage-name">${stageNames[i]}</div>`;
         }
-
         slidesHtml += `<div class="detail-stage-view">${contentHtml}</div>`;
     }
 
     const rarityColor = RARITY_DATA[info.rarity].color;
-
     const modalContent = `
         <div style="text-align:center; width:100%;">
             <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
             <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[info.rarity].name}]</span>
-            
             <div class="detail-slider-container">
                 <div class="detail-slider-track" id="detail-track" style="width:${totalStages * 100}%">
                     ${slidesHtml}
                 </div>
             </div>
-            
-            <div style="display:flex; justify-content:center; align-items:center; gap:5px; margin-top:5px;">
-                <img src="assets/images/ui/icon_arrow_left.png" style="width:12px;" onerror="this.style.display='none'">
-                <span style="font-size:0.7rem; color:#888;">좌우로 스와이프하여 성장 모습 확인</span>
-                <img src="assets/images/ui/icon_arrow_right.png" style="width:12px;" onerror="this.style.display='none'">
-            </div>
-
             <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
                 ${info.desc}
             </div>
         </div>
     `;
-
     showAlert(modalContent);
-
     setTimeout(() => {
         const track = document.getElementById('detail-track');
         if (!track) return;
-        
         let currentStage = Math.min(maxStage, totalStages - 1); 
-        
-        const updateDetailSlider = () => {
-            track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`;
-        };
+        const updateDetailSlider = () => { track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`; };
         updateDetailSlider();
-
         const views = track.querySelectorAll('.detail-stage-view');
         views.forEach(v => { v.style.width = `${100 / totalStages}%`; });
-
         const container = document.querySelector('.detail-slider-container');
         addSwipeListener(container, 
-            () => { 
-                if(currentStage < totalStages - 1) {
-                    currentStage++;
-                    updateDetailSlider();
-                }
-            },
-            () => { 
-                if(currentStage > 0) {
-                    currentStage--;
-                    updateDetailSlider();
-                }
-            }
+            () => { if(currentStage < totalStages - 1) { currentStage++; updateDetailSlider(); } },
+            () => { if(currentStage > 0) { currentStage--; updateDetailSlider(); } }
         );
     }, 100);
 }
 
-// 스와이프 리스너
 let isSwipeCooldown = false;
-
 function addSwipeListener(el, onLeft, onRight) {
     if(!el) return;
-    let startX = 0;
-    let endX = 0;
-    
-    el.addEventListener('touchstart', e => {
-        startX = e.changedTouches[0].screenX;
-    }, {passive: true});
-    
-    el.addEventListener('touchend', e => {
-        endX = e.changedTouches[0].screenX;
-        if (isSwipeCooldown) return;
-        handleGesture();
-    }, {passive: true});
-
+    let startX = 0; let endX = 0;
+    el.addEventListener('touchstart', e => { startX = e.changedTouches[0].screenX; }, {passive: true});
+    el.addEventListener('touchend', e => { endX = e.changedTouches[0].screenX; if (isSwipeCooldown) return; handleGesture(); }, {passive: true});
     function handleGesture() {
         const threshold = 60; 
-        if (startX - endX > threshold) {
-            if(onLeft) { onLeft(); triggerCooldown(); }
-        } else if (endX - startX > threshold) {
-            if(onRight) { onRight(); triggerCooldown(); }
-        }
+        if (startX - endX > threshold) { if(onLeft) { onLeft(); triggerCooldown(); } }
+        else if (endX - startX > threshold) { if(onRight) { onRight(); triggerCooldown(); } }
     }
-
-    function triggerCooldown() {
-        isSwipeCooldown = true;
-        setTimeout(() => { isSwipeCooldown = false; }, 500); 
-    }
+    function triggerCooldown() { isSwipeCooldown = true; setTimeout(() => { isSwipeCooldown = false; }, 500); }
 }
 
-// 상점 렌더링
 function renderShop() {
     const shopContent = document.querySelector('#tab-shop .shop-bg');
     if(shopContent) {
-        shopContent.className = 'bg-vertical'; // 세로형 패널 스타일 적용
-        shopContent.innerHTML = `
-            <h3>상점</h3>
-            <div class="scroll-area" style="width:100%; margin-top:10px;">
-                <div id="shop-list" class="list-row"></div>
-            </div>
-        `;
+        shopContent.className = 'bg-vertical'; 
+        shopContent.innerHTML = `<h3>상점</h3><div class="scroll-area" style="width:100%; margin-top:10px;"><div id="shop-list" class="list-row"></div></div>`;
     }
-
     const list = document.getElementById('shop-list');
     if(!list) return;
     list.innerHTML = "";
-    
     SHOP_LIST.forEach(id => {
         const item = ITEM_DB[id];
         if(!item) return;
-
         const costType = item.costType || 'gold';
         const currencyIcon = costType === 'gem' ? 'assets/images/ui/icon_gem.png' : 'assets/images/ui/icon_gold.png';
         const priceColor = costType === 'gem' ? '#3498db' : '#f1c40f'; 
-
         const div = document.createElement('div');
         div.className = 'shop-item';
         div.innerHTML = `
@@ -468,7 +348,6 @@ function renderShop() {
     });
 }
 
-// 아이템 구매
 function buyItem(id) {
     const item = ITEM_DB[id];
     const costType = item.costType || 'gold'; 
@@ -477,79 +356,41 @@ function buyItem(id) {
 
     if (currentMoney >= item.price) {
         showConfirm(`${item.name}을(를) 구매하시겠습니까?\n(가격: ${item.price} ${currencyName})`, () => {
-            if ((player[costType] || 0) < item.price) {
-                showAlert(`${currencyName}이 부족합니다.`);
-                return;
-            }
+            if ((player[costType] || 0) < item.price) { showAlert(`${currencyName}이 부족합니다.`); return; }
             player[costType] -= item.price;
             addItem(id, 1);
             updateCurrency();
             showAlert("구매 완료!", () => { saveGame(); });
         });
-    } else {
-        showAlert(`${currencyName}이 부족합니다.`);
-    }
+    } else { showAlert(`${currencyName}이 부족합니다.`); }
 }
 
-function changeProfileImage() {
-    document.getElementById('file-input').click();
-}
-document.getElementById('file-input').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if(file) {
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            document.getElementById('ui-profile-img').style.backgroundImage = `url('${evt.target.result}')`;
-            document.getElementById('ui-profile-img').style.backgroundSize = "cover";
-        }
-        reader.readAsDataURL(file);
-    }
-});
-
-// 공통 팝업 (Alert)
 window.showAlert = function(msg, callback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "알림";
     document.getElementById('modal-text').innerHTML = msg; 
-    
     document.getElementById('modal-btn-alert').classList.remove('hidden');
     document.getElementById('modal-btn-confirm').classList.add('hidden');
-    
     modal.classList.remove('hidden');
     modal.classList.add('active');
-
-    const okBtn = document.querySelector('#modal-btn-alert button');
-    okBtn.onclick = function() {
-        closeModal();
-        if(callback) callback();
+    modal.querySelector('#modal-btn-alert button').onclick = function() {
+        closeModal(); if(callback) callback();
     };
 };
 
-// 공통 확인창 (Confirm)
 window.showConfirm = function(msg, yesCallback, noCallback) {
     const modal = document.getElementById('common-modal');
     document.getElementById('modal-title').innerText = "확인";
     document.getElementById('modal-text').innerHTML = msg; 
-    
     document.getElementById('modal-btn-alert').classList.add('hidden');
-    const confirmGroup = document.getElementById('modal-btn-confirm');
-    confirmGroup.classList.remove('hidden');
-    
+    document.getElementById('modal-btn-confirm').classList.remove('hidden');
     modal.classList.remove('hidden');
     modal.classList.add('active');
-
-    document.getElementById('btn-confirm-yes').onclick = function() {
-        closeModal();
-        if(yesCallback) yesCallback();
-    };
-    document.getElementById('btn-confirm-no').onclick = function() {
-        closeModal();
-        if(noCallback) noCallback();
-    };
+    document.getElementById('btn-confirm-yes').onclick = function() { closeModal(); if(yesCallback) yesCallback(); };
+    document.getElementById('btn-confirm-no').onclick = function() { closeModal(); if(noCallback) noCallback(); };
 };
 
 window.closeModal = function() {
-    const modal = document.getElementById('common-modal');
-    modal.classList.remove('active');
-    modal.classList.add('hidden');
+    document.getElementById('common-modal').classList.remove('active');
+    document.getElementById('common-modal').classList.add('hidden');
 };
