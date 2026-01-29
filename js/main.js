@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (완전한 전체 코드)
+// js/main.js (완전한 전체 코드: 도감 리뉴얼 포함)
 // ==========================================
 
 // 이미지 로드 에러 처리
@@ -12,15 +12,21 @@ window.handleImgError = function(imgEl) {
 let userNickname = "Guest";
 let prologueIndex = 0;
 let currentTab = 'dragon'; 
-let currentBookPage = 0;
+let currentBookPage = 0; // 0: fire, 1: water ...
 
 const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
-const CATEGORY_NAMES = {
-    "fire": "불의 장", "water": "물의 장", "forest": "숲의 장",
-    "electric": "번개의 장", "metal": "강철의 장", "light": "빛의 장", "dark": "어둠의 장"
+// (참고) 이미지 파일명 매핑용
+const CATEGORY_ICONS = {
+    "fire": "icon_type_fire.png",
+    "water": "icon_type_water.png",
+    "forest": "icon_type_forest.png",
+    "electric": "icon_type_electric.png",
+    "metal": "icon_type_metal.png",
+    "light": "icon_type_light.png",
+    "dark": "icon_type_dark.png"
 };
 
-// 로딩할 이미지 목록
+// 로딩할 이미지 목록 (신규 도감 에셋 추가)
 const UI_ASSETS = [
     "assets/images/ui/icon_question.png",
     "assets/images/ui_new/bg_cave.png",
@@ -34,7 +40,19 @@ const UI_ASSETS = [
     "assets/images/ui_new/slot_box_active.png",
     "assets/images/ui_new/bar_bg.png",
     "assets/images/ui_new/bar_fill.png",
-    "assets/images/ui_new/btn_touch.png"
+    "assets/images/ui_new/btn_touch.png",
+    
+    // 도감용
+    "assets/images/ui_new/bg_book.png",
+    "assets/images/ui_new/frame_book_title.png",
+    "assets/images/ui_new/frame_tab_bar.png",
+    "assets/images/ui_new/icon_type_fire.png",
+    "assets/images/ui_new/icon_type_water.png",
+    "assets/images/ui_new/icon_type_forest.png",
+    "assets/images/ui_new/icon_type_electric.png",
+    "assets/images/ui_new/icon_type_metal.png",
+    "assets/images/ui_new/icon_type_light.png",
+    "assets/images/ui_new/icon_type_dark.png"
 ];
 
 function preloadAssets() {
@@ -77,7 +95,6 @@ function preloadAssets() {
 
 window.onload = function() { preloadAssets(); };
 
-// 안전한 게임 시작 함수
 window.tryStartGame = function() {
     const startScreen = document.getElementById('screen-start');
     if(startScreen) startScreen.classList.add('hidden');
@@ -126,7 +143,6 @@ function startGame() {
     gameScreen.classList.add('active');
     gameScreen.style.display = "flex";
 
-    // 둥지 탭으로 시작
     switchTab('dragon'); 
 }
 
@@ -141,10 +157,8 @@ function switchTab(tabName) {
     const selected = document.getElementById(`tab-${tabName}`);
     if(selected) selected.classList.remove('hidden');
 
-    // 네비게이션 활성화 표시
+    // 네비게이션 활성화
     document.querySelectorAll('.nav-item').forEach(btn => btn.style.opacity = "0.5");
-    
-    // 현재 탭 버튼 찾기 (간략화)
     const navs = document.querySelectorAll('.nav-item');
     const tabMap = {'info':0, 'book':1, 'dragon':2, 'explore':3, 'shop':4};
     if(navs[tabMap[tabName]]) navs[tabMap[tabName]].style.opacity = "1";
@@ -181,76 +195,82 @@ function renderInventory() {
     });
 }
 
+// [리뉴얼] 도감 렌더링 함수
 function renderBook() {
-    const track = document.getElementById('book-track');
-    if(!track) return;
-    track.innerHTML = "";
+    // 1. 탭 바 렌더링
+    const tabBar = document.getElementById('book-tab-bar');
+    if (tabBar) {
+        tabBar.innerHTML = "";
+        BOOK_CATEGORIES.forEach((cat, idx) => {
+            const div = document.createElement('div');
+            // 선택된 탭이면 active 클래스 추가
+            div.className = `tab-type-icon ${idx === currentBookPage ? 'active' : ''}`;
+            div.innerHTML = `<img src="assets/images/ui_new/${CATEGORY_ICONS[cat]}" onerror="this.src='assets/images/ui/icon_question.png'">`;
+            
+            // 클릭 시 페이지 변경 및 재렌더링
+            div.onclick = () => {
+                currentBookPage = idx;
+                renderBook(); 
+            };
+            tabBar.appendChild(div);
+        });
+    }
 
-    if(!player.discovered) player.discovered = [];
-
-    BOOK_CATEGORIES.forEach(category => {
-        const pageDiv = document.createElement('div');
-        pageDiv.className = 'book-page';
-        const typeIcon = `assets/images/ui/icon_${category}.png`;
+    // 2. 그리드 내용물 렌더링
+    const gridArea = document.getElementById('book-grid-area');
+    if (gridArea) {
+        gridArea.innerHTML = "";
         
-        pageDiv.innerHTML = `
-            <div class="book-page-title-row">
-                <img src="${typeIcon}" class="book-type-icon" onerror="this.style.display='none'">
-                <h4 class="book-page-title">${CATEGORY_NAMES[category] || category}</h4>
-            </div>
-        `;
+        // 현재 선택된 카테고리(속성) 가져오기
+        const currentCategory = BOOK_CATEGORIES[currentBookPage];
         
-        const gridDiv = document.createElement('div');
-        gridDiv.className = 'grid-3';
-        gridDiv.style.width = "100%";
-
-        const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === category);
+        // 해당 속성의 드래곤만 필터링
+        const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === currentCategory);
         
         dragonKeys.forEach(dragonId => {
             const dragonInfo = DRAGON_DEX[dragonId];
             const isFound = player.discovered.includes(dragonId);
+            
             const slot = document.createElement('div');
-            slot.className = `book-slot-custom ${isFound ? '' : 'unknown'}`;
+            slot.className = `book-slot-item ${isFound ? '' : 'unknown'}`;
             
             if (isFound) {
+                // 발견함: 드래곤 이미지 표시
                 const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
                 let displayImg = "assets/images/dragon/stage_egg.png";
                 if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
                 
-                slot.innerHTML = `<img src="${displayImg}" class="book-img" onerror="handleImgError(this)">`;
+                slot.innerHTML = `<img src="${displayImg}" onerror="handleImgError(this)">`;
                 slot.onclick = () => showDragonDetailModal(dragonId, dragonInfo);
             } else {
-                slot.innerHTML = `<img src="assets/images/ui/icon_question.png" style="width:20px; opacity:0.3;">`;
+                // 미발견: 물음표 아이콘 (실루엣 대신 물음표 사용)
+                slot.innerHTML = `<img src="assets/images/ui/icon_question.png">`;
             }
-            gridDiv.appendChild(slot);
+            gridArea.appendChild(slot);
         });
 
+        // 데이터가 없을 경우
         if(dragonKeys.length === 0) {
-            gridDiv.innerHTML = "<p style='grid-column:span 3; text-align:center; color:#555;'>데이터 없음</p>";
+            gridArea.innerHTML = "<p style='grid-column:span 5; text-align:center; color:#555;'>데이터 없음</p>";
         }
+    }
 
-        pageDiv.appendChild(gridDiv);
-        track.appendChild(pageDiv);
-    });
-
-    addSwipeListener(document.querySelector('.book-slider-container'), 
-        () => moveBookPage(1),  
-        () => moveBookPage(-1)  
-    );
-    updateBookSlider();
+    // 3. 스와이프 기능 연결 (책 내용 부분에)
+    const bookContent = document.querySelector('.book-content-wrapper');
+    if(bookContent) {
+        addSwipeListener(bookContent, 
+            () => moveBookPage(1),  // 왼쪽으로 밀면 다음 페이지
+            () => moveBookPage(-1)  // 오른쪽으로 밀면 이전 페이지
+        );
+    }
 }
 
 function moveBookPage(dir) {
     const next = currentBookPage + dir;
     if (next >= 0 && next < BOOK_CATEGORIES.length) {
         currentBookPage = next;
-        updateBookSlider();
+        renderBook(); // 화면 갱신
     }
-}
-
-function updateBookSlider() {
-    const track = document.getElementById('book-track');
-    if(track) track.style.transform = `translateX(-${currentBookPage * 100}%)`;
 }
 
 function showDragonDetailModal(dragonId, info) {
