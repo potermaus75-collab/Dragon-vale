@@ -1,5 +1,5 @@
 /* =========================================
-   css/style.css (최종 수정: UI 위치 상향 조정 & 가방 공간 확보)
+   css/style.css (최종: 둥지/내정보 UI 위치 및 크기 완벽 수정본)
    ========================================= */
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
@@ -17,10 +17,11 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 #game-view { position: absolute; top: 0; bottom: 90px; width: 100%; }
 .tab-content { width: 100%; height: 100%; position: relative; }
 
-/* === [1] 둥지 탭 (수정됨) === */
+/* === [1] 둥지 탭 (수정됨: 알 목록 축소 & 인벤토리 확장) === */
 #tab-dragon { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 .nest-layout-container { width: 100%; height: 100%; display: flex; flex-direction: column; }
 
+/* 상단 재화 바 */
 .nest-header-area { 
     width: 100%; height: 80px; flex-shrink: 0; 
     background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; 
@@ -32,10 +33,10 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 
 .nest-body-area { flex: 1; display: flex; overflow: hidden; padding-top: 5px; position: relative; }
 
-/* 사이드바 (알 목록) - 높이 줄임 */
+/* 사이드바 (알 목록) - 높이를 줄여서 터치 게이지 위까지만 오게 설정 */
 .nest-sidebar-left { 
     width: 90px; 
-    height: 55%; /* 높이를 줄여서 게이지 근처까지만 오게 조정 */
+    height: 55%; /* 높이 축소 (목록이 너무 길지 않게) */
     background: url('../assets/images/ui_new/frame_sidebar.png') no-repeat left top; 
     background-size: 100% 100%; 
     display: flex; flex-direction: column; align-items: center; 
@@ -43,7 +44,7 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .sidebar-header-text { position: absolute; top: 13px; font-size: 0.7rem; color: #aaa; font-weight: bold; }
 
-/* 알 목록 내부 아이템 크기 축소 */
+/* 알 목록 스크롤 영역 */
 .sidebar-list-content { 
     margin-top: 40px; width: 70px; height: 85%; overflow-y: auto; 
     display: flex; flex-direction: column; gap: 5px; 
@@ -51,23 +52,27 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .sidebar-list-content::-webkit-scrollbar { display: none; }
 
-/* 사이드바 슬롯 이미지 크기 강제 축소 (요청사항 반영) */
-.sidebar-list-content .new-slot-item { width: 40px !important; height: 40px !important; } 
-.sidebar-list-content img { width: 30px !important; height: 30px !important; }
+/* [중요] 사이드바 안의 슬롯 아이템 크기 강제 축소 (40px) */
+.sidebar-list-content .new-slot-item { width: 40px !important; height: 40px !important; min-height: 40px; } 
+.sidebar-list-content img { width: 28px !important; height: 28px !important; }
 
 /* 중앙 무대 (상단으로 이동) */
 .nest-right-column { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
 .nest-center-stage { 
     width: 100%; flex: 1; 
     display: flex; flex-direction: column; align-items: center; justify-content: flex-start; /* 위쪽 정렬 */
-    padding-top: 10px; /* 약간의 여백 */
+    padding-top: 5px; 
 }
+
+/* 이름표 (위로 붙임) */
 .dragon-name-box { 
-    width: 160px; height: 35px; margin-top: 0; /* 마진 제거하여 위로 붙임 */
+    width: 160px; height: 35px; margin-top: 0; 
     background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; 
     background-size: contain; display: flex; justify-content: center; align-items: center; 
     color: #00e5ff; font-weight: bold; font-size: 0.9rem; padding-bottom: 3px; 
 }
+
+/* 드래곤 이미지 */
 .dragon-visual-area { 
     width: 200px; height: 180px; 
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; 
@@ -76,41 +81,42 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .dragon-visual-area img { width: 110px; height: 110px; object-fit: contain; margin-bottom: 30px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
 
-/* 게이지 & 버튼 (위로 이동) */
-.nest-controls { display: flex; align-items: center; gap: 10px; margin-top: 10px; width: 90%; justify-content: center; z-index: 10; }
+/* 게이지 & 버튼 (위로 당김) */
+.nest-controls { display: flex; align-items: center; gap: 10px; margin-top: 5px; width: 90%; justify-content: center; z-index: 10; }
 .gauge-box { width: 140px; height: 26px; background: url('../assets/images/ui_new/bar_bg.png') no-repeat center; background-size: 100% 100%; position: relative; display: flex; align-items: center; justify-content: center; }
 .gauge-fill { position: absolute; left: 3px; top: 3px; bottom: 3px; background: url('../assets/images/ui_new/bar_fill.png') repeat-x left center; background-size: auto 100%; width: 0%; border-radius: 4px; }
 .gauge-text { position: relative; z-index: 2; font-size: 0.7rem; color: #eee; text-shadow: 1px 1px 1px #000; }
 .btn-touch-img { width: 70px; height: 35px; background: url('../assets/images/ui_new/btn_touch.png') no-repeat center; background-size: contain; border: none; cursor: pointer; }
 
-/* 인벤토리 (공간 채우기) */
+/* [중요] 둥지 인벤토리 (높이 대폭 확장 -> 공간 채움) */
 .nest-bottom-panel { 
     width: 96%; 
-    height: 140px; /* 높이를 대폭 늘림 (기존 90px -> 140px) */
+    height: 150px; /* 높이를 늘려서 빈 공간을 채웁니다 */
     background: url('../assets/images/ui_new/frame_upgrade.png') no-repeat center center; 
     background-size: 100% 100%; position: relative; display: flex; justify-content: center; 
-    margin-bottom: 10px; margin-top: auto; z-index: 20; 
+    margin-bottom: 5px; margin-top: auto; z-index: 20; 
 }
 .panel-label { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #00e5ff; font-weight: bold; background: #1a1025; padding: 0 5px; }
 .panel-content-row { width: 92%; height: 100%; display: flex; align-items: center; justify-content: flex-start; padding-top: 15px; padding-left: 10px; }
 .material-scroll-row { display: flex; gap: 8px; overflow-x: auto; width: 100%; justify-content: flex-start; }
 
 
-/* === [2] 내 정보 탭 (수정됨: 위로 올리고 가방 확보) === */
+/* === [2] 내 정보 탭 (수정됨: 위로 이동 & 가방 공간 확보) === */
 #tab-info {
     background: url('../assets/images/ui_new/bg_book.png') no-repeat center center;
     background-size: cover;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 30px 10px 95px 10px; /* 상단 패딩 축소 */
+    /* 전체 패딩을 줄여서 위로 붙임 */
+    padding: 20px 10px 95px 10px; 
 }
 
-/* 1. 상단 프로필 영역 (높이 줄임 + 요소 위로 이동) */
+/* 1. 상단 프로필 영역 (높이를 줄여서 가방 공간을 확보) */
 .profile-container {
     width: 100%; 
     max-width: 400px;
-    height: 300px; /* 높이를 380px -> 300px으로 축소하여 가방 공간 확보 */
+    height: 320px; /* 380px -> 320px로 축소 */
     flex-shrink: 0;
     position: relative;
     display: flex; 
@@ -121,11 +127,10 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 
 .char-view-area { width: 300px; height: 100%; position: relative; }
 
-/* 캐릭터 & 발판 (위로 이동) */
-/* 기존 bottom: 40/60 -> 위로 30px씩 더 올림 */
+/* 캐릭터 & 발판 (위치 대폭 상향 조정) */
 .char-pedestal {
     position: absolute; 
-    bottom: 70px; /* 위로 이동 */
+    bottom: 50px; /* 바닥에서 띄움 */
     left: 50%; transform: translateX(-50%);
     width: 220px; height: 90px;
     background: url('../assets/images/ui_new/ui_pedestal.png') no-repeat center bottom;
@@ -133,7 +138,7 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 }
 .char-body {
     position: absolute; 
-    bottom: 90px; /* 위로 이동 (발판 위에 딱 맞게) */
+    bottom: 70px; /* 발판 위에 위치 */
     left: 50%; transform: translateX(-50%);
     width: 180px; height: 260px;
     background: url('../assets/images/ui_new/char_silhouette.png') no-repeat center bottom;
@@ -147,10 +152,10 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
     background-repeat: no-repeat; background-position: center; background-size: contain;
     z-index: 10; cursor: pointer; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
 }
-.slot-head { top: 0px; left: 50%; transform: translateX(-50%); background-image: url('../assets/images/ui_new/slot_equip_head.png'); } /* 더 위로 */
-.slot-body { top: 90px; left: 0; background-image: url('../assets/images/ui_new/slot_equip_body.png'); } /* 위로 */
-.slot-weapon { top: 90px; right: 0; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); } /* 위로 */
-.slot-shoes { bottom: 60px; left: 50%; transform: translateX(-50%); background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); } /* 위로 */
+.slot-head { top: 0px; left: 50%; transform: translateX(-50%); background-image: url('../assets/images/ui_new/slot_equip_head.png'); } /* 머리 */
+.slot-body { top: 100px; left: 0; background-image: url('../assets/images/ui_new/slot_equip_body.png'); } /* 몸통 */
+.slot-weapon { top: 100px; right: 0; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); } /* 무기 */
+.slot-shoes { bottom: 60px; left: 50%; transform: translateX(-50%); background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); } /* 신발 */
 
 .equipped-item-img { width: 70%; height: 70%; object-fit: contain; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
@@ -160,9 +165,9 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 .stat-icon { font-size: 1rem; margin-right: 5px; }
 .stat-val { font-size: 0.9rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 1px #000; }
 
-/* 2. 하단 인벤토리 영역 (남은 공간 모두 차지) */
+/* 2. 하단 인벤토리 영역 (남은 공간을 모두 차지 -> 확실히 보임) */
 .inventory-container {
-    flex: 1; /* 남은 공간 꽉 채움 */
+    flex: 1; /* 남은 높이 꽉 채움 */
     width: 95%; max-width: 420px;
     background: rgba(30, 20, 40, 0.85); border: 2px solid #5d4a6d; border-radius: 10px;
     box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
@@ -181,6 +186,8 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; background: #1a
 #tab-explore, #tab-book, #tab-shop { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: cover; }
 .shop-bg { width: 95%; height: 90%; max-width: 450px; background: url('../assets/images/ui/panel_book.png') no-repeat center center !important; background-size: 100% 100% !important; padding: 35px 35px 40px 35px; display: flex; flex-direction: column; align-items: center; position: relative; }
 .scroll-area { width: 100%; flex: 1; overflow-y: auto; margin-top: 10px; padding-right: 5px; }
+.scroll-area::-webkit-scrollbar { width: 4px; }
+.scroll-area::-webkit-scrollbar-thumb { background: #555; border-radius: 2px; }
 .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); }
 .shop-item .item-img-lg { width: 60px; height: 60px; object-fit: contain; margin-right: 15px; background: rgba(0,0,0,0.2); border-radius: 5px; }
 .new-bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; background: url('../assets/images/ui_new/frame_nav.png') no-repeat center bottom; background-size: 100% 100%; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 10px; }
