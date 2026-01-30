@@ -16,91 +16,76 @@
         <span id="stat-def">5</span>
     </div>
 
-    <section id="screen-start" class="full-screen active">
-        <div class="title-area">
+    <section id="screen-start" class="full-screen active relative-stage">
+        <div class="abs-start-title">
             <h1>DRAGON<br>CHRONICLES</h1>
-            <div id="loading-container" style="width: 80%; max-width: 300px; text-align: center; margin-top: 20px;">
-                <div class="loading-bar-bg" style="width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden;">
-                    <div id="loading-bar-fill" style="width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s;"></div>
+        </div>
+        <div class="abs-start-bottom">
+            <div id="loading-container" style="width: 100%;">
+                <div class="loading-bar-bg">
+                    <div id="loading-bar-fill"></div>
                 </div>
-                <p id="loading-text" style="font-size: 0.9rem; color: #aaa; margin-top: 5px;">로딩 중...</p>
+                <p id="loading-text">로딩 중...</p>
             </div>
-            <p id="start-msg" class="blink hidden" style="cursor:pointer; margin-top:20px;" 
-               onclick="tryStartGame()">
-               터치하여 시작
-            </p>
+            <p id="start-msg" class="blink hidden" onclick="tryStartGame()">터치하여 시작</p>
         </div>
     </section>
 
-    <section id="screen-setup" class="full-screen hidden">
-        <div class="panel-box">
+    <section id="screen-setup" class="full-screen hidden relative-stage">
+        <div class="abs-center-panel">
             <h2>이름을 알려주세요</h2>
             <input type="text" id="input-nickname" maxlength="8">
             <button class="btn-stone" onclick="submitName()">모험 시작</button>
         </div>
     </section>
 
-    <section id="screen-prologue" class="full-screen hidden" onclick="nextPrologueCut()">
-        <div class="panel-box" style="height: 50%;">
+    <section id="screen-prologue" class="full-screen hidden relative-stage" onclick="nextPrologueCut()">
+        <div class="abs-center-panel" style="height: 50%;">
             <p id="prologue-text">...</p>
         </div>
-        <p class="blink">터치하여 계속 >></p>
+        <p class="blink abs-bottom-text">터치하여 계속 >></p>
     </section>
 
     <section id="screen-game" class="full-screen hidden">
         <main id="game-view">
             
-            <div id="tab-dragon" class="tab-content">
-                <div class="nest-layout-container">
-                    <div class="nest-header-area">
-                        <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
-                        <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
-                    </div>
-                    <div class="nest-body-area">
-                        <div class="nest-sidebar-left">
-                            <div class="sidebar-header-text">알 목록</div>
-                            <div id="my-egg-list" class="sidebar-list-content"></div>
-                        </div>
-                        <div class="nest-right-column">
-                            <div class="nest-center-stage">
-                                <div class="dragon-name-box"><span id="dragon-name-ui">이름 없음</span></div>
-                                <div class="dragon-visual-area"><div id="dragon-display"></div></div>
-                                <div class="nest-controls">
-                                    <div class="gauge-box"><div id="progress-fill" class="gauge-fill"></div><span class="gauge-text">0 / 100</span></div>
-                                    <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
-                                </div>
-                            </div>
-                            <div class="nest-bottom-panel">
-                                <div class="panel-label">인벤토리</div>
-                                <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
-                            </div>
-                        </div>
-                    </div>
+            <div id="tab-dragon" class="tab-content relative-stage">
+                <div class="abs-header-area">
+                    <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
+                    <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
+                </div>
+                <div class="abs-sidebar-left">
+                    <div class="sidebar-header-text">알 목록</div>
+                    <div id="my-egg-list" class="sidebar-list-content"></div>
+                </div>
+                <div class="abs-dragon-name"><span id="dragon-name-ui">이름 없음</span></div>
+                <div class="abs-dragon-visual"><div id="dragon-display"></div></div>
+                <div class="abs-center-controls">
+                    <div class="gauge-box"><div id="progress-fill" class="gauge-fill"></div><span class="gauge-text">0 / 100</span></div>
+                    <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
+                </div>
+                <div class="abs-bottom-panel">
+                    <div class="panel-label">인벤토리</div>
+                    <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
                 </div>
             </div>
 
-            <div id="tab-info" class="tab-content hidden default-layout">
-                <div class="profile-container">
-                    <div class="stat-board">
-                        <div class="stat-row">
-                            <span class="stat-icon">⚔️</span>
-                            <span class="stat-val" id="stat-atk-display">10</span>
-                        </div>
-                        <div class="stat-row">
-                            <span class="stat-icon">🛡️</span>
-                            <span class="stat-val" id="stat-def-display">5</span>
-                        </div>
-                    </div>
-                    <div class="char-view-area">
-                        <div class="char-pedestal"></div>
-                        <div class="char-body"></div>
-                        <div class="equip-slot-round slot-head" onclick="unequipItem('head')"><div id="equip-display-head"></div></div>
-                        <div class="equip-slot-round slot-body" onclick="unequipItem('body')"><div id="equip-display-body"></div></div>
-                        <div class="equip-slot-round slot-weapon" onclick="unequipItem('arm')"><div id="equip-display-arm"></div></div>
-                        <div class="equip-slot-round slot-shoes" onclick="unequipItem('leg')"><div id="equip-display-leg"></div></div>
-                    </div>
+            <div id="tab-info" class="tab-content hidden relative-stage">
+                <div class="abs-stat-board">
+                    <div class="stat-row"><span class="stat-icon">⚔️</span><span class="stat-val" id="stat-atk-display">10</span></div>
+                    <div class="stat-row"><span class="stat-icon">🛡️</span><span class="stat-val" id="stat-def-display">5</span></div>
                 </div>
-                <div class="inventory-container">
+                
+                <div class="abs-char-visual">
+                    <div class="char-pedestal"></div>
+                    <div class="char-body"></div>
+                    <div class="equip-slot-round slot-head" onclick="unequipItem('head')"><div id="equip-display-head"></div></div>
+                    <div class="equip-slot-round slot-body" onclick="unequipItem('body')"><div id="equip-display-body"></div></div>
+                    <div class="equip-slot-round slot-weapon" onclick="unequipItem('arm')"><div id="equip-display-arm"></div></div>
+                    <div class="equip-slot-round slot-shoes" onclick="unequipItem('leg')"><div id="equip-display-leg"></div></div>
+                </div>
+
+                <div class="abs-info-inventory">
                     <div class="inven-header">가방</div>
                     <div class="inven-scroll-view">
                         <div id="inventory-grid" class="inven-grid"></div>
@@ -108,22 +93,23 @@
                 </div>
             </div>
 
-            <div id="tab-explore" class="tab-content hidden">
-                 <div id="explore-map-view" class="explore-layout">
-                    <div class="nest-header-area">
+            <div id="tab-explore" class="tab-content hidden relative-stage">
+                
+                <div id="explore-map-view" class="abs-full-layer">
+                    <div class="abs-header-area">
                         <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
                         <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
                     </div>
-                    <div class="map-container-wrapper">
-                        <div class="map-board"><div id="map-icons-layer"></div></div>
+                    <div class="abs-map-board">
+                        <div id="map-icons-layer"></div>
                     </div>
-                    <div class="map-bottom-area">
+                    <div class="abs-map-btn">
                         <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>지역을 선택하세요</button>
                     </div>
                 </div>
-                <div id="explore-run-view" class="hidden explore-layout">
-                    <div class="nest-header-area"></div>
-                    <div class="run-display-frame">
+
+                <div id="explore-run-view" class="hidden abs-full-layer">
+                    <div class="abs-run-frame">
                         <div class="run-bg-area" id="explore-bg">
                             <div class="run-info-overlay">
                                 <h3 id="region-title">지역 이름</h3>
@@ -132,29 +118,27 @@
                             </div>
                         </div>
                     </div>
-                    <div class="run-controls">
+                    <div class="abs-run-controls">
                         <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
                         <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
                     </div>
                 </div>
             </div>
 
-            <div id="tab-book" class="tab-content hidden">
-                <div class="book-layout-container">
-                    <div class="book-header-box">
-                        <span class="book-header-text">도감</span>
-                    </div>
-                    <div class="book-tab-bar" id="book-tab-bar"></div>
-                    <div class="book-content-wrapper">
-                        <div id="book-grid-area"></div>
-                    </div>
+            <div id="tab-book" class="tab-content hidden relative-stage">
+                <div class="abs-book-title">
+                    <span class="book-header-text">도감</span>
+                </div>
+                <div class="abs-book-tabs" id="book-tab-bar"></div>
+                <div class="abs-book-grid">
+                    <div id="book-grid-area"></div>
                 </div>
             </div>
 
-            <div id="tab-shop" class="tab-content hidden default-layout">
-                <div class="shop-bg bg-vertical">
-                    <h3>상점</h3>
-                    <div class="scroll-area"><div id="shop-list" class="list-row"></div></div>
+            <div id="tab-shop" class="tab-content hidden relative-stage">
+                <div class="abs-shop-title"><h3>상점</h3></div>
+                <div class="abs-shop-list">
+                    <div id="shop-list" class="list-row"></div>
                 </div>
             </div>
 
@@ -169,33 +153,33 @@
         </nav>
     </section>
 
-    <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000;">
-        <div class="panel-box">
+    <div id="common-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.8); z-index:10000; position:absolute;">
+        <div class="panel-box abs-center-modal">
             <h3 id="modal-title">알림</h3>
             <div id="modal-text" style="text-align:center; margin:20px 0; white-space: pre-line;">내용</div>
             <div id="modal-btn-alert" class="hidden"><button class="btn-stone" onclick="closeModal()">확인</button></div>
-            <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px;">
+            <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px; justify-content:center;">
                 <button class="btn-stone" id="btn-confirm-yes">예</button>
                 <button class="btn-stone" id="btn-confirm-no" onclick="closeModal()">아니오</button>
             </div>
         </div>
     </div>
 
-    <div id="breeding-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.9); z-index:9500;">
-        <div class="panel-box">
+    <div id="breeding-modal" class="full-screen hidden" style="background:rgba(0,0,0,0.9); z-index:9500; position:absolute;">
+        <div class="panel-box abs-center-modal">
             <h3>교배</h3>
             <div style="display:flex; justify-content:space-around; width:100%; margin:20px 0;">
                 <div id="parent-slot-1" class="new-slot-item" onclick="selectParent(1)"></div>
                 <div id="parent-slot-2" class="new-slot-item" onclick="selectParent(2)"></div>
             </div>
-            <div style="display:flex; gap:10px;">
+            <div style="display:flex; gap:10px; justify-content:center;">
                 <button class="btn-stone" onclick="tryBreeding()">확인</button>
                 <button class="btn-stone" onclick="closeBreedingModal()">취소</button>
             </div>
              <div id="breeding-select-list" class="hidden" style="margin-top:10px; width:100%;"></div>
         </div>
     </div>
-
+    
     <script src="js/data.js"></script>
     <script src="js/dragon.js"></script>
     <script src="js/player.js"></script>
