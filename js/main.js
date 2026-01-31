@@ -387,8 +387,8 @@ function resizeGame() {
     if (!gameContainer) return;
 
     // 기준 해상도 (CSS에서 설정한 width/height와 맞춰주세요)
-    const baseWidth = 384;
-    const baseHeight = 698;
+    const baseWidth = 500;
+    const baseHeight = 900;
 
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
