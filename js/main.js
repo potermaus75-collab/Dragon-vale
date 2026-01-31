@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (최종 수정: 화면 자동 맞춤 및 안전한 로딩)
+// js/main.js (최종 수정: 강제 비율 고정 Scale 방식)
 // ==========================================
 
 window.handleImgError = function(imgEl) {
@@ -30,30 +30,27 @@ const UI_ASSETS = [
     "assets/images/ui_new/frame_tab_bar.png"
 ];
 
-// 화면 크기 자동 조절 함수 (500x900 비율 유지)
+// [핵심] 화면 크기 자동 조절 (강제 중앙 정렬 + 비율 축소)
 function resizeGame() {
     const gameContainer = document.querySelector('.full-screen');
     if (!gameContainer) return;
 
+    // 제작하신 원본 해상도
     const targetWidth = 500;
     const targetHeight = 900;
 
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    // 1. 축소 비율 계산
+    // 1. 비율 계산 (화면 밖으로 나가지 않게 min 사용)
     const scaleX = windowWidth / targetWidth;
     const scaleY = windowHeight / targetHeight;
     const scale = Math.min(scaleX, scaleY);
 
-    // 2. 중앙 위치 계산
-    const leftOffset = (windowWidth - (targetWidth * scale)) / 2;
-    const topOffset = (windowHeight - (targetHeight * scale)) / 2;
-
-    // 3. 스타일 적용
-    gameContainer.style.transform = `translate(${leftOffset}px, ${topOffset}px) scale(${scale})`;
-    
-    // console.log(`Resized: Scale=${scale.toFixed(2)}`);
+    // 2. 강제 중앙 정렬 및 스케일 적용
+    // translate(-50%, -50%): 요소의 중심을 화면 중앙에 맞춤 (CSS top:50%, left:50%와 짝꿍)
+    // scale(scale): 그 상태에서 크기만 조절
+    gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
 }
 
 function preloadAssets() {
@@ -135,7 +132,7 @@ function startGame() {
     document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
     const gameScreen = document.getElementById('screen-game');
     gameScreen.classList.remove('hidden'); gameScreen.classList.add('active');
-    gameScreen.style.display = "block"; // flex가 아닌 block으로 변경
+    gameScreen.style.display = "block"; 
     
     // 게임 화면도 리사이징 적용 확인
     resizeGame();
@@ -269,12 +266,6 @@ function renderBook() {
         tabBar.innerHTML = "";
         BOOK_CATEGORIES.forEach((cat, idx) => {
             const div = document.createElement('div');
-            // 탭은 CSS에서 절대 좌표로 배치되므로, 여기서 추가 스타일링은 최소화
-            // JS로 동적 생성 시 절대 위치를 잡아주거나, 미리 HTML에 박아두는 게 좋지만
-            // 현재 구조상 여기서는 내용만 채웁니다. (CSS nth-child로 위치 잡음)
-            
-            // *주의*: CSS에서 nth-child로 위치를 잡았으므로,
-            // 동적 생성된 div들이 순서대로 들어가면 CSS가 적용됩니다.
             div.className = `tab-type-icon ${idx === currentBookPage ? 'active' : ''}`;
             div.innerHTML = `<img src="assets/images/ui_new/${CATEGORY_ICONS[cat]}" onerror="this.src='assets/images/ui/icon_question.png'">`;
             div.onclick = () => { currentBookPage = idx; renderBook(); };
