@@ -380,3 +380,32 @@ window.closeModal = function() {
     document.getElementById('common-modal').classList.remove('active');
     document.getElementById('common-modal').classList.add('hidden');
 };
+// js/main.js 맨 아래에 추가
+
+function resizeGame() {
+    const gameContainer = document.querySelector('.full-screen');
+    if (!gameContainer) return;
+
+    // 기준 해상도 (CSS에서 설정한 width/height와 맞춰주세요)
+    const baseWidth = 394;
+    const baseHeight = 698;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // 가로/세로 중 더 작은 쪽에 맞춰 비율 계산
+    const scaleX = windowWidth / baseWidth;
+    const scaleY = windowHeight / baseHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    // 스케일 적용
+    gameContainer.style.transform = `scale(${scale})`;
+    
+    // 중앙 정렬 보정 (body가 flex center라 필요 없을 수도 있지만 확실하게)
+    // gameContainer.style.marginLeft = `${(windowWidth - baseWidth * scale) / 2}px`;
+    // gameContainer.style.marginTop = `${(windowHeight - baseHeight * scale) / 2}px`;
+}
+
+// 초기 실행 및 리사이즈 이벤트 등록
+window.addEventListener('load', resizeGame);
+window.addEventListener('resize', resizeGame);
