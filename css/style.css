@@ -7,15 +7,18 @@ body, html {
     margin: 0; padding: 0; width: 100%; height: 100%; 
     background: #0d0814; font-family: 'Nanum Gothic', sans-serif; 
     overflow: hidden; color: #fff; 
+    /* body는 화면 중앙 정렬을 위해 flex 유지 (게임 화면 컨테이너 자체의 위치) */
     display: flex; justify-content: center; align-items: center; 
 }
 
 /* 게임 화면 (S24 Ultra 비율 대응) */
+/* [수정] 스케일링을 위해 고정 해상도 기준으로 변경 권장 (예: 500px x 1000px) */
 .full-screen { 
-    width: 100%; height: 100%; max-width: 500px; 
+    width: 500px; height: 900px; /* 고정 크기로 변경 (비율 유지를 위해) */
     position: relative; background: #1a1025; 
     box-shadow: 0 0 20px rgba(0,0,0,0.5); 
-    overflow: hidden; /* 자식들이 밖으로 나가는 것 방지 */
+    overflow: hidden; 
+    transform-origin: center center; /* 스케일링 기준점 */
 }
 .hidden { display: none !important; }
 
@@ -25,16 +28,16 @@ body, html {
 /* === [1] 시작 화면 === */
 #screen-start { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 .abs-start-title {
-    position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
-    text-align: center; width: 100%;
+    position: absolute; top: 150px; left: 0; width: 100%;
+    text-align: center;
 }
 .abs-start-title h1 {
     font-size: 3rem; margin: 0; color: #f1c40f; 
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 .abs-start-bottom {
-    position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%);
-    width: 80%; max-width: 300px; text-align: center;
+    position: absolute; bottom: 180px; left: 50%; margin-left: -150px; /* width 300px의 절반만큼 이동 */
+    width: 300px; text-align: center;
 }
 .loading-bar-bg { width: 100%; height: 10px; background: #333; border: 1px solid #555; border-radius: 5px; overflow: hidden; }
 #loading-bar-fill { width: 0%; height: 100%; background: #f1c40f; transition: width 0.2s; }
@@ -45,99 +48,145 @@ body, html {
 
 /* === [공통] 중앙 패널 (셋업, 프롤로그, 모달) === */
 .abs-center-panel {
+    /* [수정] Flex 제거 -> 절대 좌표 배치 */
     position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 80%; background: rgba(0,0,0,0.8); border: 2px solid #555; padding: 20px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+    width: 300px; height: 250px; /* 고정 크기 지정 */
+    background: rgba(0,0,0,0.8); border: 2px solid #555; 
     text-align: center;
+    /* 내부 요소 수동 배치 */
 }
-.abs-bottom-text { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); width: 100%; text-align: center; }
+.abs-center-panel h2 {
+    position: absolute; top: 30px; left: 0; width: 100%; margin: 0;
+}
+.abs-center-panel input {
+    position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
+    width: 80%;
+}
+.abs-center-panel button {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+}
+
+.abs-bottom-text { position: absolute; bottom: 80px; left: 0; width: 100%; text-align: center; }
 .abs-center-modal { position: relative; margin: 0 auto; top: 50%; transform: translateY(-50%); }
 
 /* 입력창 & 버튼 */
-#input-nickname { width: 80%; padding: 10px; text-align: center; font-size: 1.1rem; }
+#input-nickname { width: 200px; padding: 10px; text-align: center; font-size: 1.1rem; }
 .btn-stone { width: 140px; height: 50px; background: #333; color: #fff; border: 1px solid #fff; cursor: pointer; }
 
 /* === [게임 뷰 공통] === */
-#game-view { position: absolute; top: 0; bottom: 90px; width: 100%; overflow: hidden; }
+#game-view { position: absolute; top: 0; bottom: 0; width: 100%; height: 100%; overflow: hidden; }
 
-/* === [탭 1] 둥지 (드래곤) - 완전 절대 좌표 === */
+/* === [탭 1] 둥지 (드래곤) === */
 #tab-dragon { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 
 /* 상단 헤더 */
 .abs-header-area {
-    position: absolute; top: 5px; left: 0; width: 100%; height: 50px;
-    background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; background-size: 100% 100%;
-    z-index: 20; padding-top: env(safe-area-inset-top);
+    position: absolute; top: 0; left: 0; width: 100%; height: 80px; /* 높이 넉넉하게 */
+    background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; background-size: 100% 60px;
+    z-index: 20;
 }
-.currency-slot { position: absolute; top: 27%; font-size: 0.78rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; width: 90px; text-align: center; }
-.gold-slot { left: 76%; transform: translateX(-140%); } 
-.gem-slot { right: 41%; transform: translateX(140%); } 
+.currency-slot { position: absolute; top: 18px; font-size: 0.78rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; width: 90px; text-align: center; }
+.gold-slot { left: 20px; text-align: left; } 
+.gem-slot { right: 20px; text-align: right; } 
 
 /* 왼쪽 사이드바 */
 .abs-sidebar-left {
-    position: absolute; top: 65px; left: 2px; width: 95px; height: 50%;
+    /* [수정] Flex 제거 */
+    position: absolute; top: 70px; left: 5px; width: 95px; height: 400px;
     background: url('../assets/images/ui_new/frame_sidebar.png') no-repeat left top; background-size: 100% 100%;
-    z-index: 10; display: flex; flex-direction: column; align-items: center;
+    z-index: 10;
 }
-.sidebar-header-text { margin-top: 15px; font-size: 0.8rem; color: #aaa; font-weight: bold; }
-.sidebar-list-content { margin-top: 17px; width: 51px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.sidebar-header-text { position: absolute; top: 15px; width: 100%; text-align: center; font-size: 0.8rem; color: #aaa; font-weight: bold; }
+.sidebar-list-content { 
+    position: absolute; top: 40px; left: 22px; width: 51px; height: 340px; 
+    overflow-y: auto; display: block; /* Flex 제거 */
+}
+/* 리스트 내부 아이템 간격은 마진으로 처리 */
+.sidebar-list-content .new-slot-item { margin-bottom: 8px; }
 .sidebar-list-content::-webkit-scrollbar { display: none; }
 
 /* 드래곤 이름표 */
 .abs-dragon-name {
-    position: absolute; top: 10%; left: 65%; transform: translateX(-50%);
+    /* [수정] Flex 제거 -> 텍스트 정렬로 변경 */
+    position: absolute; top: 80px; left: 50%; transform: translateX(-50%);
     width: 180px; height: 55px;
     background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; background-size: contain;
-    display: flex; justify-content: center; align-items: center;
-    color: #00e5ff; font-weight: bold; font-size: 0.9rem; padding-bottom: 0px; z-index: 5;
+    text-align: center; line-height: 48px; /* 세로 정렬 */
+    color: #00e5ff; font-weight: bold; font-size: 0.9rem; z-index: 5;
 }
 
 /* 드래곤 비주얼 (중앙) */
 .abs-dragon-visual {
-    position: absolute; top: 27%; left: 64%; transform: translate(-50%, -50%);
+    /* [수정] Flex 제거 */
+    position: absolute; top: 150px; left: 50%; transform: translateX(-50%);
     width: 260px; height: 340px;
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%;
-    display: flex; justify-content: center; align-items: flex-end; z-index: 1;
+    z-index: 1;
 }
-.abs-dragon-visual img { width: 140px; height: 140px; object-fit: contain; margin-bottom: 55px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
+.abs-dragon-visual img { 
+    position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+    width: 140px; height: 140px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); 
+}
 
 /* 중앙 컨트롤 (게이지 + 버튼) */
 .abs-center-controls {
-    position: absolute; bottom: 16%; left: 64%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 5px; z-index: 10;
+    /* [수정] Flex 제거 */
+    position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%);
+    width: 270px; height: 50px; /* 컨테이너 크기 지정 */
+    z-index: 10;
 }
-.gauge-box { width: 200px; height: 25px; background: url('../assets/images/ui_new/bar_bg.png') no-repeat center; background-size: 100% 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+.gauge-box { 
+    position: absolute; top: 10px; left: 0;
+    width: 200px; height: 25px; 
+    background: url('../assets/images/ui_new/bar_bg.png') no-repeat center; background-size: 100% 100%; 
+    display: flex; align-items: center; justify-content: center; /* 게이지 내부 텍스트는 flex 유지 */
+}
 .gauge-fill { position: absolute; left: 3px; top: 3px; bottom: 3px; background: url('../assets/images/ui_new/bar_fill.png') repeat-x left center; background-size: auto 100%; width: 0%; border-radius: 4px; }
 .gauge-text { position: relative; z-index: 2; font-size: 0.7rem; color: #eee; text-shadow: 1px 1px 1px #000; }
-.btn-touch-img { width: 55px; height: 330px; background: url('../assets/images/ui_new/btn_touch.png') no-repeat center; background-size: contain; border: none; cursor: pointer; }
+.btn-touch-img { 
+    position: absolute; top: -150px; right: 0; /* 버튼 위치 조정 */
+    width: 55px; height: 330px; 
+    background: url('../assets/images/ui_new/btn_touch.png') no-repeat center; background-size: contain; border: none; cursor: pointer; 
+}
 .btn-touch-img:active { transform: scale(0.95); }
 
 /* 하단 패널 (인벤토리) */
 .abs-bottom-panel {
-    position: absolute; bottom: 100px; left: 51%; transform: translateX(-50%);
-    width: 95%; height: 150px;
+    /* [수정] Flex 제거 */
+    position: absolute; bottom: 90px; left: 50%; transform: translateX(-50%);
+    width: 480px; height: 150px;
     background: url('../assets/images/ui_new/frame_upgrade.png') no-repeat center center; background-size: 100% 100%;
-    display: flex; justify-content: center; z-index: 20;
+    z-index: 20;
 }
-.panel-label { position: absolute; top: 21px; left: 49%; transform: translateX(-50%); font-size: 0.9rem; color: #00e5ff; font-weight: bold; background: #1a1025; padding: 0 5px; }
-.panel-content-row { width: 90%; height: 115%; display: flex; align-items: center; justify-content: flex-start; padding-top: 5px; padding-left: 0px; }
-.material-scroll-row { display: flex; gap: 10px; overflow-x: auto; width: 100%; justify-content: flex-start; }
+.panel-label { position: absolute; top: 21px; left: 50%; transform: translateX(-50%); font-size: 0.9rem; color: #00e5ff; font-weight: bold; background: #1a1025; padding: 0 5px; }
+.panel-content-row { 
+    position: absolute; top: 45px; left: 20px; width: 440px; height: 90px;
+}
+.material-scroll-row { display: flex; gap: 10px; overflow-x: auto; width: 100%; justify-content: flex-start; } /* 스크롤은 Flex 유지 */
 .material-scroll-row::-webkit-scrollbar { display: none; }
 
 /* === [탭 2] 내 정보 (Profile) === */
 #tab-info { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: cover; }
 
 .abs-stat-board {
-    position: absolute; top: 15px; left: 15px;
-    display: flex; flex-direction: column; gap: 5px; z-index: 10;
+    /* [수정] Flex 제거 */
+    position: absolute; top: 15px; left: 15px; width: 100px; height: 100px;
+    z-index: 10;
 }
-.stat-row { display: flex; align-items: center; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); }
+.stat-row { 
+    position: absolute; left: 0; width: 100%;
+    display: flex; align-items: center; /* 내부 정렬은 유지 */
+    background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); 
+}
+.stat-row:nth-child(1) { top: 0; }
+.stat-row:nth-child(2) { top: 40px; }
 .stat-icon { font-size: 1rem; margin-right: 5px; }
 
 .abs-char-visual {
-    position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%);
+    position: absolute; top: 300px; left: 50%; transform: translate(-50%, -50%);
     width: 300px; height: 350px; z-index: 5;
 }
+/* 장비 슬롯 등은 이미 absolute였음 */
 .char-pedestal { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: 220px; height: 90px; background: url('../assets/images/ui_new/ui_pedestal.png') no-repeat center bottom; background-size: contain; z-index: 1; }
 .char-body { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 180px; height: 260px; background: url('../assets/images/ui_new/char_silhouette.png') no-repeat center bottom; background-size: contain; z-index: 2; }
 .equip-slot-round { position: absolute; width: 64px; height: 64px; background-repeat: no-repeat; background-position: center; background-size: contain; z-index: 10; cursor: pointer; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
@@ -148,13 +197,13 @@ body, html {
 .equipped-item-img { width: 70%; height: 70%; object-fit: contain; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
 .abs-info-inventory {
-    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-    width: 95%; height: 35%; /* 화면의 35% 차지 */
+    position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+    width: 460px; height: 250px;
     background: rgba(30, 20, 40, 0.85); border: 2px solid #5d4a6d; border-radius: 10px;
-    display: flex; flex-direction: column; padding: 10px; z-index: 20;
+    padding: 10px; z-index: 20;
 }
 .inven-header { font-size: 1rem; color: #f1c40f; text-align: center; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
-.inven-scroll-view { flex: 1; overflow-y: auto; width: 100%; }
+.inven-scroll-view { width: 100%; height: 200px; overflow-y: auto; }
 .inven-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
 .inven-slot { aspect-ratio: 1/1; background: url('../assets/images/ui_new/slot_inven_bg.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
 .item-count { position: absolute; bottom: 2px; right: 4px; font-size: 0.7rem; color: #fff; text-shadow: 1px 1px 1px #000; }
@@ -164,15 +213,15 @@ body, html {
 .abs-full-layer { position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
 
 .abs-map-board {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -60%);
+    position: absolute; top: 150px; left: 50%; transform: translateX(-50%);
     width: 340px; height: 340px;
     background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: contain;
 }
 #map-icons-layer { width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
+/* 맵 아이콘 위치는 이미 absolute 였음 */
 .map-icon { position: absolute; width: 70px; height: 70px; background-size: contain; background-repeat: no-repeat; background-position: center; cursor: pointer; transition: transform 0.2s; filter: drop-shadow(0 0 2px #000); z-index: 30; }
 .map-icon.locked { filter: grayscale(1) brightness(0.5); }
 .map-icon.selected { filter: drop-shadow(0 0 8px #ffd700) brightness(1.2); transform: scale(1.1); z-index: 40; }
-/* 맵 아이콘 위치 (맵 보드 기준 %) */
 .loc-fire { top: 12%; left: 30%; background-image: url('../assets/images/ui_new/loc_fire.png'); }
 .loc-electric { top: 15%; left: 68%; background-image: url('../assets/images/ui_new/loc_electric.png'); }
 .loc-forest { top: 38%; left: 40%; background-image: url('../assets/images/ui_new/loc_forest.png'); }
@@ -182,7 +231,7 @@ body, html {
 .loc-dark { top: 62%; left: 62%; background-image: url('../assets/images/ui_new/loc_dark.png'); }
 
 .abs-map-btn {
-    position: absolute; bottom: 5%; left: 50%; transform: translateX(-50%);
+    position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%);
     text-align: center; width: 100%;
 }
 .btn-enter-wide { width: 250px; height: 60px; background: url('../assets/images/ui_new/btn_enter_wide.png') no-repeat center center; background-size: contain; border: none; color: transparent; cursor: pointer; }
@@ -190,39 +239,60 @@ body, html {
 
 /* 탐험 실행 화면 */
 .abs-run-frame {
-    position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
-    width: 90%; height: 300px;
+    /* [수정] Flex 제거 */
+    position: absolute; top: 150px; left: 50%; transform: translateX(-50%);
+    width: 450px; height: 300px;
     background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: 100% 100%;
-    display: flex; justify-content: center; align-items: center; padding: 20px;
+    text-align: center;
 }
-.run-bg-area { width: 90%; height: 90%; border-radius: 10px; position: relative; background-size: cover; background-position: center; }
+.run-bg-area { 
+    position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
+    width: 420px; height: 270px; border-radius: 10px; background-size: cover; background-position: center; 
+}
 .run-info-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: #fff; padding: 10px; text-align: center; border-radius: 0 0 10px 10px; }
-.abs-run-controls { position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; }
+.abs-run-controls { 
+    /* [수정] Flex 제거 -> 절대 좌표 버튼 */
+    position: absolute; bottom: 120px; left: 50%; transform: translateX(-50%); width: 300px; height: 50px;
+}
+.abs-run-controls #btn-move { position: absolute; left: 0; }
+.abs-run-controls #btn-return { position: absolute; right: 0; }
 
 /* === [탭 4] 도감 (Book) === */
 #tab-book { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 
 .abs-book-title {
-    position: absolute; top: 5%; left: 50%; transform: translateX(-50%);
+    /* [수정] Flex 제거 */
+    position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
     width: 200px; height: 50px;
     background: url('../assets/images/ui_new/frame_book_title.png') no-repeat center center; background-size: 100% 100%;
-    display: flex; justify-content: center; align-items: center;
+    text-align: center; line-height: 50px;
 }
-.book-header-text { font-size: 1.2rem; font-weight: bold; color: #f1c40f; text-shadow: 1px 1px 2px #000; margin-bottom: 3px; }
+.book-header-text { font-size: 1.2rem; font-weight: bold; color: #f1c40f; text-shadow: 1px 1px 2px #000; }
 
 .abs-book-tabs {
-    position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
-    width: 95%; height: 70px;
+    /* [수정] Flex 제거 -> 절대 좌표 */
+    position: absolute; top: 100px; left: 50%; transform: translateX(-50%);
+    width: 450px; height: 70px;
     background: url('../assets/images/ui_new/frame_tab_bar.png') no-repeat center center; background-size: 100% 100%;
-    display: flex; justify-content: center; align-items: center; gap: 10px;
 }
-.tab-type-icon { width: 42px; height: 42px; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-.tab-type-icon img { width: 80%; height: 80%; object-fit: contain; z-index: 2; opacity: 0.5; }
+.tab-type-icon { 
+    position: absolute; top: 14px; width: 42px; height: 42px; cursor: pointer; 
+}
+/* 탭 아이콘 수동 배치 */
+.tab-type-icon:nth-child(1) { left: 20px; }
+.tab-type-icon:nth-child(2) { left: 80px; }
+.tab-type-icon:nth-child(3) { left: 140px; }
+.tab-type-icon:nth-child(4) { left: 200px; }
+.tab-type-icon:nth-child(5) { left: 260px; }
+.tab-type-icon:nth-child(6) { left: 320px; }
+.tab-type-icon:nth-child(7) { left: 380px; }
+
+.tab-type-icon img { width: 80%; height: 80%; position: absolute; top: 10%; left: 10%; object-fit: contain; z-index: 2; opacity: 0.5; }
 .tab-type-icon.active img { opacity: 1; transform: scale(1.1); }
 .tab-type-icon.active::after { content: ''; position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px; background: url('../assets/images/ui_new/slot_box_active.png') no-repeat center center; background-size: 100% 100%; z-index: 1; }
 
 .abs-book-grid {
-    position: absolute; top: 28%; bottom: 10px; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 200px; bottom: 100px; left: 50%; transform: translateX(-50%);
     width: 90%; overflow-y: auto;
 }
 #book-grid-area { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 5px; }
@@ -234,15 +304,15 @@ body, html {
 #tab-shop { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 
 .abs-shop-title {
-    position: absolute; top: 5%; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
     width: 200px; height: 50px;
     background: url('../assets/images/ui/panel_title.png') no-repeat center center; background-size: 100% 100%;
-    display: flex; justify-content: center; align-items: center;
+    text-align: center; line-height: 50px;
 }
 .abs-shop-title h3 { margin: 0; color: #f1c40f; text-shadow: 1px 1px 2px #000; }
 
 .abs-shop-list {
-    position: absolute; top: 15%; bottom: 10px; left: 50%; transform: translateX(-50%);
+    position: absolute; top: 100px; bottom: 100px; left: 50%; transform: translateX(-50%);
     width: 90%; overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 10px;
 }
 .shop-item { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1); }
@@ -251,11 +321,22 @@ body, html {
 
 /* === [공통] 하단 네비게이션 === */
 .new-bottom-nav { 
+    /* [수정] Flex 제거 -> 절대 좌표 버튼 배치 */
     position: absolute; bottom: 0; left: 0; width: 100%; height: 90px; 
     background: url('../assets/images/ui_new/frame_nav.png') no-repeat center bottom; background-size: 100% 100%; 
-    display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 10px; 
+    z-index: 100;
 }
-.nav-item { background: none; border: none; width: 50px; height: 50px; cursor: pointer; }
+.nav-item { 
+    background: none; border: none; width: 50px; height: 50px; cursor: pointer; 
+    position: absolute; top: 20px; /* 버튼 상단 위치 통일 */
+}
+/* 버튼 5개 수동 배치 (총 가로 500px 기준 간격 조정) */
+.nav-item:nth-child(1) { left: 40px; }
+.nav-item:nth-child(2) { left: 130px; }
+.nav-item:nth-child(3) { left: 225px; } /* 중앙 */
+.nav-item:nth-child(4) { left: 320px; }
+.nav-item:nth-child(5) { left: 410px; }
+
 .nav-item img { width: 100%; height: 100%; object-fit: contain; }
 
 /* 기타 공통 */
