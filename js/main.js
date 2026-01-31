@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (최종 수정: 강제 비율 고정 Scale 방식)
+// js/main.js (최종: 내 정보 UI 리메이크 적용)
 // ==========================================
 
 window.handleImgError = function(imgEl) {
@@ -29,29 +29,6 @@ const UI_ASSETS = [
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
     "assets/images/ui_new/frame_tab_bar.png"
 ];
-
-// [핵심] 화면 크기 자동 조절 (강제 중앙 정렬 + 비율 축소)
-function resizeGame() {
-    const gameContainer = document.querySelector('.full-screen');
-    if (!gameContainer) return;
-
-    // 제작하신 원본 해상도
-    const targetWidth = 500;
-    const targetHeight = 900;
-
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    // 1. 비율 계산 (화면 밖으로 나가지 않게 min 사용)
-    const scaleX = windowWidth / targetWidth;
-    const scaleY = windowHeight / targetHeight;
-    const scale = Math.min(scaleX, scaleY);
-
-    // 2. 강제 중앙 정렬 및 스케일 적용
-    // translate(-50%, -50%): 요소의 중심을 화면 중앙에 맞춤 (CSS top:50%, left:50%와 짝꿍)
-    // scale(scale): 그 상태에서 크기만 조절
-    gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
-}
 
 function preloadAssets() {
     let loadedCount = 0;
@@ -85,15 +62,7 @@ function preloadAssets() {
     }
 }
 
-// 안전한 로딩 방식 사용
-window.addEventListener('load', function() {
-    resizeGame();     // 화면 크기 맞춤
-    preloadAssets();  // 에셋 로딩 시작
-});
-
-// 창 크기 변경 시 자동 조절
-window.addEventListener('resize', resizeGame);
-
+window.onload = function() { preloadAssets(); };
 
 window.tryStartGame = function() {
     const startScreen = document.getElementById('screen-start');
@@ -132,10 +101,7 @@ function startGame() {
     document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
     const gameScreen = document.getElementById('screen-game');
     gameScreen.classList.remove('hidden'); gameScreen.classList.add('active');
-    gameScreen.style.display = "block"; 
-    
-    // 게임 화면도 리사이징 적용 확인
-    resizeGame();
+    gameScreen.style.display = "flex";
     switchTab('dragon'); 
 }
 
