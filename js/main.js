@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (최종: 내 정보 UI 리메이크 적용)
+// js/main.js (최종 수정: 화면 자동 맞춤 및 안전한 로딩)
 // ==========================================
 
 window.handleImgError = function(imgEl) {
@@ -29,6 +29,32 @@ const UI_ASSETS = [
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
     "assets/images/ui_new/frame_tab_bar.png"
 ];
+
+// 화면 크기 자동 조절 함수 (500x900 비율 유지)
+function resizeGame() {
+    const gameContainer = document.querySelector('.full-screen');
+    if (!gameContainer) return;
+
+    const targetWidth = 500;
+    const targetHeight = 900;
+
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+
+    // 1. 축소 비율 계산
+    const scaleX = windowWidth / targetWidth;
+    const scaleY = windowHeight / targetHeight;
+    const scale = Math.min(scaleX, scaleY);
+
+    // 2. 중앙 위치 계산
+    const leftOffset = (windowWidth - (targetWidth * scale)) / 2;
+    const topOffset = (windowHeight - (targetHeight * scale)) / 2;
+
+    // 3. 스타일 적용
+    gameContainer.style.transform = `translate(${leftOffset}px, ${topOffset}px) scale(${scale})`;
+    
+    // console.log(`Resized: Scale=${scale.toFixed(2)}`);
+}
 
 function preloadAssets() {
     let loadedCount = 0;
@@ -62,7 +88,15 @@ function preloadAssets() {
     }
 }
 
-window.onload = function() { preloadAssets(); };
+// 안전한 로딩 방식 사용
+window.addEventListener('load', function() {
+    resizeGame();     // 화면 크기 맞춤
+    preloadAssets();  // 에셋 로딩 시작
+});
+
+// 창 크기 변경 시 자동 조절
+window.addEventListener('resize', resizeGame);
+
 
 window.tryStartGame = function() {
     const startScreen = document.getElementById('screen-start');
@@ -101,7 +135,10 @@ function startGame() {
     document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
     const gameScreen = document.getElementById('screen-game');
     gameScreen.classList.remove('hidden'); gameScreen.classList.add('active');
-    gameScreen.style.display = "flex";
+    gameScreen.style.display = "block"; // flex가 아닌 block으로 변경
+    
+    // 게임 화면도 리사이징 적용 확인
+    resizeGame();
     switchTab('dragon'); 
 }
 
@@ -232,6 +269,12 @@ function renderBook() {
         tabBar.innerHTML = "";
         BOOK_CATEGORIES.forEach((cat, idx) => {
             const div = document.createElement('div');
+            // 탭은 CSS에서 절대 좌표로 배치되므로, 여기서 추가 스타일링은 최소화
+            // JS로 동적 생성 시 절대 위치를 잡아주거나, 미리 HTML에 박아두는 게 좋지만
+            // 현재 구조상 여기서는 내용만 채웁니다. (CSS nth-child로 위치 잡음)
+            
+            // *주의*: CSS에서 nth-child로 위치를 잡았으므로,
+            // 동적 생성된 div들이 순서대로 들어가면 CSS가 적용됩니다.
             div.className = `tab-type-icon ${idx === currentBookPage ? 'active' : ''}`;
             div.innerHTML = `<img src="assets/images/ui_new/${CATEGORY_ICONS[cat]}" onerror="this.src='assets/images/ui/icon_question.png'">`;
             div.onclick = () => { currentBookPage = idx; renderBook(); };
@@ -380,32 +423,3 @@ window.closeModal = function() {
     document.getElementById('common-modal').classList.remove('active');
     document.getElementById('common-modal').classList.add('hidden');
 };
-// js/main.js 맨 아래에 추가
-
-function resizeGame() {
-    const gameContainer = document.querySelector('.full-screen');
-    if (!gameContainer) return;
-
-    // 기준 해상도 (CSS에서 설정한 width/height와 맞춰주세요)
-    const baseWidth = 500;
-    const baseHeight = 900;
-
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-
-    // 가로/세로 중 더 작은 쪽에 맞춰 비율 계산
-    const scaleX = windowWidth / baseWidth;
-    const scaleY = windowHeight / baseHeight;
-    const scale = Math.min(scaleX, scaleY);
-
-    // 스케일 적용
-    gameContainer.style.transform = `scale(${scale})`;
-    
-    // 중앙 정렬 보정 (body가 flex center라 필요 없을 수도 있지만 확실하게)
-    // gameContainer.style.marginLeft = `${(windowWidth - baseWidth * scale) / 2}px`;
-    // gameContainer.style.marginTop = `${(windowHeight - baseHeight * scale) / 2}px`;
-}
-
-// 초기 실행 및 리사이즈 이벤트 등록
-window.addEventListener('load', resizeGame);
-window.addEventListener('resize', resizeGame);
