@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (최종 수정: 지도 연동 및 버튼 버그 해결)
+// js/explore.js (수정됨: 속성 상성, 전투력 반영, 저장 보안)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -9,7 +9,6 @@ let movesLeft = 0;
 let stealAttempts = 0; 
 let selectedRegionId = null;
 
-// 탐험 탭 초기화 (지도 그리기)
 window.initExploreTab = function() {
     renderMap();
     updateMapCurrency(); 
@@ -22,7 +21,6 @@ function updateMapCurrency() {
     if(gemUI) gemUI.innerText = player.gem;
 }
 
-// 지도에 아이콘 배치
 function renderMap() {
     const container = document.getElementById('map-icons-layer');
     const enterBtn = document.getElementById('btn-enter-region');
@@ -30,7 +28,6 @@ function renderMap() {
     if(!container) return; 
     container.innerHTML = "";
     
-    // 버튼 초기화
     if(enterBtn) {
         enterBtn.disabled = true;
         enterBtn.innerText = "지역을 선택하세요";
@@ -41,7 +38,6 @@ function renderMap() {
 
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
-        // CSS 클래스로 위치 지정 (loc-fire, loc-water 등)
         div.className = `map-icon loc-${region.type}`; 
         
         if (player.level < region.levelReq) {
@@ -56,12 +52,9 @@ function renderMap() {
 
 function selectRegion(id, element) {
     selectedRegionId = id;
-    // 기존 선택 해제
     document.querySelectorAll('.map-icon').forEach(icon => icon.classList.remove('selected'));
-    // 신규 선택
     element.classList.add('selected');
     
-    // 버튼 활성화
     const enterBtn = document.getElementById('btn-enter-region');
     if(enterBtn) {
         enterBtn.disabled = false;
@@ -79,7 +72,6 @@ function enterSelectedRegion() {
     startExplore(selectedRegionId);
 }
 
-// 화면 전환 (지도 <-> 진행)
 function toggleExploreView(viewName) {
     const mapDiv = document.getElementById('explore-map-view');
     const runDiv = document.getElementById('explore-run-view');
@@ -93,7 +85,6 @@ function toggleExploreView(viewName) {
     }
 }
 
-// 탐험 시작
 function startExplore(regionId) {
     currentRegionId = regionId;
     movesLeft = 10;
@@ -124,15 +115,16 @@ function saveExploreState() {
 function moveForward() {
     if (movesLeft <= 0 || !window.isExploreActive) return;
 
+    // [보안] 이동 횟수를 먼저 차감하고 저장하여 새로고침 악용 방지
     movesLeft--;
+    saveExploreState(); // 상태 먼저 저장
+
     const bg = document.getElementById('explore-bg');
-    // 애니메이션 리셋
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
     bg.classList.add('walking-anim');
 
     processRandomEvent();
-    saveExploreState();
     updateMoveUI();
 }
 
@@ -151,7 +143,6 @@ function updateMoveUI() {
 
         returnBtn.innerText = "보상 받기";
         returnBtn.style.color = "#2ecc71";
-        // [중요] 버튼 클릭 이벤트 재설정
         returnBtn.onclick = () => finishExplore(true);
     } else {
         moveBtn.disabled = !window.isExploreActive;
@@ -164,7 +155,6 @@ function updateMoveUI() {
     }
 }
 
-// 이벤트 처리 (기존 로직 유지)
 function processRandomEvent() {
     const roll = Math.floor(Math.random() * 100);
     const msgArea = document.getElementById('event-msg');
@@ -247,14 +237,45 @@ function tryStealLoop(eggId) {
     }
 }
 
+// [전투 개선] 전투력 기반 + 속성 상성
 function wakeParentDragon(eggId) {
     document.getElementById('event-msg').innerText = "부모 용 출현!";
+    
+    // 1. 내 총 전투력 가져오기
+    const myPower = window.calculateTotalCombatPower ? window.calculateTotalCombatPower() : 10;
+    
+    // 2. 지역 속성 상성 체크
+    // 상성: 물 > 불 > 풀 > 전기 > 물 | 빛 <> 어둠 | 강철은 무상성(예시)
+    const regionType = REGION_DATA[currentRegionId].type;
+    let typeBonus = 0;
+    
+    // 플레이어가 보유한 드래곤 중 '유리한 속성'의 성체 이상 드래곤이 있는지 확인
+    const counterTypes = {
+        "fire": "water", "water": "electric", "electric": "forest", "forest": "fire",
+        "dark": "light", "light": "dark"
+    };
+    const neededType = counterTypes[regionType];
+    
+    if (neededType) {
+        const hasCounter = player.myDragons.some(d => d.type === neededType && d.stage >= 2);
+        if(hasCounter) {
+            typeBonus = 20; // 상성 보너스 20%
+        }
+    }
+
+    // 3. 승률 계산
+    // 기본 승률 30% + (전투력 * 0.5) + 상성보너스
+    // 최대 승률 95%로 제한
+    const calculatedChance = 30 + (myPower * 0.2) + typeBonus;
+    const winChance = Math.min(95, Math.floor(calculatedChance));
+
     setTimeout(() => {
-        const atk = player.stats ? player.stats.atk : 10;
-        const winChance = Math.min(90, 30 + atk); 
+        let bonusText = typeBonus > 0 ? `<br><span style="color:#3498db; font-size:0.8rem;">(상성 우위 +20%)</span>` : "";
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
-                <b>부모 용에게 들켰습니다!</b><br>(승률: ${winChance}%) 싸우시겠습니까?
+                <b>부모 용에게 들켰습니다!</b><br>
+                전투력: ${myPower} ${bonusText}<br>
+                (승률: ${winChance}%) 싸우시겠습니까?
             </div>`,
             () => fightParent(winChance, eggId),
             () => tryFlee()
@@ -351,7 +372,6 @@ function claimTempLoot() {
     return html;
 }
 
-// [복구] 새로고침 대비
 window.restoreExploration = function() {
     if (!player.exploreState) return;
     const state = player.exploreState;
@@ -360,7 +380,6 @@ window.restoreExploration = function() {
     tempLoot = state.loot || [];
     window.isExploreActive = true;
 
-    // 강제 화면 전환
     const tabExplore = document.getElementById('tab-explore');
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
     tabExplore.classList.remove('hidden');
