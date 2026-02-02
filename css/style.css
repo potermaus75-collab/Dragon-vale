@@ -160,7 +160,7 @@ body, html {
 #tab-info { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: cover; }
 
 .abs-stat-board {
-    position: absolute; top: 15px; left: 15px;
+    position: absolute; top: 100px; left: 215px;
     display: flex; flex-direction: column; gap: 5px; z-index: 10;
 }
 .stat-row { display: flex; align-items: center; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.2); }
@@ -174,23 +174,23 @@ body, html {
 }
 .char-pedestal { 
     position: absolute; 
-    bottom: 20px; left: 40px; 
+    bottom: 45px; left: -52px; 
     width: 200px; height: 80px; 
     background: url('../assets/images/ui_new/ui_pedestal.png') no-repeat center bottom; background-size: contain; z-index: 1; 
 }
 .char-body { 
     position: absolute; 
-    bottom: 40px; left: 60px; 
-    width: 160px; height: 230px; 
+    bottom: 100px; left: -35px; 
+    width: 160px; height: 240px; 
     background: url('../assets/images/ui_new/char_silhouette.png') no-repeat center bottom; background-size: contain; z-index: 2; 
 }
 
 /* 장비 슬롯 좌표 직접 지정 (비주얼 기준) */
 .equip-slot-round { position: absolute; width: 56px; height: 56px; background-repeat: no-repeat; background-position: center; background-size: contain; z-index: 10; cursor: pointer; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
-.slot-head { top: 0px; left: 112px; background-image: url('../assets/images/ui_new/slot_equip_head.png'); }
-.slot-body { top: 100px; left: 10px; background-image: url('../assets/images/ui_new/slot_equip_body.png'); }
-.slot-weapon { top: 100px; left: 214px; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); }
-.slot-shoes { top: 220px; left: 112px; background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); }
+.slot-head { top: -30px; left: 16px; background-image: url('../assets/images/ui_new/slot_equip_head.png'); }
+.slot-body { top: 70px; left: 90px; background-image: url('../assets/images/ui_new/slot_equip_body.png'); }
+.slot-weapon { top: 70px; left: -50px; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); }
+.slot-shoes { top: 155px; left: 15px; background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); }
 
 .equipped-item-img { width: 70%; height: 70%; object-fit: contain; position: absolute; top: 15%; left: 15%; }
 
@@ -324,7 +324,7 @@ body, html {
     display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 10px; 
 }
 .nav-item { background: none; border: none; width: 45px; height: 45px; cursor: pointer; }
-.nav-item img { width: 100%; height: 100%; object-fit: contain; }
+.nav-item img { width: 100%; height: 135%; object-fit: contain; }
 
 /* 기타 공통 */
 .new-slot-item { width: 45px; height: 45px; flex-shrink: 0; background: url('../assets/images/ui_new/slot_box_default.png') no-repeat center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer;}
