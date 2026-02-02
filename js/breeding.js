@@ -1,15 +1,14 @@
 // ==========================================
-// js/breeding.js (완전한 코드: 그리드 UI 적용)
+// js/breeding.js (수정됨: uId 기반 교배 시스템)
 // ==========================================
 
-let selectedParents = { 1: null, 2: null }; 
+let selectedParents = { 1: null, 2: null }; // 이제 uId를 저장합니다.
 let currentSelectingSlot = 0; 
 
 function openBreedingModal() {
     selectedParents = { 1: null, 2: null };
     updateParentSlots();
     
-    // 리스트 초기화
     const listDiv = document.getElementById('breeding-select-list');
     if(listDiv) {
         listDiv.classList.add('hidden');
@@ -30,15 +29,16 @@ function closeBreedingModal() {
 function updateParentSlots() {
     for(let i=1; i<=2; i++) {
         const slotEl = document.getElementById(`parent-slot-${i}`);
-        const pIndex = selectedParents[i];
+        const pUId = selectedParents[i];
         
         slotEl.className = "new-slot-item"; 
         slotEl.style.border = "none"; 
 
-        if (pIndex !== null) {
-            const dragon = player.myDragons[pIndex];
+        // uId로 드래곤 객체 찾기
+        const dragon = pUId ? player.myDragons.find(d => d.uId === pUId) : null;
+
+        if (dragon) {
             let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
-            
             slotEl.innerHTML = `
                 <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;" 
                 onerror="handleImgError(this)">
@@ -60,18 +60,17 @@ function selectParent(slotNum) {
     listDiv.innerHTML = "";
     listDiv.classList.remove('hidden');
 
-    // 그리드 스타일 적용
     listDiv.style.display = "grid";
     listDiv.style.gridTemplateColumns = "repeat(4, 1fr)";
     listDiv.style.gap = "5px";
 
     const otherSlot = slotNum === 1 ? 2 : 1;
-    const otherIndex = selectedParents[otherSlot];
+    const otherUId = selectedParents[otherSlot];
 
     let count = 0;
-    player.myDragons.forEach((dragon, index) => {
-        // 이미 선택된 용 제외
-        if (index === otherIndex) return;
+    player.myDragons.forEach((dragon) => {
+        // 이미 다른 슬롯에 선택된 드래곤 제외 (uId 비교)
+        if (dragon.uId === otherUId) return;
 
         // 성체(3단계) 이상만 교배 가능
         if (dragon.stage >= 3) {
@@ -86,7 +85,7 @@ function selectParent(slotNum) {
             `;
             
             div.onclick = () => {
-                selectedParents[slotNum] = index;
+                selectedParents[slotNum] = dragon.uId; // uId 저장
                 updateParentSlots();
                 listDiv.classList.add('hidden');
             };
@@ -102,7 +101,7 @@ function selectParent(slotNum) {
 }
 
 function tryBreeding() {
-    if (selectedParents[1] === null || selectedParents[2] === null) {
+    if (!selectedParents[1] || !selectedParents[2]) {
         showAlert("두 마리의 부모 용을 모두 선택해주세요.");
         return;
     }
@@ -113,8 +112,8 @@ function tryBreeding() {
         return;
     }
 
-    const p1 = player.myDragons[selectedParents[1]];
-    const p2 = player.myDragons[selectedParents[2]];
+    const p1 = player.myDragons.find(d => d.uId === selectedParents[1]);
+    const p2 = player.myDragons.find(d => d.uId === selectedParents[2]);
 
     showConfirm(
         `[${p1.name}]와(과) [${p2.name}]을(를)<br>교배하시겠습니까?\n(소모: ${cost} 골드)`,
@@ -128,7 +127,6 @@ function tryBreeding() {
 }
 
 function processBreeding(parent1, parent2) {
-    // 50% 확률로 부모 중 하나의 속성을 따라감
     const targetType = Math.random() < 0.5 ? parent1.type : parent2.type;
     const eggId = `egg_${targetType}`;
     
