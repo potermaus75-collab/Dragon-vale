@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
+@import@import url('https://fonts.googleapis.com/css2?family=Nanum+Gothic:wght@700;800&display=swap');
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
@@ -28,7 +28,6 @@ body, html {
 
 .abs-start-title {
     position: absolute; 
-    /* (384 - 300) / 2 = 42 */
     top: 120px; left: 42px; 
     width: 300px; height: 120px;
     text-align: center;
@@ -40,7 +39,6 @@ body, html {
 
 .abs-start-bottom {
     position: absolute; 
-    /* (384 - 260) / 2 = 62 */
     bottom: 150px; left: 62px;
     width: 260px; height: 100px;
     text-align: center;
@@ -56,7 +54,6 @@ body, html {
 /* === [공통] 중앙 패널 (셋업, 프롤로그, 모달) === */
 .abs-center-panel {
     position: absolute; 
-    /* (384 - 320) / 2 = 32 */
     top: 200px; left: 32px;
     width: 320px; height: 250px;
     background: rgba(0,0,0,0.8); border: 2px solid #555; padding: 20px;
@@ -80,7 +77,6 @@ body, html {
 .btn-stone { width: 120px; height: 45px; background: #333; color: #fff; border: 1px solid #fff; cursor: pointer; }
 
 /* === [게임 뷰 공통] === */
-/* 하단 네비 80px 제외 (698 - 80 = 618) */
 #game-view { position: absolute; top: 0; width: 384px; height: 618px; overflow: hidden; }
 
 /* === [탭 1] 둥지 (드래곤) === */
@@ -111,7 +107,6 @@ body, html {
 /* 드래곤 이름표 */
 .abs-dragon-name {
     position: absolute; 
-    /* (384 - 160) / 2 = 112, 약간 오른쪽으로 치우치게 조정 */
     top: 60px; left: 160px; 
     width: 190px; height: 75px;
     background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; background-size: contain;
@@ -119,10 +114,9 @@ body, html {
     color: #00e5ff; font-weight: bold; font-size: 0.85rem; padding-bottom: 0px; z-index: 5;
 }
 
-/* 드래곤 비주얼 (중앙) */
+/* 드래곤 비주얼 */
 .abs-dragon-visual {
     position: absolute; 
-    /* (384 - 240) / 2 = 72, 사이드바 피해서 약간 우측 */
     top: 65px; left: 130px;
     width: 240px; height: 333px;
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%;
@@ -130,7 +124,7 @@ body, html {
 }
 .abs-dragon-visual img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 60px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
 
-/* 중앙 컨트롤 (게이지 + 버튼) */
+/* 중앙 컨트롤 */
 .abs-center-controls {
     position: absolute; 
     top: 125px; left: 170px;
@@ -168,7 +162,6 @@ body, html {
 
 .abs-char-visual {
     position: absolute; 
-    /* (384 - 280) / 2 = 52 */
     top: 100px; left: 52px;
     width: 280px; height: 320px; z-index: 5;
 }
@@ -185,14 +178,25 @@ body, html {
     background: url('../assets/images/ui_new/char_silhouette.png') no-repeat center bottom; background-size: contain; z-index: 2; 
 }
 
-/* 장비 슬롯 좌표 직접 지정 (비주얼 기준) */
-.equip-slot-round { position: absolute; width: 56px; height: 56px; background-repeat: no-repeat; background-position: center; background-size: contain; z-index: 10; cursor: pointer; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); }
+/* [수정] 장비 슬롯: 이미지가 슬롯 크기에 맞게 중앙 정렬되도록 Flex 추가 */
+.equip-slot-round { 
+    position: absolute; width: 56px; height: 56px; 
+    background-repeat: no-repeat; background-position: center; background-size: contain; 
+    z-index: 10; cursor: pointer; filter: drop-shadow(0 0 5px rgba(0,0,0,0.5)); 
+    display: flex; justify-content: center; align-items: center; /* 추가됨 */
+}
 .slot-head { top: -30px; left: 16px; background-image: url('../assets/images/ui_new/slot_equip_head.png'); }
 .slot-body { top: 70px; left: 90px; background-image: url('../assets/images/ui_new/slot_equip_body.png'); }
 .slot-weapon { top: 70px; left: -50px; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); }
 .slot-shoes { top: 155px; left: 15px; background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); }
 
-.equipped-item-img { width: 70%; height: 70%; object-fit: contain; position: absolute; top: 15%; left: 15%; }
+/* [수정] 장착된 아이템 이미지 크기 제한 */
+.equip-slot-round img, .equipped-item-img { 
+    width: auto !important; height: auto !important; 
+    max-width: 80%; max-height: 80%; 
+    object-fit: contain; 
+    position: static !important; /* absolute 제거하여 flex 정렬 따르게 함 */
+}
 
 .abs-info-inventory {
     position: absolute; 
@@ -204,7 +208,20 @@ body, html {
 .inven-header { font-size: 0.9rem; color: #f1c40f; text-align: center; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 .inven-scroll-view { flex: 1; overflow-y: auto; width: 100%; }
 .inven-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
-.inven-slot { width: 62px; height: 62px; background: url('../assets/images/ui_new/slot_inven_bg.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
+
+/* [수정] 인벤토리 슬롯 이미지 크기 제한 */
+.inven-slot { 
+    width: 62px; height: 62px; 
+    background: url('../assets/images/ui_new/slot_inven_bg.png') no-repeat center center; background-size: 100% 100%; 
+    display: flex; justify-content: center; align-items: center; 
+    position: relative; cursor: pointer; 
+}
+.inven-slot img {
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+}
+
 .item-count { position: absolute; bottom: 1px; right: 3px; font-size: 0.6rem; color: #fff; text-shadow: 1px 1px 1px #000; }
 
 /* === [탭 3] 탐험 (Explore) === */
@@ -213,7 +230,6 @@ body, html {
 
 .abs-map-board {
     position: absolute; 
-    /* (384 - 320) / 2 = 32 */
     top: 130px; left: 32px;
     width: 320px; height: 320px;
     background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: contain;
@@ -223,7 +239,7 @@ body, html {
 .map-icon.locked { filter: grayscale(1) brightness(0.5); }
 .map-icon.selected { filter: drop-shadow(0 0 8px #ffd700) brightness(1.2); transform: scale(1.1); z-index: 40; }
 
-/* 맵 아이콘 위치 (320px 기준 재조정) */
+/* 맵 아이콘 위치 */
 .loc-fire { top: 70px; left: 95px; background-image: url('../assets/images/ui_new/loc_fire.png'); }
 .loc-electric { top: 75px; left: 195px; background-image: url('../assets/images/ui_new/loc_electric.png'); }
 .loc-forest { top: 130px; left: 135px; background-image: url('../assets/images/ui_new/loc_forest.png'); }
