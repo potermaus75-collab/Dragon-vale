@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (수정됨: 속성 상성, 전투력 반영, 저장 보안)
+// js/explore.js (수정됨: 5성 제외 및 상성)
 // ==========================================
 
 window.isExploreActive = false; 
@@ -115,9 +115,8 @@ function saveExploreState() {
 function moveForward() {
     if (movesLeft <= 0 || !window.isExploreActive) return;
 
-    // [보안] 이동 횟수를 먼저 차감하고 저장하여 새로고침 악용 방지
     movesLeft--;
-    saveExploreState(); // 상태 먼저 저장
+    saveExploreState(); 
 
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
@@ -237,43 +236,57 @@ function tryStealLoop(eggId) {
     }
 }
 
-// [전투 개선] 전투력 기반 + 속성 상성
 function wakeParentDragon(eggId) {
     document.getElementById('event-msg').innerText = "부모 용 출현!";
     
-    // 1. 내 총 전투력 가져오기
-    const myPower = window.calculateTotalCombatPower ? window.calculateTotalCombatPower() : 10;
-    
-    // 2. 지역 속성 상성 체크
-    // 상성: 물 > 불 > 풀 > 전기 > 물 | 빛 <> 어둠 | 강철은 무상성(예시)
     const regionType = REGION_DATA[currentRegionId].type;
-    let typeBonus = 0;
-    
-    // 플레이어가 보유한 드래곤 중 '유리한 속성'의 성체 이상 드래곤이 있는지 확인
-    const counterTypes = {
-        "fire": "water", "water": "electric", "electric": "forest", "forest": "fire",
-        "dark": "light", "light": "dark"
-    };
-    const neededType = counterTypes[regionType];
-    
-    if (neededType) {
-        const hasCounter = player.myDragons.some(d => d.type === neededType && d.stage >= 2);
-        if(hasCounter) {
-            typeBonus = 20; // 상성 보너스 20%
+
+    let candidates = [];
+    if (window.DRAGON_DEX) {
+        for (const key in DRAGON_DEX) {
+            const d = DRAGON_DEX[key];
+            if (d.type === regionType) {
+                // [핵심] 5성(10마리 이상 수집) 드래곤은 등장 제외
+                const star = window.getDragonStarLevel ? window.getDragonStarLevel(key) : 0;
+                if (star < 5) {
+                    candidates.push({ ...d, id: key });
+                }
+            }
         }
     }
 
-    // 3. 승률 계산
-    // 기본 승률 30% + (전투력 * 0.5) + 상성보너스
-    // 최대 승률 95%로 제한
-    const calculatedChance = 30 + (myPower * 0.2) + typeBonus;
-    const winChance = Math.min(95, Math.floor(calculatedChance));
+    if (candidates.length === 0) {
+        document.getElementById('event-msg').innerText = "이 지역의 모든 용을 정복했습니다!";
+        setTimeout(() => {
+            showAlert("이 구역의 지배자이시군요!<br>부모 용들이 당신을 피해 숨었습니다.<br><br><b style='color:#3498db'>보상: 보석 3개</b>", () => {
+                player.gem += 3;
+                finishExplore(true);
+            });
+        }, 800);
+        return;
+    }
+
+    const parentDragon = candidates[Math.floor(Math.random() * candidates.length)];
+    const parentImg = window.getDragonImage ? window.getDragonImage(parentDragon.id, 3) : "assets/images/ui/icon_question.png";
+
+    const myPower = window.calculateTotalCombatPower ? window.calculateTotalCombatPower() : 10;
+    
+    const counterTypes = { "fire": "water", "water": "electric", "electric": "forest", "forest": "fire", "dark": "light", "light": "dark" };
+    const neededType = counterTypes[regionType];
+    let typeBonus = 0;
+    if (neededType && player.myDragons.some(d => d.type === neededType && d.stage >= 2)) {
+        typeBonus = 20;
+    }
+
+    const winChance = Math.min(95, Math.floor(30 + (myPower * 0.2) + typeBonus));
 
     setTimeout(() => {
         let bonusText = typeBonus > 0 ? `<br><span style="color:#3498db; font-size:0.8rem;">(상성 우위 +20%)</span>` : "";
+        
         showConfirm(
             `<div style="text-align:center; color:#ff6b6b">
-                <b>부모 용에게 들켰습니다!</b><br>
+                <img src="${parentImg}" style="width:80px; height:80px; object-fit:contain; margin-bottom:5px;"><br>
+                <b>야생의 [${parentDragon.name}] 출현!</b><br>
                 전투력: ${myPower} ${bonusText}<br>
                 (승률: ${winChance}%) 싸우시겠습니까?
             </div>`,
