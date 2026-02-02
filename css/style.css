@@ -70,7 +70,7 @@ body, html {
 }
 .abs-center-modal { 
     position: absolute; 
-    top: 250px; left: 42px;
+    top: 160px; left: 40px;
     width: 300px; 
     margin: 0; 
 }
@@ -93,8 +93,8 @@ body, html {
     z-index: 20;
 }
 .currency-slot { position: absolute; top: 12px; font-size: 0.75rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; width: 80px; text-align: center; }
-.gold-slot { left: 5px; } 
-.gem-slot { right: 5px; } 
+.gold-slot { left: 173px; } 
+.gem-slot { right: 35px; } 
 
 /* 왼쪽 사이드바 (알 목록) */
 .abs-sidebar-left {
@@ -105,15 +105,15 @@ body, html {
     z-index: 10; display: flex; flex-direction: column; align-items: center;
 }
 .sidebar-header-text { margin-top: 12px; font-size: 0.75rem; color: #aaa; font-weight: bold; }
-.sidebar-list-content { margin-top: 15px; width: 45px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.sidebar-list-content { margin-top: 25px; width: 45px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .sidebar-list-content::-webkit-scrollbar { display: none; }
 
 /* 드래곤 이름표 */
 .abs-dragon-name {
     position: absolute; 
     /* (384 - 160) / 2 = 112, 약간 오른쪽으로 치우치게 조정 */
-    top: 60px; left: 140px; 
-    width: 160px; height: 50px;
+    top: 60px; left: 160px; 
+    width: 190px; height: 75px;
     background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; background-size: contain;
     display: flex; justify-content: center; align-items: center;
     color: #00e5ff; font-weight: bold; font-size: 0.85rem; padding-bottom: 0px; z-index: 5;
@@ -123,21 +123,21 @@ body, html {
 .abs-dragon-visual {
     position: absolute; 
     /* (384 - 240) / 2 = 72, 사이드바 피해서 약간 우측 */
-    top: 110px; left: 90px;
-    width: 240px; height: 300px;
+    top: 65px; left: 130px;
+    width: 240px; height: 333px;
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%;
     display: flex; justify-content: center; align-items: flex-end; z-index: 1;
 }
-.abs-dragon-visual img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 45px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
+.abs-dragon-visual img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 60px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
 
 /* 중앙 컨트롤 (게이지 + 버튼) */
 .abs-center-controls {
     position: absolute; 
-    top: 410px; left: 110px;
-    width: 220px; height: 40px;
+    top: 125px; left: 170px;
+    width: 200px; height: 40px;
     display: flex; align-items: center; gap: 5px; z-index: 10;
 }
-.gauge-box { width: 160px; height: 22px; background: url('../assets/images/ui_new/bar_bg.png') no-repeat center; background-size: 100% 100%; position: relative; display: flex; align-items: center; justify-content: center; }
+.gauge-box { width: 160px; height: 28px; background: url('../assets/images/ui_new/bar_bg.png') no-repeat center; background-size: 100% 100%; position: relative; display: flex; align-items: center; justify-content: center; }
 .gauge-fill { position: absolute; left: 3px; top: 3px; bottom: 3px; background: url('../assets/images/ui_new/bar_fill.png') repeat-x left center; background-size: auto 100%; width: 0%; border-radius: 4px; }
 .gauge-text { position: relative; z-index: 2; font-size: 0.65rem; color: #eee; text-shadow: 1px 1px 1px #000; }
 .btn-touch-img { width: 50px; height: 50px; background: url('../assets/images/ui_new/btn_touch.png') no-repeat center; background-size: contain; border: none; cursor: pointer; } 
@@ -146,7 +146,7 @@ body, html {
 /* 하단 패널 (인벤토리) */
 .abs-bottom-panel {
     position: absolute; 
-    bottom: 80px; left: 12px;
+    bottom: 130px; left: 12px;
     width: 360px; height: 120px;
     background: url('../assets/images/ui_new/frame_upgrade.png') no-repeat center center; background-size: 100% 100%;
     display: flex; justify-content: center; z-index: 20;
@@ -224,13 +224,13 @@ body, html {
 .map-icon.selected { filter: drop-shadow(0 0 8px #ffd700) brightness(1.2); transform: scale(1.1); z-index: 40; }
 
 /* 맵 아이콘 위치 (320px 기준 재조정) */
-.loc-fire { top: 30px; left: 90px; background-image: url('../assets/images/ui_new/loc_fire.png'); }
-.loc-electric { top: 40px; left: 210px; background-image: url('../assets/images/ui_new/loc_electric.png'); }
-.loc-forest { top: 120px; left: 130px; background-image: url('../assets/images/ui_new/loc_forest.png'); }
-.loc-water { top: 120px; left: 20px; background-image: url('../assets/images/ui_new/loc_water.png'); }
-.loc-light { top: 120px; left: 240px; background-image: url('../assets/images/ui_new/loc_light.png'); }
-.loc-metal { top: 200px; left: 50px; background-image: url('../assets/images/ui_new/loc_metal.png'); }
-.loc-dark { top: 200px; left: 200px; background-image: url('../assets/images/ui_new/loc_dark.png'); }
+.loc-fire { top: 70px; left: 95px; background-image: url('../assets/images/ui_new/loc_fire.png'); }
+.loc-electric { top: 75px; left: 195px; background-image: url('../assets/images/ui_new/loc_electric.png'); }
+.loc-forest { top: 130px; left: 135px; background-image: url('../assets/images/ui_new/loc_forest.png'); }
+.loc-water { top: 125px; left: 45px; background-image: url('../assets/images/ui_new/loc_water.png'); }
+.loc-light { top: 138px; left: 210px; background-image: url('../assets/images/ui_new/loc_light.png'); }
+.loc-metal { top: 200px; left: 70px; background-image: url('../assets/images/ui_new/loc_metal.png'); }
+.loc-dark { top: 210px; left: 210px; background-image: url('../assets/images/ui_new/loc_dark.png'); }
 
 .abs-map-btn {
     position: absolute; 
@@ -250,7 +250,7 @@ body, html {
     display: flex; justify-content: center; align-items: center; padding: 15px;
 }
 .run-bg-area { width: 320px; height: 220px; border-radius: 8px; position: relative; background-size: cover; background-position: center; }
-.run-info-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: #fff; padding: 8px; text-align: center; border-radius: 0 0 8px 8px; }
+.run-info-overlay { position: absolute; bottom: -18; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: #fff; padding: 90px; text-align: center; border-radius: 0 0 8px 8px; }
 .abs-run-controls { 
     position: absolute; 
     bottom: 120px; left: 52px;
