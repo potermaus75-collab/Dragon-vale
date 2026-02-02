@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (수정됨: uId 기반 렌더링)
+// js/hatchery.js (수정됨: 수동 귀속 및 별 시스템)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -7,7 +7,6 @@ const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
 
-// 전역 UI 업데이트
 window.renderCaveUI = function() {
     syncBookData(); 
     renderEggList();     
@@ -38,14 +37,12 @@ function syncBookData() {
     }
 }
 
-// 알 목록 렌더링 (uId 사용)
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
     
     player.myDragons.forEach((dragon) => {
         const div = document.createElement('div');
-        // 현재 선택된 드래곤인지 uId로 확인
         const isActive = (dragon.uId === player.currentDragonUId);
         div.className = `new-slot-item ${isActive ? 'active' : ''}`;
         
@@ -54,23 +51,20 @@ function renderEggList() {
 
         div.innerHTML = `<img src="${iconSrc}" onerror="handleImgError(this)">`;
         div.onclick = () => {
-            player.currentDragonUId = dragon.uId; // Index 대신 uId 저장
+            player.currentDragonUId = dragon.uId;
             window.renderCaveUI(); 
         };
         eggListArea.appendChild(div);
     });
 }
 
-// 둥지 화면 렌더링
 function renderNest() {
-    // uId로 현재 드래곤 찾기
     const dragonData = player.myDragons.find(d => d.uId === player.currentDragonUId);
     
     if (!dragonData) {
-        // 만약 선택된 드래곤이 없다면(삭제 등) 첫번째 드래곤 선택
         if(player.myDragons.length > 0) {
             player.currentDragonUId = player.myDragons[0].uId;
-            renderNest(); // 재귀 호출
+            renderNest();
         } else {
             if(dragonNameUI) dragonNameUI.innerText = "드래곤 없음";
             if(dragonDisplay) dragonDisplay.innerHTML = "";
@@ -79,10 +73,16 @@ function renderNest() {
     }
 
     let displayName = dragonData.name;
+    const starLv = window.getDragonStarLevel ? window.getDragonStarLevel(dragonData.id) : 0;
+    const starStr = "★".repeat(starLv);
+
     if (dragonData.stage === 0) {
         displayName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[dragonData.type]) ? window.EGG_TYPE_NAMES[dragonData.type] : "미확인 알";
+    } else {
+        if (starLv > 0) displayName = `${displayName} <span style="color:#f1c40f">${starStr}</span>`;
     }
-    if(dragonNameUI) dragonNameUI.innerText = displayName;
+
+    if(dragonNameUI) dragonNameUI.innerHTML = displayName;
 
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
     const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
@@ -92,7 +92,7 @@ function renderNest() {
     let percent = 0;
     if (isMaxLevel) {
         percent = 100;
-        if(dragonNameUI) dragonNameUI.innerText += " (MAX)";
+        if(dragonNameUI) dragonNameUI.innerHTML += " (MAX)";
     } else {
         percent = (dragonData.clicks / max) * 100;
     }
@@ -122,27 +122,35 @@ function renderNest() {
                 imgEl.style.cursor = "pointer";
                 imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
             } else {
-                imgEl.style.cursor = "default";
-                imgEl.onclick = () => showAlert("이 용은 성장을 마쳤습니다.");
+                // 성체 단계에서 클릭 시: 귀속 가능 여부 체크
+                imgEl.style.cursor = "pointer";
+                imgEl.onclick = () => checkAndBindDragon(dragonData);
             }
         }
     }
 }
 
-// TOUCH 버튼
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons.find(d => d.uId === player.currentDragonUId);
-    const imgEl = dragonDisplay ? dragonDisplay.querySelector('img') : null;
-    if (dragonData && imgEl) {
-        handleDragonClick(dragonData, imgEl);
+    if (!dragonData) return;
+    
+    const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
+    const maxStageLimit = isHighTier ? 4 : 3;
+    
+    if(dragonData.stage >= maxStageLimit) {
+        checkAndBindDragon(dragonData);
+    } else {
+        const imgEl = dragonDisplay ? dragonDisplay.querySelector('img') : null;
+        if(imgEl) handleDragonClick(dragonData, imgEl);
     }
 };
 
-// 클릭 및 진화 로직
 function handleDragonClick(dragon, imgEl) {
-    imgEl.classList.remove('click-anim');
-    void imgEl.offsetWidth; 
-    imgEl.classList.add('click-anim');
+    if(imgEl) {
+        imgEl.classList.remove('click-anim');
+        void imgEl.offsetWidth; 
+        imgEl.classList.add('click-anim');
+    }
 
     const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
     const maxStageLimit = isHighTier ? 4 : 3;
@@ -153,23 +161,30 @@ function handleDragonClick(dragon, imgEl) {
     const clickPower = 1 + (player.nestLevel || 0);
     dragon.clicks += clickPower;
     
-    // UI 즉시 반영
     const percent = Math.min(100, (dragon.clicks / max) * 100);
     if(progressBar) progressBar.style.width = `${percent}%`;
     const gaugeText = document.querySelector('.gauge-text');
     if(gaugeText) gaugeText.innerText = `${Math.floor(dragon.clicks)} / ${max}`;
 
-    // 진화 조건 달성
     if (dragon.clicks >= max) {
         const oldStage = dragon.stage;
         dragon.stage++;
         dragon.clicks = 0;
         
         if (oldStage === 0 && dragon.stage === 1) {
-            if(!player.discovered.includes(dragon.id)) {
-                player.discovered.push(dragon.id);
-            }
+            if(!player.discovered.includes(dragon.id)) player.discovered.push(dragon.id);
+            // 첫 성체 카운트 등록 (없을 경우에만 1로 설정)
+            if(!player.dragonCounts) player.dragonCounts = {};
+            if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
+            
             showAlert(`알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!`);
+        } else if (dragon.stage >= maxStageLimit) {
+            // 성체 도달 시점
+            if(!player.dragonCounts) player.dragonCounts = {};
+            // 만약 첫 성체라면 카운트 1 보장
+            if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
+
+            showAlert(`축하합니다!<br>[${dragon.name}]이(가) 최종 단계까지 성장했습니다!<br>(한 번 더 터치하여 관리할 수 있습니다)`);
         } else {
             showAlert(`축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!`);
         }
@@ -179,15 +194,75 @@ function handleDragonClick(dragon, imgEl) {
             player.maxStages[dragon.id] = dragon.stage;
         }
 
-        const xpReward = [0, 50, 100, 300, 1000];
-        const gain = xpReward[dragon.stage] || 50;
-        if(window.gainExp) window.gainExp(gain);
-        
         syncBookData();
         renderNest(); 
         renderEggList(); 
         if(window.saveGame) window.saveGame(true);
     }
+}
+
+// [수정됨] 성체 클릭 시 귀속 처리 로직
+function checkAndBindDragon(dragon) {
+    // 1. 현재 보유한 드래곤 중, 같은 ID이며 성체인 드래곤 개수 파악
+    const maxLimit = (dragon.rarity === 'epic' || dragon.rarity === 'legend') ? 4 : 3;
+    const adultDragons = player.myDragons.filter(d => d.id === dragon.id && d.stage >= maxLimit);
+    
+    // 2. 다른 성체가 하나라도 더 있어야 귀속 가능 (최소 2마리 보유 시)
+    if (adultDragons.length > 1) {
+        const starLv = window.getDragonStarLevel(dragon.id);
+        const currentCount = player.dragonCounts[dragon.id];
+        
+        showConfirm(
+            `<div style="text-align:center">
+                <h3 style="color:#f1c40f">초월 공명</h3>
+                <br>
+                다른 성체가 존재합니다.<br>
+                이 용을 기존 영혼에 <b>귀속</b>하시겠습니까?<br>
+                <span style="font-size:0.8rem; color:#aaa;">(이 용은 사라지고 별 등급 경험치가 오릅니다)</span>
+                <br><br>
+                <b>현재 수집: ${currentCount} / 등급: ${starLv}성</b>
+            </div>`,
+            () => performBind(dragon)
+        );
+    } else {
+        showAlert("성장을 마친 드래곤입니다.<br>멋지게 자랐군요!");
+    }
+}
+
+function performBind(dragon) {
+    // 1. 카운트 증가
+    if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
+    player.dragonCounts[dragon.id]++;
+    
+    const newCount = player.dragonCounts[dragon.id];
+    const starLv = window.getDragonStarLevel(dragon.id);
+    
+    // 2. 드래곤 삭제
+    const idx = player.myDragons.findIndex(d => d.uId === dragon.uId);
+    if (idx > -1) {
+        player.myDragons.splice(idx, 1);
+        // 인덱스 조정
+        if (player.myDragons.length > 0) {
+            player.currentDragonUId = player.myDragons[Math.max(0, idx - 1)].uId;
+        } else {
+            player.currentDragonUId = null;
+        }
+    }
+
+    showAlert(
+        `<div style="text-align:center">
+            <h3 style="color:#f1c40f">귀속 완료!</h3>
+            <br>
+            영혼이 강해졌습니다.<br>
+            <b>총 수집: ${newCount}마리</b><br>
+            <b style="font-size:1.2rem; color:#ff6b6b">현재 등급: ${starLv}성</b>
+        </div>`,
+        () => {
+            renderNest();
+            renderEggList();
+            saveGame(true);
+        }
+    );
 }
 
 function renderCaveInventory() {
@@ -265,7 +340,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
     const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
 
-    // 새 드래곤 생성
     const newDragon = {
         uId: generateUID(), 
         id: resultDragon.id,
@@ -278,7 +352,7 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     };
 
     player.myDragons.push(newDragon);
-    player.currentDragonUId = newDragon.uId; // 새 드래곤 자동 선택
+    player.currentDragonUId = newDragon.uId;
 
     if(!player.maxStages) player.maxStages = {};
     if(typeof player.maxStages[resultDragon.id] === 'undefined') {
