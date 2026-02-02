@@ -1,18 +1,21 @@
 // ==========================================
-// js/player.js (수정됨: uId 기반 관리 및 전투력 시스템 도입)
+// js/player.js (수정됨: 별의 성 데이터 추가)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
     level: 1, exp: 0, maxExp: 100,  
     gold: 500, gem: 10, 
     inventory: {}, 
-    // uId는 필수입니다.
     myDragons: [ { id: "fire_c1", type: "fire", stage: 0, clicks: 0, name: "불도마뱀", rarity: "common", uId: "init_001" } ],
-    currentDragonUId: "init_001", // Index 대신 UId 사용
+    currentDragonUId: "init_001",
     equipment: { head: null, body: null, arm: null, leg: null },
     stats: { explore: 0, atk: 10, def: 5 },
     discovered: ["fire_c1"], 
     maxStages: { "fire_c1": 0 }, 
+    
+    // [신규] 드래곤 별 카운트 (ID별 성체 달성/흡수 횟수)
+    dragonCounts: { "fire_c1": 1 }, 
+    
     nestLevel: 0, nickname: "Guest", exploreState: null 
 };
 
@@ -34,18 +37,25 @@ function deepMerge(target, source) {
     return target;
 }
 
-// [신규 기능] 드래곤 전투력 합산 (전투 승률에 기여)
+// [신규] 별 등급 계산 함수
+// 1성(2마리), 2성(3), 3성(5), 4성(7), 5성(10)
+function getDragonStarLevel(dragonId) {
+    const count = (player.dragonCounts && player.dragonCounts[dragonId]) ? player.dragonCounts[dragonId] : 0;
+    if (count >= 10) return 5;
+    if (count >= 7) return 4;
+    if (count >= 5) return 3;
+    if (count >= 3) return 2;
+    if (count >= 2) return 1;
+    return 0;
+}
+
 function calculateTotalCombatPower() {
-    let equipmentPower = player.stats.atk + player.stats.def; // 기본 장비 스탯
-    
-    // 드래곤 전투력 계산: (성장단계 + 1) * 희귀도 가중치
-    // 희귀도 가중치: common(1), rare(1.5), heroic(2), epic(3), legend(5)
+    let equipmentPower = player.stats.atk + player.stats.def; 
     const rarityMultipliers = { "common": 1, "rare": 1.5, "heroic": 2, "epic": 3, "legend": 5 };
     
     let dragonPower = 0;
     player.myDragons.forEach(dragon => {
         const mult = rarityMultipliers[dragon.rarity] || 1;
-        // 알(0단계)은 전투력 0
         if (dragon.stage > 0) {
             dragonPower += (dragon.stage * 10) * mult;
         }
@@ -104,9 +114,6 @@ function recalcStats() {
     
     const atkUI = document.getElementById('stat-atk');
     const defUI = document.getElementById('stat-def');
-    
-    // UI에는 장비 스탯 + 드래곤 전투력을 합쳐서 보여줄 수도 있고, 분리할 수도 있음.
-    // 여기서는 기본 스탯을 보여주고, 전투 시 합산됨을 암시
     if(atkUI) atkUI.innerText = player.stats.atk;
     if(defUI) defUI.innerText = player.stats.def;
 }
@@ -153,7 +160,6 @@ function useItem(itemId) {
         isProcessing = true;
         player.inventory[itemId]--;
         if(itemId === "potion_s") {
-            // 현재 선택된 드래곤 찾기 (uId 기준)
             const dragon = player.myDragons.find(d => d.uId === player.currentDragonUId);
             if(dragon) {
                 const effect = item.effect || 10;
@@ -162,7 +168,7 @@ function useItem(itemId) {
                 showAlert(`[${dragon.name}]에게 물약을 먹였습니다.<br><b>성장치 +${effect}</b>`, () => { isProcessing = false; });
             } else { 
                 showAlert("물약을 사용할 드래곤이 없습니다.");
-                player.inventory[itemId]++; // 복구
+                player.inventory[itemId]++;
                 isProcessing = false; 
             }
         }
@@ -212,11 +218,9 @@ function loadGame() {
             if (!player.myDragons || player.myDragons.length === 0) {
                 player.myDragons = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE.myDragons));
             }
-            // [마이그레이션] 구버전 데이터(uId 없음) 대응
             player.myDragons.forEach((d, idx) => {
                 if(!d.uId) d.uId = `legacy_${Date.now()}_${idx}`;
             });
-            // currentDragonUId가 없으면 첫 번째 드래곤으로 설정
             if(!player.currentDragonUId && player.myDragons.length > 0) {
                 player.currentDragonUId = player.myDragons[0].uId;
             }
@@ -231,8 +235,8 @@ function loadGame() {
     }
 }
 
-// 전역 노출
 window.player = player;
+window.getDragonStarLevel = getDragonStarLevel; 
 window.gainExp = gainExp;
 window.saveGame = saveGame;
 window.loadGame = loadGame;
