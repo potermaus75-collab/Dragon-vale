@@ -1,8 +1,8 @@
 // ==========================================
-// js/breeding.js (수정됨: uId 기반 교배 시스템)
+// js/breeding.js (수정됨: uId 기반 교배)
 // ==========================================
 
-let selectedParents = { 1: null, 2: null }; // 이제 uId를 저장합니다.
+let selectedParents = { 1: null, 2: null }; 
 let currentSelectingSlot = 0; 
 
 function openBreedingModal() {
@@ -34,7 +34,6 @@ function updateParentSlots() {
         slotEl.className = "new-slot-item"; 
         slotEl.style.border = "none"; 
 
-        // uId로 드래곤 객체 찾기
         const dragon = pUId ? player.myDragons.find(d => d.uId === pUId) : null;
 
         if (dragon) {
@@ -69,10 +68,8 @@ function selectParent(slotNum) {
 
     let count = 0;
     player.myDragons.forEach((dragon) => {
-        // 이미 다른 슬롯에 선택된 드래곤 제외 (uId 비교)
         if (dragon.uId === otherUId) return;
 
-        // 성체(3단계) 이상만 교배 가능
         if (dragon.stage >= 3) {
             const div = document.createElement('div');
             div.className = "new-slot-item"; 
@@ -85,7 +82,7 @@ function selectParent(slotNum) {
             `;
             
             div.onclick = () => {
-                selectedParents[slotNum] = dragon.uId; // uId 저장
+                selectedParents[slotNum] = dragon.uId; 
                 updateParentSlots();
                 listDiv.classList.add('hidden');
             };
