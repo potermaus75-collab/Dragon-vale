@@ -1,8 +1,11 @@
 // ==========================================
-// js/main.js (최종: 내 정보 UI 리메이크 적용)
+// js/main.js (수정됨: 이미지 에러 로깅 추가)
 // ==========================================
 
 window.handleImgError = function(imgEl) {
+    // [보안/디버깅] 누락된 에셋 경로를 콘솔에 출력하여 개발자가 인지할 수 있게 함
+    console.warn(`[Image Missing] ${imgEl.getAttribute('src')}`);
+    
     imgEl.onerror = null; 
     imgEl.src = "assets/images/ui/icon_question.png"; 
     imgEl.style.objectFit = "contain";
@@ -127,7 +130,6 @@ window.updateUI = function() {
     else if (currentTab === 'explore' && window.initExploreTab) window.initExploreTab();
 };
 
-// [UI 업데이트] 내 정보 탭 렌더링 (리메이크)
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -153,6 +155,7 @@ function renderInventory() {
 
     updateEquipSlots();
 
+    // 공격력/방어력 표기 (전투력 합산 수치로 보여줄지 고민 필요, 일단 기본 스탯)
     if(document.getElementById('stat-atk-display')) {
         document.getElementById('stat-atk-display').innerText = player.stats.atk;
     }
