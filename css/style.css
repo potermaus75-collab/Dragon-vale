@@ -122,7 +122,7 @@ body, html {
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%;
     display: flex; justify-content: center; align-items: flex-end; z-index: 1;
 }
-.abs-dragon-visual img { width: 160px; height: 160px; object-fit: contain; margin-bottom: 60px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
+.abs-dragon-visual img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 60px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
 
 /* 중앙 컨트롤 */
 .abs-center-controls {
