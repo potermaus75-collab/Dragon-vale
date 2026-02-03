@@ -1,5 +1,5 @@
 // ==========================================
-// js/data.js (완전한 전체 코드)
+// js/data.js (수정됨: 몬스터 및 기본 스탯 추가)
 // ==========================================
 
 // [시스템 1] 등급 데이터
@@ -27,7 +27,6 @@ const EGG_TYPE_NAMES = {
 const DRAGON_DATA = {
     stages: ["알", "유아기", "성장기", "성룡", "고룡"],
     reqClicks: [20, 50, 150, 500],
-    // 이미지는 dragon.js의 getDragonImage에서 처리하므로 여기선 참조용
     stageImages: []
 };
 
@@ -50,7 +49,25 @@ const REGION_DATA = [
     { id: 6, name: "지하 심연", levelReq: 30, type: "dark", desc: "어둠 속성 용이 서식합니다. (Lv.30)", bg: "assets/images/bg/abyss.jpg" }
 ];
 
-// 확률 및 비용
+// [시스템 6] 드래곤 기본 스탯 (전투용)
+// 등급별 { 체력, 공격력 }
+const BASE_STATS = {
+    "common": { hp: 100, atk: 15 },
+    "rare": { hp: 150, atk: 25 },
+    "heroic": { hp: 250, atk: 45 },
+    "epic": { hp: 500, atk: 80 },
+    "legend": { hp: 1000, atk: 150 }
+};
+
+// [시스템 7] 야생 몬스터 (잡몹)
+const MONSTER_LIST = [
+    { name: "슬라임", hp: 50, atk: 5, exp: 5 },
+    { name: "고블린", hp: 80, atk: 10, exp: 10 },
+    { name: "늑대", hp: 120, atk: 15, exp: 15 },
+    { name: "오크", hp: 200, atk: 25, exp: 30 },
+    { name: "골렘", hp: 400, atk: 40, exp: 60 } // 희귀
+];
+
 const ENCOUNTER_RATES = {
     NOTHING: 20,
     RESOURCE: 65, 
@@ -88,7 +105,7 @@ const ITEM_DB = {
 // 상점 목록
 const SHOP_LIST = ["potion_s", "nest_wood", "egg_random", "egg_shiny", "sword_wood", "helm_leather", "armor_cloth", "boots_leather"];
 
-// 전역 변수로 노출 (다른 JS 파일에서 접근 가능하도록)
+// 전역 변수로 노출
 window.RARITY_DATA = RARITY_DATA;
 window.EGG_TYPE_NAMES = EGG_TYPE_NAMES;
 window.DRAGON_DATA = DRAGON_DATA;
@@ -98,3 +115,5 @@ window.ENCOUNTER_RATES = ENCOUNTER_RATES;
 window.NEST_UPGRADE_COST = NEST_UPGRADE_COST;
 window.ITEM_DB = ITEM_DB;
 window.SHOP_LIST = SHOP_LIST;
+window.BASE_STATS = BASE_STATS;
+window.MONSTER_LIST = MONSTER_LIST;
