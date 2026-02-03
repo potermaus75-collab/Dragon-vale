@@ -1,5 +1,5 @@
 // ==========================================
-// js/dragon.js (완전한 전체 코드)
+// js/dragon.js (수정됨: 스탯 계산 함수 추가)
 // ==========================================
 
 const DRAGON_DEX = {
@@ -148,6 +148,36 @@ function getDragonImage(dragonId, stageIndex) {
     const baseName = IMG_MAPPING[dragonId] || "fire_lizard";
     return `assets/images/dragon/${baseName}_${stageNames[stageIndex]}.png`;
 }
+
+// [신규] 드래곤 현재 스탯 계산
+window.getDragonStats = function(dragon) {
+    if (!dragon) return { hp: 100, maxHp: 100, atk: 10, def: 0 };
+
+    // 희귀도별 기본 스탯 가져오기
+    const base = window.BASE_STATS[dragon.rarity] || window.BASE_STATS['common'];
+    
+    // 성장 단계 보너스 (성장기: 1.2배, 성룡: 1.5배, 고룡: 2배)
+    let stageMult = 1.0;
+    if (dragon.stage === 2) stageMult = 1.2;
+    if (dragon.stage === 3) stageMult = 1.5;
+    if (dragon.stage >= 4) stageMult = 2.0;
+
+    // 별 등급 보너스 (1성당 10% 추가)
+    const starLv = window.getDragonStarLevel ? window.getDragonStarLevel(dragon.id) : 0;
+    const starMult = 1 + (starLv * 0.1);
+
+    // 장비 보너스 (플레이어 장비 스탯 합산, 방어력은 체력으로 환산)
+    const equipAtk = (player && player.stats) ? player.stats.atk : 0;
+    const equipDef = (player && player.stats) ? player.stats.def : 0;
+
+    const finalMaxHp = Math.floor(base.hp * stageMult * starMult) + (equipDef * 5); 
+    const finalAtk = Math.floor(base.atk * stageMult * starMult) + equipAtk;
+
+    return {
+        maxHp: finalMaxHp,
+        atk: finalAtk
+    };
+};
 
 // 전역 노출
 window.DRAGON_DEX = DRAGON_DEX;
