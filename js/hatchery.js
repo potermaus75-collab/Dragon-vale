@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (수정됨: 수동 귀속 및 별 시스템)
+// js/hatchery.js (수정됨: 동굴 인벤토리 필터링)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -122,7 +122,6 @@ function renderNest() {
                 imgEl.style.cursor = "pointer";
                 imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
             } else {
-                // 성체 단계에서 클릭 시: 귀속 가능 여부 체크
                 imgEl.style.cursor = "pointer";
                 imgEl.onclick = () => checkAndBindDragon(dragonData);
             }
@@ -173,15 +172,12 @@ function handleDragonClick(dragon, imgEl) {
         
         if (oldStage === 0 && dragon.stage === 1) {
             if(!player.discovered.includes(dragon.id)) player.discovered.push(dragon.id);
-            // 첫 성체 카운트 등록 (없을 경우에만 1로 설정)
             if(!player.dragonCounts) player.dragonCounts = {};
             if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
             
             showAlert(`알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!`);
         } else if (dragon.stage >= maxStageLimit) {
-            // 성체 도달 시점
             if(!player.dragonCounts) player.dragonCounts = {};
-            // 만약 첫 성체라면 카운트 1 보장
             if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
 
             showAlert(`축하합니다!<br>[${dragon.name}]이(가) 최종 단계까지 성장했습니다!<br>(한 번 더 터치하여 관리할 수 있습니다)`);
@@ -201,13 +197,10 @@ function handleDragonClick(dragon, imgEl) {
     }
 }
 
-// [수정됨] 성체 클릭 시 귀속 처리 로직
 function checkAndBindDragon(dragon) {
-    // 1. 현재 보유한 드래곤 중, 같은 ID이며 성체인 드래곤 개수 파악
     const maxLimit = (dragon.rarity === 'epic' || dragon.rarity === 'legend') ? 4 : 3;
     const adultDragons = player.myDragons.filter(d => d.id === dragon.id && d.stage >= maxLimit);
     
-    // 2. 다른 성체가 하나라도 더 있어야 귀속 가능 (최소 2마리 보유 시)
     if (adultDragons.length > 1) {
         const starLv = window.getDragonStarLevel(dragon.id);
         const currentCount = player.dragonCounts[dragon.id];
@@ -230,18 +223,15 @@ function checkAndBindDragon(dragon) {
 }
 
 function performBind(dragon) {
-    // 1. 카운트 증가
     if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
     player.dragonCounts[dragon.id]++;
     
     const newCount = player.dragonCounts[dragon.id];
     const starLv = window.getDragonStarLevel(dragon.id);
     
-    // 2. 드래곤 삭제
     const idx = player.myDragons.findIndex(d => d.uId === dragon.uId);
     if (idx > -1) {
         player.myDragons.splice(idx, 1);
-        // 인덱스 조정
         if (player.myDragons.length > 0) {
             player.currentDragonUId = player.myDragons[Math.max(0, idx - 1)].uId;
         } else {
@@ -265,6 +255,7 @@ function performBind(dragon) {
     );
 }
 
+// [수정] 동굴 인벤토리: 장비 제외하고 표시
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -276,6 +267,7 @@ function renderCaveInventory() {
     itemIds.forEach(id => {
         if(player.inventory[id] > 0) {
             const item = ITEM_DB[id];
+            // 장비가 아닌 것(재료, 알, 소비 등)만 필터
             if(item && item.type !== 'equip') {
                 const div = document.createElement('div');
                 div.className = 'new-slot-item'; 
