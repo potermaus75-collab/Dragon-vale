@@ -1,17 +1,22 @@
 // ==========================================
-// js/explore.js (수정됨: 5성 제외 및 상성)
+// js/explore.js (완전 개편: 전투 & 탐험 시스템)
 // ==========================================
 
-window.isExploreActive = false; 
+window.isExploreActive = false;
+window.inBattle = false;
 
 let currentRegionId = -1;
 let movesLeft = 0;
-let stealAttempts = 0; 
-let selectedRegionId = null;
+let tempLoot = [];
+
+// 전투 관련 변수
+let battleMyDragon = null; // 실제 객체 참조
+let battleStats = { myHp: 0, myMaxHp: 0, myAtk: 0, enHp: 0, enMaxHp: 0, enAtk: 0 };
+let currentEnemy = null;   // { name, hp, atk, img, isBoss, dropEggId }
 
 window.initExploreTab = function() {
     renderMap();
-    updateMapCurrency(); 
+    updateMapCurrency();
 };
 
 function updateMapCurrency() {
@@ -24,7 +29,6 @@ function updateMapCurrency() {
 function renderMap() {
     const container = document.getElementById('map-icons-layer');
     const enterBtn = document.getElementById('btn-enter-region');
-    
     if(!container) return; 
     container.innerHTML = "";
     
@@ -34,12 +38,9 @@ function renderMap() {
         enterBtn.style.color = "#888";
     }
 
-    if(typeof REGION_DATA === 'undefined') return;
-
     REGION_DATA.forEach(region => {
         const div = document.createElement('div');
         div.className = `map-icon loc-${region.type}`; 
-        
         if (player.level < region.levelReq) {
             div.classList.add('locked');
             div.onclick = () => showAlert(`[${region.name}] 접근 불가\n(Lv.${region.levelReq} 이상 필요)`);
@@ -51,7 +52,7 @@ function renderMap() {
 }
 
 function selectRegion(id, element) {
-    selectedRegionId = id;
+    currentRegionId = id; 
     document.querySelectorAll('.map-icon').forEach(icon => icon.classList.remove('selected'));
     element.classList.add('selected');
     
@@ -63,35 +64,38 @@ function selectRegion(id, element) {
     }
 }
 
+// [요청사항 3] 탐험 시 현재 동굴의 드래곤을 데려감
 function enterSelectedRegion() {
-    if (window.isExploreActive) return; 
-    if (selectedRegionId === null) {
-        showAlert("먼저 탐험할 지역을 선택해주세요.");
+    if (window.isExploreActive) return;
+    if (currentRegionId === -1) { showAlert("지역을 선택하세요."); return; }
+
+    const myDragon = player.myDragons.find(d => d.uId === player.currentDragonUId);
+    if (!myDragon) {
+        showAlert("함께할 드래곤이 없습니다.\n동굴에서 드래곤을 선택해주세요.");
         return;
     }
-    startExplore(selectedRegionId);
-}
-
-function toggleExploreView(viewName) {
-    const mapDiv = document.getElementById('explore-map-view');
-    const runDiv = document.getElementById('explore-run-view');
-    if(viewName === 'map') {
-        mapDiv.classList.remove('hidden');
-        runDiv.classList.add('hidden');
-        updateMapCurrency();
-    } else {
-        mapDiv.classList.add('hidden');
-        runDiv.classList.remove('hidden');
+    // 알 상태면 탐험 불가
+    if (myDragon.stage === 0) {
+        showAlert("알 상태로는 탐험할 수 없습니다.\n부화시킨 후 시도하세요.");
+        return;
     }
+
+    startExplore(currentRegionId, myDragon);
 }
 
-function startExplore(regionId) {
-    currentRegionId = regionId;
+function startExplore(regionId, myDragon) {
+    battleMyDragon = myDragon;
     movesLeft = 10;
-    tempLoot = []; 
-    window.isExploreActive = true; 
+    tempLoot = [];
+    window.isExploreActive = true;
+    window.inBattle = false;
 
-    saveExploreState();
+    // 내 드래곤 스탯 계산 (getDragonStats 함수는 dragon.js에 추가됨)
+    const stats = window.getDragonStats ? window.getDragonStats(myDragon) : { maxHp: 100, atk: 10 };
+    battleStats.myMaxHp = stats.maxHp;
+    battleStats.myHp = stats.maxHp;
+    battleStats.myAtk = stats.atk;
+
     toggleExploreView('run');
     
     const region = REGION_DATA[regionId];
@@ -104,20 +108,34 @@ function startExplore(regionId) {
     
     document.getElementById('region-title').innerText = region.name;
     document.getElementById('event-msg').innerHTML = "탐험을 시작합니다.";
+    
+    updateMyMiniStatus();
     updateMoveUI();
 }
 
-function saveExploreState() {
-    player.exploreState = { regionId: currentRegionId, moves: movesLeft, loot: tempLoot };
-    if(window.saveGame) window.saveGame(true); 
+function toggleExploreView(mode) {
+    document.getElementById('explore-map-view').classList.add('hidden');
+    document.getElementById('explore-run-view').classList.add('hidden');
+    document.getElementById('explore-battle-view').classList.add('hidden');
+
+    if (mode === 'map') document.getElementById('explore-map-view').classList.remove('hidden');
+    else if (mode === 'run') document.getElementById('explore-run-view').classList.remove('hidden');
+    else if (mode === 'battle') document.getElementById('explore-battle-view').classList.remove('hidden');
+}
+
+function updateMyMiniStatus() {
+    document.getElementById('explore-my-name').innerText = battleMyDragon.name;
+    const hpPct = Math.max(0, (battleStats.myHp / battleStats.myMaxHp) * 100);
+    document.getElementById('explore-my-hp').style.width = `${hpPct}%`;
+    document.getElementById('explore-my-hp-text').innerText = `${battleStats.myHp} / ${battleStats.myMaxHp}`;
 }
 
 function moveForward() {
-    if (movesLeft <= 0 || !window.isExploreActive) return;
+    if (movesLeft <= 0 || !window.isExploreActive || window.inBattle) return;
 
     movesLeft--;
-    saveExploreState(); 
-
+    
+    // 걷기 애니메이션
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
@@ -137,279 +155,331 @@ function updateMoveUI() {
     if (movesLeft <= 0) {
         document.getElementById('event-msg').innerText = "날이 저물었습니다. 귀환하세요.";
         moveBtn.disabled = true;
-        moveBtn.style.opacity = 0.5;
         moveBtn.innerText = "종료";
-
         returnBtn.innerText = "보상 받기";
         returnBtn.style.color = "#2ecc71";
         returnBtn.onclick = () => finishExplore(true);
     } else {
-        moveBtn.disabled = !window.isExploreActive;
-        moveBtn.style.opacity = 1;
-        moveBtn.innerText = "앞으로 이동";
-        
-        returnBtn.innerText = "중도 포기";
+        moveBtn.disabled = false;
+        moveBtn.innerText = "이동";
+        returnBtn.innerText = "포기";
         returnBtn.style.color = "#aaa"; 
         returnBtn.onclick = () => finishExplore(false);
     }
 }
 
+// [요청사항 3] 확률 변경: 몬스터 전투(35%), 둥지(5%)
 function processRandomEvent() {
-    const roll = Math.floor(Math.random() * 100);
+    const roll = Math.random() * 100;
     const msgArea = document.getElementById('event-msg');
 
-    if (roll < 20) {
-        msgArea.innerHTML = "조용합니다...";
-    } else if (roll < 85) {
-        const typeRoll = Math.random();
-        if (typeRoll < 0.6) { 
-            const goldAmt = Math.floor(Math.random() * 50) + 10;
-            addTempLoot("gold", goldAmt);
-             msgArea.innerHTML = `<span style="color:#f1c40f">+${goldAmt} 골드</span> 획득!`;
-        } else if (typeRoll < 0.9) { 
-             const woodAmt = Math.floor(Math.random() * 2) + 1;
-             addTempLoot("nest_wood", woodAmt);
-             msgArea.innerHTML = `둥지 재료 ${woodAmt}개 발견!`;
-        } else { 
-             addTempLoot("gem", 1);
-             msgArea.innerHTML = `<span style="color:#3498db">보석</span> 발견!`;
+    if (roll < 30) {
+        msgArea.innerText = "평화로운 숲길입니다...";
+    } else if (roll < 60) {
+        const isGold = Math.random() < 0.7;
+        if (isGold) {
+            const amt = Math.floor(Math.random() * 30) + 10;
+            addTempLoot('gold', amt);
+            msgArea.innerHTML = `<span style="color:#f1c40f">${amt} 골드</span>를 주웠습니다.`;
+        } else {
+            addTempLoot('nest_wood', 1);
+            msgArea.innerHTML = `둥지 재료를 발견했습니다.`;
+        }
+    } else if (roll < 95) {
+        encounterMonster();
+    } else {
+        encounterNest();
+    }
+}
+
+// ---- 전투 시스템 ----
+
+function encounterMonster() {
+    // 몬스터 랜덤 선택 (data.js에 MONSTER_LIST 필요)
+    const list = window.MONSTER_LIST || [{ name: "슬라임", hp: 50, atk: 5 }];
+    const monData = list[Math.floor(Math.random() * list.length)];
+    const levelBonus = 1 + (currentRegionId * 0.2); 
+    
+    startBattle({
+        name: monData.name,
+        hp: Math.floor(monData.hp * levelBonus),
+        maxHp: Math.floor(monData.hp * levelBonus),
+        atk: Math.floor(monData.atk * levelBonus),
+        img: "assets/images/ui/icon_alert.png", 
+        isBoss: false
+    });
+}
+
+function encounterParentDragon() {
+    // [요청사항 3] 부모 용 등급별 출현 확률
+    const roll = Math.random() * 100;
+    let rarity = 'common';
+    if (roll > 99) rarity = 'legend';
+    else if (roll > 95) rarity = 'epic';
+    else if (roll > 80) rarity = 'heroic';
+    else if (roll > 50) rarity = 'rare';
+
+    const regionType = REGION_DATA[currentRegionId].type;
+    const candidates = [];
+    if (window.DRAGON_DEX) {
+        for(const key in DRAGON_DEX) {
+            if(DRAGON_DEX[key].type === regionType && DRAGON_DEX[key].rarity === rarity) {
+                candidates.push({ ...DRAGON_DEX[key], id: key });
+            }
+        }
+        if(candidates.length === 0) {
+            for(const key in DRAGON_DEX) {
+                if(DRAGON_DEX[key].type === regionType && DRAGON_DEX[key].rarity === 'common') {
+                    candidates.push({ ...DRAGON_DEX[key], id: key });
+                }
+            }
+        }
+    }
+    
+    const target = candidates.length > 0 ? candidates[Math.floor(Math.random() * candidates.length)] : { name: "알 수 없는 용", rarity: "common" };
+    const stats = window.BASE_STATS ? BASE_STATS[target.rarity] : { hp: 200, atk: 30 };
+    
+    const bossHp = stats.hp * 2;
+    const bossAtk = stats.atk * 1.5;
+    const img = window.getDragonImage ? window.getDragonImage(target.id, 3) : "";
+
+    startBattle({
+        name: `[보스] ${target.name}`,
+        hp: bossHp, maxHp: bossHp, atk: bossAtk,
+        img: img,
+        isBoss: true,
+        dropEggId: `egg_${regionType}`, 
+        dragonId: target.id 
+    });
+}
+
+function startBattle(enemyData) {
+    window.inBattle = true;
+    currentEnemy = enemyData;
+    battleStats.enHp = enemyData.hp;
+    battleStats.enMaxHp = enemyData.maxHp;
+    battleStats.enAtk = enemyData.atk;
+
+    toggleExploreView('battle');
+
+    document.getElementById('enemy-name').innerText = enemyData.name;
+    document.getElementById('enemy-img').src = enemyData.img || "assets/images/ui/icon_alert.png";
+    updateBattleUI();
+    
+    document.getElementById('battle-my-name').innerText = battleMyDragon.name;
+    const myImg = window.getDragonImage ? window.getDragonImage(battleMyDragon.id, battleMyDragon.stage) : "";
+    document.getElementById('battle-my-img').src = myImg;
+
+    const log = document.getElementById('battle-log');
+    log.innerHTML = ""; 
+    logBattle(`[${enemyData.name}]이(가) 나타났다!`);
+}
+
+function updateBattleUI() {
+    const enPct = Math.max(0, (battleStats.enHp / battleStats.enMaxHp) * 100);
+    document.getElementById('enemy-hp-bar').style.width = `${enPct}%`;
+    document.getElementById('enemy-hp-text').innerText = `${Math.floor(battleStats.enHp)}/${battleStats.enMaxHp}`;
+
+    const myPct = Math.max(0, (battleStats.myHp / battleStats.myMaxHp) * 100);
+    document.getElementById('battle-my-hp-bar').style.width = `${myPct}%`;
+    document.getElementById('battle-my-hp-text').innerText = `${Math.floor(battleStats.myHp)}/${battleStats.myMaxHp}`;
+}
+
+function logBattle(msg) {
+    const log = document.getElementById('battle-log');
+    log.innerHTML += `<div>${msg}</div>`;
+    log.scrollTop = log.scrollHeight;
+}
+
+window.battleAttack = function() {
+    if (!window.inBattle) return;
+
+    // 플레이어 공격
+    const isCrit = Math.random() < 0.1;
+    let dmg = Math.floor(battleStats.myAtk * (Math.random() * 0.2 + 0.9)); 
+    if (isCrit) { dmg = Math.floor(dmg * 1.5); }
+    
+    battleStats.enHp -= dmg;
+    updateBattleUI();
+    logBattle(`내 공격! ${dmg} 피해${isCrit ? "(치명타!)" : ""}`);
+
+    if (battleStats.enHp <= 0) {
+        winBattle();
+        return;
+    }
+
+    // 적 반격 (0.5초 딜레이)
+    setTimeout(() => {
+        if (!window.inBattle) return;
+        let enDmg = Math.floor(battleStats.enAtk * (Math.random() * 0.2 + 0.9));
+        
+        // 회피 (기본 5%)
+        if (Math.random() < 0.05) {
+            logBattle(`적의 공격을 회피했습니다!`);
+        } else {
+            battleStats.myHp -= enDmg;
+            updateBattleUI();
+            logBattle(`적의 공격! ${enDmg} 피해를 입음.`);
+        }
+
+        if (battleStats.myHp <= 0) {
+            loseBattle();
+        }
+    }, 500);
+};
+
+window.battleFlee = function() {
+    if (!window.inBattle) return;
+    if (currentEnemy.isBoss) {
+        logBattle("보스에게서는 도망칠 수 없습니다!");
+        return;
+    }
+    if (Math.random() < 0.5) {
+        logBattle("성공적으로 도망쳤습니다.");
+        setTimeout(() => endBattle(false), 800);
+    } else {
+        logBattle("도망 실패! 공격받습니다.");
+        setTimeout(() => {
+            let enDmg = Math.floor(battleStats.enAtk);
+            battleStats.myHp -= enDmg;
+            updateBattleUI();
+            if (battleStats.myHp <= 0) loseBattle();
+        }, 500);
+    }
+};
+
+function winBattle() {
+    window.inBattle = false;
+    let rewardsHtml = "";
+    
+    if (currentEnemy.isBoss) {
+        addTempLoot('gem', 10);
+        rewardsHtml += `<div style="color:#3498db">보석 +10</div>`;
+
+        if (Math.random() < 0.5) {
+            addTempLoot(currentEnemy.dropEggId, 1);
+            rewardsHtml += `<div style="color:#f1c40f">알 획득!</div>`;
         }
     } else {
-        msgArea.innerHTML = `<span style="color:#ff6b6b; font-weight:bold;">용의 기운이 느껴집니다!</span>`;
-        encounterNest();
+        const gold = Math.floor(Math.random() * 20) + 10;
+        addTempLoot('gold', gold);
+        rewardsHtml += `<div style="color:#f1c40f">골드 +${gold}</div>`;
+    }
+
+    if(window.gainExp) window.gainExp(10); 
+    showBattleResult("VICTORY", currentEnemy.img, "승리했습니다!", rewardsHtml);
+}
+
+function loseBattle() {
+    window.inBattle = false;
+    showBattleResult("DEFEAT", "assets/images/ui/icon_alert.png", "쓰러졌습니다...<br>탐험을 중단하고 복귀합니다.", "");
+    tempLoot = []; 
+}
+
+function showBattleResult(title, img, msg, rewards) {
+    const modal = document.getElementById('battle-result-modal');
+    document.getElementById('battle-result-title').innerText = title;
+    document.getElementById('battle-result-title').style.color = (title === "VICTORY") ? "#f1c40f" : "#888";
+    document.getElementById('battle-result-img').src = img;
+    document.getElementById('battle-result-msg').innerHTML = msg;
+    document.getElementById('battle-rewards').innerHTML = rewards;
+    
+    modal.classList.remove('hidden');
+    
+    const btn = modal.querySelector('button');
+    btn.onclick = () => {
+        closeBattleResult();
+        if (title === "VICTORY") {
+            endBattle(true);
+        } else {
+            toggleExploreView('map');
+            window.isExploreActive = false;
+            if(window.updateUI) window.updateUI();
+        }
+    };
+}
+
+window.closeBattleResult = function() {
+    const modal = document.getElementById('battle-result-modal');
+    modal.classList.add('hidden');
+};
+
+function endBattle(win) {
+    window.inBattle = false;
+    toggleExploreView('run');
+    updateMyMiniStatus(); 
+    
+    if (win) {
+        document.getElementById('event-msg').innerText = "전투에서 승리했습니다.";
     }
 }
 
 function encounterNest() {
     const moveBtn = document.getElementById('btn-move');
-    if(moveBtn) moveBtn.disabled = true;
+    moveBtn.disabled = true;
 
-    stealAttempts = 3; 
-    const regionType = REGION_DATA[currentRegionId].type;
-    const eggId = `egg_${regionType}`; 
-    const nestImg = (window.ITEM_DB && window.ITEM_DB[eggId]) ? window.ITEM_DB[eggId].img : "assets/images/dragon/stage_egg.png";
-
-    setTimeout(() => {
-        showConfirm(
-            `<div style="text-align:center;">
-                <img src="${nestImg}" style="width:60px;" onerror="handleImgError(this)"><br>
-                <b>[${REGION_DATA[currentRegionId].name}] 둥지!</b><br>
-                알을 훔치시겠습니까?
-            </div>`, 
-            () => { tryStealLoop(eggId); }, 
-            () => { 
-                document.getElementById('event-msg').innerText = "조용히 지나쳤습니다.";
-                if(moveBtn) moveBtn.disabled = false;
-                if(movesLeft <= 0) updateMoveUI();
+    // [요청사항 3] 알 훔치기 확률 대폭 축소 (10%)
+    showConfirm("둥지를 발견했습니다! 알을 훔칠까요?", 
+        () => {
+            if (Math.random() < 0.1) {
+                const regionType = REGION_DATA[currentRegionId].type;
+                const eggId = `egg_${regionType}`;
+                addTempLoot(eggId, 1);
+                showAlert("성공적으로 알을 훔쳤습니다!", () => {
+                    moveBtn.disabled = false;
+                    updateMoveUI();
+                });
+            } else {
+                showAlert("들켰습니다!! 부모 용이 깨어났습니다!", () => {
+                    encounterParentDragon();
+                });
             }
-        );
-    }, 100);
-}
-
-function tryStealLoop(eggId) {
-    if (stealAttempts <= 0) {
-        wakeParentDragon(eggId);
-        return;
-    }
-    const success = Math.random() < 0.5; 
-    
-    if (success) {
-        showAlert("알 획득 성공!<br>(탐험을 마칩니다)", () => {
-            addTempLoot(eggId, 1); 
-            finishExplore(true);
-        });
-    } else {
-        stealAttempts--;
-        if (stealAttempts > 0) {
-            showConfirm(`실패... 알이 무겁습니다.\n(남은 기회: ${stealAttempts})\n다시 시도?`,
-                () => { tryStealLoop(eggId); }, 
-                () => {
-                    document.getElementById('event-msg').innerText = "위험해서 물러났습니다.";
-                    const moveBtn = document.getElementById('btn-move');
-                    if(moveBtn) moveBtn.disabled = false;
-                    if(movesLeft <= 0) updateMoveUI();
-                }
-            );
-        } else {
-            wakeParentDragon(eggId);
-        }
-    }
-}
-
-function wakeParentDragon(eggId) {
-    document.getElementById('event-msg').innerText = "부모 용 출현!";
-    
-    const regionType = REGION_DATA[currentRegionId].type;
-
-    let candidates = [];
-    if (window.DRAGON_DEX) {
-        for (const key in DRAGON_DEX) {
-            const d = DRAGON_DEX[key];
-            if (d.type === regionType) {
-                // [핵심] 5성(10마리 이상 수집) 드래곤은 등장 제외
-                const star = window.getDragonStarLevel ? window.getDragonStarLevel(key) : 0;
-                if (star < 5) {
-                    candidates.push({ ...d, id: key });
-                }
-            }
-        }
-    }
-
-    if (candidates.length === 0) {
-        document.getElementById('event-msg').innerText = "이 지역의 모든 용을 정복했습니다!";
-        setTimeout(() => {
-            showAlert("이 구역의 지배자이시군요!<br>부모 용들이 당신을 피해 숨었습니다.<br><br><b style='color:#3498db'>보상: 보석 3개</b>", () => {
-                player.gem += 3;
-                finishExplore(true);
-            });
-        }, 800);
-        return;
-    }
-
-    const parentDragon = candidates[Math.floor(Math.random() * candidates.length)];
-    const parentImg = window.getDragonImage ? window.getDragonImage(parentDragon.id, 3) : "assets/images/ui/icon_question.png";
-
-    const myPower = window.calculateTotalCombatPower ? window.calculateTotalCombatPower() : 10;
-    
-    const counterTypes = { "fire": "water", "water": "electric", "electric": "forest", "forest": "fire", "dark": "light", "light": "dark" };
-    const neededType = counterTypes[regionType];
-    let typeBonus = 0;
-    if (neededType && player.myDragons.some(d => d.type === neededType && d.stage >= 2)) {
-        typeBonus = 20;
-    }
-
-    const winChance = Math.min(95, Math.floor(30 + (myPower * 0.2) + typeBonus));
-
-    setTimeout(() => {
-        let bonusText = typeBonus > 0 ? `<br><span style="color:#3498db; font-size:0.8rem;">(상성 우위 +20%)</span>` : "";
-        
-        showConfirm(
-            `<div style="text-align:center; color:#ff6b6b">
-                <img src="${parentImg}" style="width:80px; height:80px; object-fit:contain; margin-bottom:5px;"><br>
-                <b>야생의 [${parentDragon.name}] 출현!</b><br>
-                전투력: ${myPower} ${bonusText}<br>
-                (승률: ${winChance}%) 싸우시겠습니까?
-            </div>`,
-            () => fightParent(winChance, eggId),
-            () => tryFlee()
-        );
-    }, 500);
-}
-
-function tryFlee() {
-    if (Math.random() < 0.3) { 
-        showAlert("휴... 도망쳤습니다.", () => finishExplore(true));
-    } else {
-        showAlert("도망 실패! 공격당했습니다.\n전리품을 잃었습니다.", () => {
-            clearTempLoot();
-            finishExplore(false);
-        });
-    }
-}
-
-function fightParent(winChance, eggId) {
-    const win = Math.random() * 100 < winChance; 
-    if (win) {
-        addTempLoot(eggId, 1); 
-        let msg = "승리! 부모 용을 물리쳤습니다!";
-        if (Math.random() < 0.3) { 
-             addTempLoot("gem", 1);
-             msg += "<br><b style='color:#3498db'>보석 획득!</b>";
-        }
-        showAlert(msg, () => finishExplore(true));
-    } else {
-        showAlert("패배했습니다...", () => {
-            clearTempLoot();
-            finishExplore(false);
-        });
-    }
-}
-
-function finishExplore(success = true) {
-    window.isExploreActive = false; 
-
-    const lootMsg = claimTempLoot();
-    
-    const onComplete = () => {
-        const moveBtn = document.getElementById('btn-move');
-        if(moveBtn) {
+        },
+        () => {
+            document.getElementById('event-msg').innerText = "조용히 지나갑니다.";
             moveBtn.disabled = false;
-            moveBtn.style.opacity = 1;
+            updateMoveUI();
         }
-        toggleExploreView('map');
-        
-        if(success) {
-            const xpGain = (currentRegionId * 5) + 5;
-            if(window.gainExp) window.gainExp(xpGain);
-        }
-
-        player.exploreState = null;
-        if(window.saveGame) window.saveGame(true);
-        if(window.updateUI) window.updateUI();
-    };
-
-    if (success && lootMsg) {
-        showAlert(`<div style="text-align:center"><b>[탐험 완료]</b><br>마을에 무사히 도착했습니다.<br><br>${lootMsg}</div>`, onComplete);
-    } else if (!success) {
-        showAlert("빈손으로 돌아왔습니다.", onComplete);
-        clearTempLoot();
-        player.exploreState = null;
-        if(window.saveGame) window.saveGame(true);
-    } else {
-        showAlert("마을로 돌아왔습니다.", onComplete);
-    }
+    );
 }
 
-function addTempLoot(itemId, count = 1) {
-    tempLoot.push({ id: itemId, count: count });
+function finishExplore(success) {
+    window.isExploreActive = false;
+    const lootMsg = claimTempLoot();
+    toggleExploreView('map');
+    
+    if(success && lootMsg) {
+        showAlert(`<div style="text-align:center"><b>[탐험 완료]</b><br>${lootMsg}</div>`);
+    } else if (!success) {
+        showAlert("탐험을 중단하고 돌아왔습니다.");
+    }
+    
+    if(window.updateUI) window.updateUI();
+    if(window.saveGame) window.saveGame(true);
 }
 
 function claimTempLoot() {
     if (tempLoot.length === 0) return "";
-    let html = "<div style='background:rgba(0,0,0,0.3); padding:5px; border-radius:5px; text-align:left; font-size:0.8rem;'>";
+    let html = "";
     tempLoot.forEach(item => {
         if (item.id === 'gold') {
             player.gold += item.count;
-            html += `<div><span style="color:#f1c40f">${item.count} 골드</span></div>`;
+            html += `<div>${item.count} 골드</div>`;
         } else if (item.id === 'gem') {
             player.gem += item.count;
-            html += `<div><span style="color:#3498db">${item.count} 보석</span></div>`;
+            html += `<div>${item.count} 보석</div>`;
         } else {
-            const itemData = window.ITEM_DB ? window.ITEM_DB[item.id] : { name: "아이템" };
-            addItem(item.id, item.count);
-            html += `<div>${itemData.name} x${item.count}</div>`;
+            window.addItem(item.id, item.count);
+            const name = (window.ITEM_DB && window.ITEM_DB[item.id]) ? window.ITEM_DB[item.id].name : item.id;
+            html += `<div>${name} x${item.count}</div>`;
         }
     });
-    html += "</div>";
-    tempLoot = [];
     return html;
 }
 
-window.restoreExploration = function() {
-    if (!player.exploreState) return;
-    const state = player.exploreState;
-    currentRegionId = state.regionId;
-    movesLeft = state.moves;
-    tempLoot = state.loot || [];
-    window.isExploreActive = true;
-
-    const tabExplore = document.getElementById('tab-explore');
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-    tabExplore.classList.remove('hidden');
-    document.getElementById('explore-map-view').classList.add('hidden');
-    document.getElementById('explore-run-view').classList.remove('hidden');
-
-    const region = REGION_DATA[currentRegionId];
-    const bgElem = document.getElementById('explore-bg');
-    if (region.bg) {
-        bgElem.style.backgroundImage = `url('${region.bg}')`;
-        bgElem.style.backgroundSize = "cover";
-        bgElem.style.backgroundPosition = "center";
-    }
-    document.getElementById('region-title').innerText = region.name;
-    document.getElementById('event-msg').innerText = "탐험을 재개합니다.";
-    updateMoveUI();
-};
+function addTempLoot(id, count) {
+    tempLoot.push({ id: id, count: count });
+}
 
 window.initExploreTab = initExploreTab;
 window.enterSelectedRegion = enterSelectedRegion;
