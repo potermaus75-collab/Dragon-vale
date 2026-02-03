@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (수정됨: 별의 성 데이터 추가)
+// js/player.js (수정됨: 장비 인벤토리 필터링)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -12,15 +12,11 @@ const INITIAL_PLAYER_STATE = {
     stats: { explore: 0, atk: 10, def: 5 },
     discovered: ["fire_c1"], 
     maxStages: { "fire_c1": 0 }, 
-    
-    // [신규] 드래곤 별 카운트 (ID별 성체 달성/흡수 횟수)
     dragonCounts: { "fire_c1": 1 }, 
-    
     nestLevel: 0, nickname: "Guest", exploreState: null 
 };
 
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
-let tempLoot = []; 
 let isProcessing = false; 
 let saveTimeout = null;   
 
@@ -37,8 +33,6 @@ function deepMerge(target, source) {
     return target;
 }
 
-// [신규] 별 등급 계산 함수
-// 1성(2마리), 2성(3), 3성(5), 4성(7), 5성(10)
 function getDragonStarLevel(dragonId) {
     const count = (player.dragonCounts && player.dragonCounts[dragonId]) ? player.dragonCounts[dragonId] : 0;
     if (count >= 10) return 5;
@@ -49,6 +43,7 @@ function getDragonStarLevel(dragonId) {
     return 0;
 }
 
+// 전투력 계산 (장비 + 드래곤 합산)
 function calculateTotalCombatPower() {
     let equipmentPower = player.stats.atk + player.stats.def; 
     const rarityMultipliers = { "common": 1, "rare": 1.5, "heroic": 2, "epic": 3, "legend": 5 };
@@ -114,8 +109,13 @@ function recalcStats() {
     
     const atkUI = document.getElementById('stat-atk');
     const defUI = document.getElementById('stat-def');
+    const atkDisplay = document.getElementById('stat-atk-display');
+    const defDisplay = document.getElementById('stat-def-display');
+
     if(atkUI) atkUI.innerText = player.stats.atk;
     if(defUI) defUI.innerText = player.stats.def;
+    if(atkDisplay) atkDisplay.innerText = player.stats.atk;
+    if(defDisplay) defDisplay.innerText = player.stats.def;
 }
 
 function addItem(itemId, count = 1, force = false) {
@@ -123,9 +123,6 @@ function addItem(itemId, count = 1, force = false) {
     if (!player.inventory[itemId]) player.inventory[itemId] = 0;
     player.inventory[itemId] += count;
 }
-
-function addTempLoot(itemId, count = 1) { tempLoot.push({ id: itemId, count: count }); }
-function clearTempLoot() { tempLoot = []; }
 
 function useItem(itemId) {
     if (isProcessing) return; 
@@ -174,6 +171,55 @@ function useItem(itemId) {
         }
         if(window.updateUI) window.updateUI();
     }
+}
+
+// [수정] '내 정보' 탭의 인벤토리: 장비(equip)만 표시
+function renderInventory() {
+    const grid = document.getElementById('inventory-grid');
+    if(!grid) return;
+    grid.innerHTML = "";
+
+    if(player.inventory) {
+        Object.keys(player.inventory).forEach(id => {
+            if(player.inventory[id] > 0) {
+                const item = ITEM_DB[id];
+                // 장비 타입만 필터링
+                if(item && item.type === 'equip') {
+                    const div = document.createElement('div');
+                    div.className = 'inven-slot';
+                    div.onclick = () => useItem(id); 
+                    div.innerHTML = `
+                        <img src="${item.img}" onerror="handleImgError(this)">
+                        <span class="item-count">${player.inventory[id]}</span>
+                    `;
+                    grid.appendChild(div);
+                }
+            }
+        });
+    }
+
+    updateEquipSlots();
+    recalcStats();
+}
+
+function updateEquipSlots() {
+    const slots = ['head', 'body', 'arm', 'leg'];
+    slots.forEach(slot => {
+        const displayId = `equip-display-${slot}`;
+        const container = document.getElementById(displayId);
+        if(!container) return;
+
+        container.innerHTML = ""; 
+        const itemId = player.equipment[slot];
+        
+        if(itemId && ITEM_DB[itemId]) {
+            const img = document.createElement('img');
+            img.src = ITEM_DB[itemId].img;
+            img.className = 'equipped-item-img';
+            img.onerror = function() { this.src = "assets/images/ui/icon_question.png"; };
+            container.appendChild(img);
+        }
+    });
 }
 
 function equipItem(itemId, slot) {
@@ -235,6 +281,45 @@ function loadGame() {
     }
 }
 
+// [수정] 모달 닫기 기능 (ID 지정 가능)
+window.closeModal = function(modalId = 'common-modal') {
+    const m = document.getElementById(modalId);
+    if(m) {
+        m.classList.remove('active');
+        m.classList.add('hidden');
+    }
+};
+
+window.showAlert = function(msg, callback) {
+    const modal = document.getElementById('common-modal');
+    document.getElementById('modal-title').innerText = "알림";
+    document.getElementById('modal-text').innerHTML = msg; 
+    document.getElementById('modal-btn-alert').classList.remove('hidden');
+    document.getElementById('modal-btn-confirm').classList.add('hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    
+    // 이벤트 리스너 중복 방지: 새 함수 할당
+    const btn = modal.querySelector('#modal-btn-alert button');
+    btn.onclick = function() {
+        closeModal('common-modal'); 
+        if(callback) callback();
+    };
+};
+
+window.showConfirm = function(msg, yesCallback, noCallback) {
+    const modal = document.getElementById('common-modal');
+    document.getElementById('modal-title').innerText = "확인";
+    document.getElementById('modal-text').innerHTML = msg; 
+    document.getElementById('modal-btn-alert').classList.add('hidden');
+    document.getElementById('modal-btn-confirm').classList.remove('hidden');
+    modal.classList.remove('hidden');
+    modal.classList.add('active');
+    
+    document.getElementById('btn-confirm-yes').onclick = function() { closeModal('common-modal'); if(yesCallback) yesCallback(); };
+    document.getElementById('btn-confirm-no').onclick = function() { closeModal('common-modal'); if(noCallback) noCallback(); };
+};
+
 window.player = player;
 window.getDragonStarLevel = getDragonStarLevel; 
 window.gainExp = gainExp;
@@ -245,3 +330,4 @@ window.useItem = useItem;
 window.equipItem = equipItem;
 window.unequipItem = unequipItem;
 window.calculateTotalCombatPower = calculateTotalCombatPower;
+window.renderInventory = renderInventory;
