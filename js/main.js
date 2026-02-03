@@ -317,7 +317,7 @@ function showDragonDetailModal(dragonId, info) {
                     ${slidesHtml}
                 </div>
             </div>
-            <div style="text-align:left; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
+            <div style="text-align:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
                 ${info.desc}
             </div>
         </div>
