@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (수정됨: 장비 인벤토리 필터링)
+// js/player.js
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -13,7 +13,7 @@ const INITIAL_PLAYER_STATE = {
     discovered: ["fire_c1"], 
     maxStages: { "fire_c1": 0 }, 
     dragonCounts: { "fire_c1": 1 }, 
-    nestLevel: 0, nickname: "Guest", exploreState: null 
+    nestLevel: 0, nickname: "Guest" 
 };
 
 let player = JSON.parse(JSON.stringify(INITIAL_PLAYER_STATE));
@@ -41,22 +41,6 @@ function getDragonStarLevel(dragonId) {
     if (count >= 3) return 2;
     if (count >= 2) return 1;
     return 0;
-}
-
-// 전투력 계산 (장비 + 드래곤 합산)
-function calculateTotalCombatPower() {
-    let equipmentPower = player.stats.atk + player.stats.def; 
-    const rarityMultipliers = { "common": 1, "rare": 1.5, "heroic": 2, "epic": 3, "legend": 5 };
-    
-    let dragonPower = 0;
-    player.myDragons.forEach(dragon => {
-        const mult = rarityMultipliers[dragon.rarity] || 1;
-        if (dragon.stage > 0) {
-            dragonPower += (dragon.stage * 10) * mult;
-        }
-    });
-
-    return Math.floor(equipmentPower + dragonPower);
 }
 
 function updateCurrency() {
@@ -143,11 +127,12 @@ function useItem(itemId) {
             `<div style="text-align:center"><img src="${item.img}" style="width:64px;" onerror="handleImgError(this)"><br><b>${item.name}</b>을(를) 둥지에 놓겠습니까?</div>`, 
             () => {
                 player.inventory[itemId]--; 
+                // 신비한 알인지 확인
                 const isShiny = (itemId === 'egg_shiny');
-                if(window.hatchEggInternal) {
-                    window.hatchEggInternal(isShiny, item.dragonType || null);
-                    if(window.switchTab) window.switchTab('dragon');
-                }
+                // 드래곤 타입 전달 (랜덤 알이면 'random', 속성 알이면 'fire' 등)
+                window.hatchEggInternal(isShiny, item.dragonType);
+                
+                if(window.switchTab) window.switchTab('dragon');
                 if(window.updateUI) window.updateUI();
                 showAlert("둥지에 알을 놓았습니다!", () => { isProcessing = false; });
             },
@@ -173,7 +158,6 @@ function useItem(itemId) {
     }
 }
 
-// [수정] '내 정보' 탭의 인벤토리: 장비(equip)만 표시
 function renderInventory() {
     const grid = document.getElementById('inventory-grid');
     if(!grid) return;
@@ -183,7 +167,6 @@ function renderInventory() {
         Object.keys(player.inventory).forEach(id => {
             if(player.inventory[id] > 0) {
                 const item = ITEM_DB[id];
-                // 장비 타입만 필터링
                 if(item && item.type === 'equip') {
                     const div = document.createElement('div');
                     div.className = 'inven-slot';
@@ -197,7 +180,6 @@ function renderInventory() {
             }
         });
     }
-
     updateEquipSlots();
     recalcStats();
 }
@@ -208,10 +190,8 @@ function updateEquipSlots() {
         const displayId = `equip-display-${slot}`;
         const container = document.getElementById(displayId);
         if(!container) return;
-
         container.innerHTML = ""; 
         const itemId = player.equipment[slot];
-        
         if(itemId && ITEM_DB[itemId]) {
             const img = document.createElement('img');
             img.src = ITEM_DB[itemId].img;
@@ -270,9 +250,6 @@ function loadGame() {
             if(!player.currentDragonUId && player.myDragons.length > 0) {
                 player.currentDragonUId = player.myDragons[0].uId;
             }
-
-            if(typeof player.exp === 'undefined') player.exp = 0;
-            if(!player.maxExp) player.maxExp = 100;
             if(player.nickname && typeof userNickname !== 'undefined') { userNickname = player.nickname; }
         } catch(e) {
             console.error("세이브 파일 손상, 초기화합니다.", e);
@@ -281,7 +258,6 @@ function loadGame() {
     }
 }
 
-// [수정] 모달 닫기 기능 (ID 지정 가능)
 window.closeModal = function(modalId = 'common-modal') {
     const m = document.getElementById(modalId);
     if(m) {
@@ -299,7 +275,6 @@ window.showAlert = function(msg, callback) {
     modal.classList.remove('hidden');
     modal.classList.add('active');
     
-    // 이벤트 리스너 중복 방지: 새 함수 할당
     const btn = modal.querySelector('#modal-btn-alert button');
     btn.onclick = function() {
         closeModal('common-modal'); 
@@ -320,6 +295,84 @@ window.showConfirm = function(msg, yesCallback, noCallback) {
     document.getElementById('btn-confirm-no').onclick = function() { closeModal('common-modal'); if(noCallback) noCallback(); };
 };
 
+// [수정] 부화 로직 개선
+function hatchEggInternal(isShinyEgg = false, targetType = null) {
+    const lv = player.level || 1;
+    const bonusProb = lv * 0.05; 
+
+    // 확률 설정
+    let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); 
+    let pEpic = RARITY_DATA.epic.prob + bonusProb;
+    let pHeroic = RARITY_DATA.heroic.prob;
+    
+    if(isShinyEgg) { pLegend += 5; pEpic += 10; pHeroic += 25; } // 신비한 알 보정
+
+    const rand = Math.random() * 100;
+    let rarity = 'common';
+
+    if (rand < pLegend) rarity = 'legend';
+    else if (rand < pLegend + pEpic) rarity = 'epic';
+    else if (rand < pLegend + pEpic + pHeroic) rarity = 'heroic';
+    else if (rand < pLegend + pEpic + pHeroic + RARITY_DATA.rare.prob) rarity = 'rare';
+    else rarity = 'common';
+
+    // 해당 rarity의 드래곤 찾기
+    let candidates = [];
+    if(typeof DRAGON_DEX !== 'undefined') {
+        for (const key in DRAGON_DEX) {
+            const dragon = DRAGON_DEX[key];
+            if (dragon.rarity === rarity) {
+                // targetType이 지정되어 있고(random이 아니면), 타입 일치 여부 확인
+                if (targetType && targetType !== 'random') {
+                    if (dragon.type === targetType) candidates.push({ ...dragon, id: key });
+                } else {
+                    candidates.push({ ...dragon, id: key });
+                }
+            }
+        }
+    }
+
+    // 만약 해당 rarity에 후보가 없다면 (예: 해당 속성의 전설이 아직 데이터에 없음)
+    // rarity를 낮춰서라도 찾도록 fallback
+    if (candidates.length === 0) {
+        for (const key in DRAGON_DEX) {
+            if (targetType && targetType !== 'random') {
+                if (DRAGON_DEX[key].type === targetType) candidates.push({ ...DRAGON_DEX[key], id: key });
+            } else {
+                candidates.push({ ...DRAGON_DEX[key], id: key });
+            }
+        }
+    }
+    
+    // 그래도 없으면 불도마뱀 (안전장치)
+    if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
+    
+    const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
+    // 이로치 확률
+    const isShiny = Math.random() < (isShinyEgg ? 0.3 : 0.05); // 신비한 알은 이로치 확률 대폭 증가
+
+    const newDragon = {
+        uId: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), 
+        id: resultDragon.id,
+        type: resultDragon.type,
+        isShiny: isShiny,
+        rarity: resultDragon.rarity,
+        stage: 0, 
+        clicks: 0, 
+        name: resultDragon.name 
+    };
+
+    player.myDragons.push(newDragon);
+    player.currentDragonUId = newDragon.uId;
+
+    if(!player.maxStages) player.maxStages = {};
+    if(typeof player.maxStages[resultDragon.id] === 'undefined') {
+        player.maxStages[resultDragon.id] = 0;
+    }
+
+    if(window.saveGame) window.saveGame();
+}
+
 window.player = player;
 window.getDragonStarLevel = getDragonStarLevel; 
 window.gainExp = gainExp;
@@ -329,5 +382,5 @@ window.addItem = addItem;
 window.useItem = useItem;
 window.equipItem = equipItem;
 window.unequipItem = unequipItem;
-window.calculateTotalCombatPower = calculateTotalCombatPower;
 window.renderInventory = renderInventory;
+window.hatchEggInternal = hatchEggInternal;
