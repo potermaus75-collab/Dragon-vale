@@ -32,21 +32,32 @@ body, html {
     text-align: center; padding: 25px;
     z-index: 9100;
 }
-/* [수정] 도감 상세 전용 세로형 패널 스타일 */
+
+/* [수정] 도감 상세 창 (세로형) 스타일 개선 */
 .panel-vertical {
     background-image: url('../assets/images/ui/panel_vertical.png') !important;
-    min-height: 400px; /* 세로로 긴 이미지 비율에 맞춤 */
-    padding-top: 40px;
-    padding-bottom: 40px;
-    justify-content: flex-start; /* 내용물을 위에서부터 배치 */
+    min-height: 440px; 
+    padding: 40px 30px; 
+    justify-content: flex-start; /* 위에서부터 배치 */
+    color: #4a3b2a; /* 기본 글씨: 진한 갈색 (가독성 확보) */
+}
+/* 도감 창 내부 텍스트 강제 색상 지정 */
+.panel-vertical p, .panel-vertical div {
+    color: #4a3b2a !important;
+    text-shadow: none !important;
+    font-weight: bold;
+}
+/* 도감 창 타이틀(이름): 등급 색상은 유지하되 가독성을 위해 검은 테두리 추가 */
+.panel-vertical h2 {
+    text-shadow: 2px 0 0 #000, -2px 0 0 #000, 0 2px 0 #000, 0 -2px 0 #000, 
+                 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000 !important;
 }
 
 .panel-battle-victory { background-image: url('../assets/images/ui_new/ui_popup_victory.png') !important; }
 .panel-battle-defeat { background-image: url('../assets/images/ui_new/ui_popup_defeat.png') !important; }
-
 #battle-result-title, #battle-result-msg, #battle-rewards, #battle-result-img { display: none !important; }
 
-/* === UI 바 (게이지) === */
+/* === UI 바 === */
 .ui-bar-frame {
     position: relative; display: flex; justify-content: flex-start; align-items: center;
     background-repeat: no-repeat; background-position: center; background-size: 100% 100%;
@@ -73,40 +84,37 @@ body, html {
 .blink { animation: blinker 1.5s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 
-/* 버튼 및 입력창 */
 #input-nickname { width: 220px; height: 40px; background: url('../assets/images/ui_new/ui_input_field.png') no-repeat center; background-size: 100% 100%; border: none; color: #fff; text-align: center; font-size: 1rem; outline: none; }
-.btn-stone { width: 120px; height: 45px; background: url('../assets/images/ui_new/ui_btn_default.png') no-repeat center !important; background-size: 100% 100% !important; border: none !important; color: #fff; cursor: pointer; font-weight: bold; font-size: 0.95rem; text-shadow: 1px 1px 1px #000; display: flex; justify-content: center; align-items: center; }
+
+.btn-stone { 
+    width: 120px; height: 45px; 
+    background: url('../assets/images/ui_new/ui_btn-default.png') no-repeat center !important; 
+    background-size: 100% 100% !important; border: none !important; color: #fff; cursor: pointer; font-weight: bold; font-size: 0.95rem; text-shadow: 1px 1px 1px #000; display: flex; justify-content: center; align-items: center; 
+}
 .btn-stone:active { transform: scale(0.95); }
 
 /* === 게임 뷰 === */
 #game-view { position: absolute; top: 0; width: 384px; height: 618px; overflow: hidden; }
-
-/* 탭 공통 및 개별 스타일 (기존 유지) */
 #tab-dragon { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 .abs-header-area { position: absolute; top: 5px; left: 0; width: 384px; height: 45px; background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; background-size: 100% 100%; z-index: 20; }
 .currency-slot { position: absolute; top: 12px; font-size: 0.75rem; font-weight: bold; color: #fff; text-shadow: 1px 1px 2px #000; width: 80px; text-align: center; }
 .gold-slot { left: 173px; } .gem-slot { right: 35px; } 
-
 .abs-sidebar-left { position: absolute; top: 55px; left: 2px; width: 85px; height: 350px; background: url('../assets/images/ui_new/frame_sidebar.png') no-repeat left top; background-size: 100% 100%; z-index: 10; display: flex; flex-direction: column; align-items: center; }
 .sidebar-header-text { margin-top: 12px; font-size: 0.75rem; color: #aaa; font-weight: bold; }
 .sidebar-list-content { margin-top: 25px; width: 45px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .sidebar-list-content::-webkit-scrollbar { display: none; }
-
 .abs-dragon-name { position: absolute; top: 60px; left: 160px; width: 190px; height: 75px; background: url('../assets/images/ui_new/frame_title.png') no-repeat center center; background-size: contain; display: flex; justify-content: center; align-items: center; color: #00e5ff; font-weight: bold; font-size: 0.85rem; padding-bottom: 0px; z-index: 5; }
 .abs-dragon-visual { position: absolute; top: 65px; left: 130px; width: 240px; height: 333px; background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%; display: flex; justify-content: center; align-items: flex-end; z-index: 1; }
 .abs-dragon-visual img { width: 120px; height: 120px; object-fit: contain; margin-bottom: 60px; filter: drop-shadow(0 0 10px rgba(0,255,255,0.4)); }
-
 .abs-center-controls { position: absolute; top: 125px; left: 170px; width: 200px; height: 40px; display: flex; align-items: center; gap: 5px; z-index: 10; }
 .gauge-text { position: absolute; width: 100%; text-align: center; z-index: 2; font-size: 0.65rem; color: #eee; text-shadow: 1px 1px 1px #000; }
 .btn-touch-img { width: 50px; height: 50px; background: url('../assets/images/ui_new/btn_touch.png') no-repeat center; background-size: contain; border: none; cursor: pointer; } 
-
 .abs-bottom-panel { position: absolute; bottom: 130px; left: 12px; width: 360px; height: 120px; background: url('../assets/images/ui_new/frame_upgrade.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; z-index: 20; }
 .panel-label { position: absolute; top: 18px; left: 140px; font-size: 0.8rem; color: #00e5ff; font-weight: bold; background: #1a1025; padding: 0 5px; }
 .panel-content-row { width: 330px; height: 130px; display: flex; align-items: center; justify-content: flex-start; padding-top: 5px; padding-left: 0px; }
 .material-scroll-row { display: flex; gap: 8px; overflow-x: auto; width: 100%; justify-content: flex-start; }
 .material-scroll-row::-webkit-scrollbar { display: none; }
 
-/* 내 정보 탭 */
 #tab-info { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: cover; }
 .abs-stat-board { position: absolute; top: 100px; left: 215px; display: flex; flex-direction: column; gap: 5px; z-index: 10; }
 .stat-row { width: 110px; height: 32px; background: url('../assets/images/ui_new/ui_stat_panel.png') no-repeat center; background-size: 100% 100%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.85rem; border: none; }
@@ -126,7 +134,6 @@ body, html {
 .inven-slot { width: 62px; height: 62px; background: url('../assets/images/ui_new/slot_inven_bg.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer; }
 .inven-slot img { max-width: 85%; max-height: 85%; object-fit: contain; }
 
-/* 탐험 탭 */
 #tab-explore { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 .abs-full-layer { position: absolute; width: 384px; height: 618px; top: 0; left: 0; }
 .abs-map-board { position: absolute; top: 130px; left: 32px; width: 320px; height: 320px; background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: contain; }
@@ -157,7 +164,6 @@ body, html {
 .battle-log-box { position: absolute; bottom: 100px; left: 22px; width: 340px; height: 80px; background: url('../assets/images/ui_new/ui_battle_log_bg.png') no-repeat center; background-size: 100% 100%; border: none; padding: 10px 15px; font-size: 0.8rem; overflow-y: auto; color: #ddd; }
 .battle-controls { position: absolute; bottom: 30px; left: 0; width: 384px; display: flex; justify-content: center; gap: 20px; }
 
-/* 도감 탭 */
 #tab-book { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 .abs-book-title { position: absolute; top: 30px; left: 102px; width: 180px; height: 45px; background: url('../assets/images/ui_new/frame_book_title.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; }
 .book-header-text { font-size: 1.1rem; font-weight: bold; color: #f1c40f; text-shadow: 1px 1px 2px #000; margin-bottom: 2px; }
@@ -172,7 +178,6 @@ body, html {
 .book-slot-item img { width: 75%; height: 75%; object-fit: contain; }
 .book-slot-item.unknown img { opacity: 0.6; }
 
-/* 상점 탭 */
 #tab-shop { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 .abs-shop-title { position: absolute; top: 30px; left: 102px; width: 180px; height: 45px; background: url('../assets/images/ui/panel_title.png') no-repeat center center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; }
 .abs-shop-title h3 { margin: 0; color: #f1c40f; text-shadow: 1px 1px 2px #000; }
@@ -181,29 +186,35 @@ body, html {
 .shop-item .item-img-lg { width: 50px; height: 50px; object-fit: contain; margin-right: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; }
 .currency-icon { width: 14px; height: 14px; vertical-align: middle; }
 
-/* 네비게이션 */
 .new-bottom-nav { position: absolute; bottom: 0; left: 0; width: 384px; height: 80px; background: url('../assets/images/ui_new/frame_nav.png') no-repeat center bottom; background-size: 100% 100%; display: flex; justify-content: space-around; align-items: center; z-index: 100; padding-bottom: 10px; }
 .nav-item { background: none; border: none; width: 45px; height: 45px; cursor: pointer; }
 .nav-item img { width: 100%; height: 135%; object-fit: contain; }
 
-/* 공통 기타 */
 .new-slot-item { width: 45px; height: 45px; flex-shrink: 0; background: url('../assets/images/ui_new/slot_box_default.png') no-repeat center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer;}
 .new-slot-item.active { background-image: url('../assets/images/ui_new/slot_box_active.png'); }
 .new-slot-item img { width: 70%; height: 70%; object-fit: contain; }
 .count-badge { position: absolute; bottom: 1px; right: 3px; font-size: 0.6rem; color: #fff; text-shadow: 1px 1px 1px #000; }
 
-/* 도감 슬라이더 */
+/* [수정] 도감 슬라이더 스타일 */
 .detail-slider-container { 
-    width: 200px; height: 120px; margin: 10px auto;
+    width: 220px; height: 140px; margin: 10px auto;
     overflow-x: auto; overflow-y: hidden;
-    position: relative; background: rgba(0,0,0,0.2); border-radius: 10px; border: 2px solid rgba(255,255,255,0.1);
-    scroll-snap-type: x mandatory; display: flex;
+    position: relative; 
+    background: rgba(0,0,0,0.1); /* 미세한 배경 추가 */
+    border-radius: 10px; 
+    border: 2px solid rgba(139, 69, 19, 0.3); /* 갈색 테두리 */
+    display: flex; /* 자식 요소들을 가로로 배치 */
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none; 
 }
 .detail-slider-container::-webkit-scrollbar { display: none; }
+
 .detail-stage-view { 
-    min-width: 100%; width: 100%; height: 100%; flex-shrink: 0; 
+    min-width: 100%; /* 부모(컨테이너)의 100% 너비 */
+    height: 100%; 
+    flex-shrink: 0; 
     display: flex; flex-direction: column; align-items: center; justify-content: center; 
     scroll-snap-align: center; 
 }
 .detail-img-large { width: 90px; height: 90px; object-fit: contain; filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
-.stage-label { font-size: 0.75rem; color: #ddd; margin-top: 5px; }
+.stage-label { font-size: 0.75rem; color: #4a3b2a !important; margin-top: 5px; font-weight: bold; }
