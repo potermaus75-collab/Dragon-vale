@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (완전판: 전투 & 탐험 시스템)
+// js/explore.js (완전판: 전투 & 탐험)
 // ==========================================
 
 window.isExploreActive = false;
@@ -9,10 +9,10 @@ let currentRegionId = -1;
 let movesLeft = 0;
 let tempLoot = [];
 
-// 전투 관련 변수
-let battleMyDragon = null; // 실제 객체 참조
+// 전투 변수
+let battleMyDragon = null; 
 let battleStats = { myHp: 0, myMaxHp: 0, myAtk: 0, enHp: 0, enMaxHp: 0, enAtk: 0 };
-let currentEnemy = null;   // { name, hp, atk, img, isBoss, dropEggId }
+let currentEnemy = null;   
 
 window.initExploreTab = function() {
     renderMap();
@@ -340,58 +340,56 @@ window.battleFlee = function() {
 
 function winBattle() {
     window.inBattle = false;
-    let rewardsHtml = "";
     
+    // 보상 로직은 그대로 수행하되 UI에는 표시 안 함
     if (currentEnemy.isBoss) {
         addTempLoot('gem', 10);
-        rewardsHtml += `<div style="color:#3498db">보석 +10</div>`;
-
         if (Math.random() < 0.5) {
             addTempLoot(currentEnemy.dropEggId, 1);
-            rewardsHtml += `<div style="color:#f1c40f">알 획득!</div>`;
         }
     } else {
         const gold = Math.floor(Math.random() * 20) + 10;
         addTempLoot('gold', gold);
-        rewardsHtml += `<div style="color:#f1c40f">골드 +${gold}</div>`;
     }
 
     if(window.gainExp) window.gainExp(10); 
-    showBattleResult("VICTORY", currentEnemy.img, "승리했습니다!", rewardsHtml);
+    
+    // [수정] 텍스트 없이 이미지만 표시
+    showBattleResult("VICTORY");
 }
 
 function loseBattle() {
     window.inBattle = false;
-    showBattleResult("DEFEAT", "assets/images/ui/icon_alert.png", "쓰러졌습니다...<br>탐험을 중단하고 복귀합니다.", "");
-    tempLoot = []; 
+    tempLoot = []; // 패배 시 전리품 소실
+    showBattleResult("DEFEAT");
 }
 
-function showBattleResult(title, img, msg, rewards) {
+// [수정] 전투 결과 팝업: 텍스트/이미지 아이콘 등을 제거하고 배경 이미지만 교체
+function showBattleResult(type) {
     const modal = document.getElementById('battle-result-modal');
     const panel = modal.querySelector('.panel-box'); 
 
-    // [신규 로직] 결과에 따라 팝업 배경 클래스 토글
+    // 기존 클래스 제거
     panel.classList.remove('panel-battle-victory', 'panel-battle-defeat');
     
-    if (title === "VICTORY") {
+    if (type === "VICTORY") {
         panel.classList.add('panel-battle-victory');
-        document.getElementById('battle-result-title').style.color = "#f1c40f"; 
     } else {
         panel.classList.add('panel-battle-defeat');
-        document.getElementById('battle-result-title').style.color = "#888"; 
     }
 
-    document.getElementById('battle-result-title').innerText = title;
-    document.getElementById('battle-result-img').src = img;
-    document.getElementById('battle-result-msg').innerHTML = msg;
-    document.getElementById('battle-rewards').innerHTML = rewards;
+    // 텍스트 및 보상 내용 숨기기 (CSS로도 처리하지만 확실하게)
+    document.getElementById('battle-result-title').style.display = 'none';
+    document.getElementById('battle-result-img').style.display = 'none';
+    document.getElementById('battle-result-msg').style.display = 'none';
+    document.getElementById('battle-rewards').style.display = 'none';
     
     modal.classList.remove('hidden');
     
     const btn = modal.querySelector('button');
     btn.onclick = () => {
         closeBattleResult();
-        if (title === "VICTORY") {
+        if (type === "VICTORY") {
             endBattle(true);
         } else {
             toggleExploreView('map');
