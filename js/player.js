@@ -1,5 +1,5 @@
 // ==========================================
-// js/player.js (완전판)
+// js/player.js (최종 수정: 문법 오류 해결)
 // ==========================================
 
 const INITIAL_PLAYER_STATE = {
@@ -330,17 +330,15 @@ window.showConfirm = function(msg, yesCallback, noCallback) {
     document.getElementById('btn-confirm-no').onclick = function() { closeModal('common-modal'); if(noCallback) noCallback(); };
 };
 
-// [수정] 알 부화 로직 (확률 수정 및 대상 필터링 강화)
+// [수정] 알 부화 로직
 function hatchEggInternal(isShinyEgg = false, targetType = null) {
     const lv = player.level || 1;
     const bonusProb = lv * 0.05; 
 
-    // 등급 확률 설정 (레벨 비례)
     let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); 
     let pEpic = RARITY_DATA.epic.prob + bonusProb;
     let pHeroic = RARITY_DATA.heroic.prob;
     
-    // 신비한 알일 경우 고등급 확률 증가
     if(isShinyEgg) { pLegend += 5; pEpic += 10; pHeroic += 25; }
 
     const rand = Math.random() * 100;
@@ -352,13 +350,11 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     else if (rand < pLegend + pEpic + pHeroic + RARITY_DATA.rare.prob) rarity = 'rare';
     else rarity = 'common';
 
-    // 해당 조건(rarity, type)에 맞는 드래곤 후보군 검색
     let candidates = [];
     if(typeof DRAGON_DEX !== 'undefined') {
         for (const key in DRAGON_DEX) {
             const dragon = DRAGON_DEX[key];
             if (dragon.rarity === rarity) {
-                // targetType이 'random'이 아니고 지정되어 있다면 타입 필터링
                 if (targetType && targetType !== 'random') {
                     if (dragon.type === targetType) candidates.push({ ...dragon, id: key });
                 } else {
@@ -368,8 +364,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
 
-    // 만약 후보군이 없으면 (예: 해당 속성의 전설 등급이 없을 경우)
-    // rarity 조건을 무시하고 타입만 맞춰서 다시 검색
     if (candidates.length === 0) {
         for (const key in DRAGON_DEX) {
             const dragon = DRAGON_DEX[key];
@@ -381,22 +375,17 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
         }
     }
     
-    // 그래도 후보군이 없으면 기본 드래곤(불도마뱀) 추가 (안전장치)
     if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
     
-    // 최종 드래곤 선택
     const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
-    
-    // 이로치(Shiny) 확률 적용
-    // 신비한 알은 이로치 확률 30%, 일반 알은 5%
     const isShiny = Math.random() < (isShinyEgg ? 0.3 : 0.05);
 
     const newDragon = {
-        uId: Date.now().toString(36) + Math.random().toString(36).substr(2, 5), // 고유 ID 생성
+        uId: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
         id: resultDragon.id,
         type: resultDragon.type,
         isShiny: isShiny,
-        rarity: resultDragon.rarity, // 실제 뽑힌 드래곤의 등급 적용
+        rarity: resultDragon.rarity,
         stage: 0, 
         clicks: 0, 
         name: resultDragon.name 
@@ -414,7 +403,6 @@ function hatchEggInternal(isShinyEgg = false, targetType = null) {
     if(window.saveGame) window.saveGame();
 }
 
-// 전역 변수 노출
 window.player = player;
 window.getDragonStarLevel = getDragonStarLevel; 
 window.gainExp = gainExp;
