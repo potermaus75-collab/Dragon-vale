@@ -1,5 +1,5 @@
 // ==========================================
-// js/explore.js (완전 개편: 전투 & 탐험 시스템)
+// js/explore.js (수정됨: 팝업 이미지 동적 변경)
 // ==========================================
 
 window.isExploreActive = false;
@@ -64,7 +64,6 @@ function selectRegion(id, element) {
     }
 }
 
-// [요청사항 3] 탐험 시 현재 동굴의 드래곤을 데려감
 function enterSelectedRegion() {
     if (window.isExploreActive) return;
     if (currentRegionId === -1) { showAlert("지역을 선택하세요."); return; }
@@ -74,7 +73,6 @@ function enterSelectedRegion() {
         showAlert("함께할 드래곤이 없습니다.\n동굴에서 드래곤을 선택해주세요.");
         return;
     }
-    // 알 상태면 탐험 불가
     if (myDragon.stage === 0) {
         showAlert("알 상태로는 탐험할 수 없습니다.\n부화시킨 후 시도하세요.");
         return;
@@ -90,7 +88,6 @@ function startExplore(regionId, myDragon) {
     window.isExploreActive = true;
     window.inBattle = false;
 
-    // 내 드래곤 스탯 계산 (getDragonStats 함수는 dragon.js에 추가됨)
     const stats = window.getDragonStats ? window.getDragonStats(myDragon) : { maxHp: 100, atk: 10 };
     battleStats.myMaxHp = stats.maxHp;
     battleStats.myHp = stats.maxHp;
@@ -135,7 +132,6 @@ function moveForward() {
 
     movesLeft--;
     
-    // 걷기 애니메이션
     const bg = document.getElementById('explore-bg');
     bg.classList.remove('walking-anim');
     void bg.offsetWidth; 
@@ -168,7 +164,6 @@ function updateMoveUI() {
     }
 }
 
-// [요청사항 3] 확률 변경: 몬스터 전투(35%), 둥지(5%)
 function processRandomEvent() {
     const roll = Math.random() * 100;
     const msgArea = document.getElementById('event-msg');
@@ -195,7 +190,6 @@ function processRandomEvent() {
 // ---- 전투 시스템 ----
 
 function encounterMonster() {
-    // 몬스터 랜덤 선택 (data.js에 MONSTER_LIST 필요)
     const list = window.MONSTER_LIST || [{ name: "슬라임", hp: 50, atk: 5 }];
     const monData = list[Math.floor(Math.random() * list.length)];
     const levelBonus = 1 + (currentRegionId * 0.2); 
@@ -211,7 +205,6 @@ function encounterMonster() {
 }
 
 function encounterParentDragon() {
-    // [요청사항 3] 부모 용 등급별 출현 확률
     const roll = Math.random() * 100;
     let rarity = 'common';
     if (roll > 99) rarity = 'legend';
@@ -294,7 +287,6 @@ function logBattle(msg) {
 window.battleAttack = function() {
     if (!window.inBattle) return;
 
-    // 플레이어 공격
     const isCrit = Math.random() < 0.1;
     let dmg = Math.floor(battleStats.myAtk * (Math.random() * 0.2 + 0.9)); 
     if (isCrit) { dmg = Math.floor(dmg * 1.5); }
@@ -308,12 +300,10 @@ window.battleAttack = function() {
         return;
     }
 
-    // 적 반격 (0.5초 딜레이)
     setTimeout(() => {
         if (!window.inBattle) return;
         let enDmg = Math.floor(battleStats.enAtk * (Math.random() * 0.2 + 0.9));
         
-        // 회피 (기본 5%)
         if (Math.random() < 0.05) {
             logBattle(`적의 공격을 회피했습니다!`);
         } else {
@@ -378,8 +368,20 @@ function loseBattle() {
 
 function showBattleResult(title, img, msg, rewards) {
     const modal = document.getElementById('battle-result-modal');
+    const panel = modal.querySelector('.panel-box'); 
+
+    // [신규 로직] 결과에 따라 팝업 배경 클래스 토글
+    panel.classList.remove('panel-battle-victory', 'panel-battle-defeat');
+    
+    if (title === "VICTORY") {
+        panel.classList.add('panel-battle-victory');
+        document.getElementById('battle-result-title').style.color = "#f1c40f"; 
+    } else {
+        panel.classList.add('panel-battle-defeat');
+        document.getElementById('battle-result-title').style.color = "#888"; 
+    }
+
     document.getElementById('battle-result-title').innerText = title;
-    document.getElementById('battle-result-title').style.color = (title === "VICTORY") ? "#f1c40f" : "#888";
     document.getElementById('battle-result-img').src = img;
     document.getElementById('battle-result-msg').innerHTML = msg;
     document.getElementById('battle-rewards').innerHTML = rewards;
@@ -418,7 +420,6 @@ function encounterNest() {
     const moveBtn = document.getElementById('btn-move');
     moveBtn.disabled = true;
 
-    // [요청사항 3] 알 훔치기 확률 대폭 축소 (10%)
     showConfirm("둥지를 발견했습니다! 알을 훔칠까요?", 
         () => {
             if (Math.random() < 0.1) {
