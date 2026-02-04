@@ -1,153 +1,108 @@
 // ==========================================
-// js/breeding.js (수정됨: uId 기반 교배)
+// js/breeding.js (완전판)
 // ==========================================
 
-let selectedParents = { 1: null, 2: null }; 
-let currentSelectingSlot = 0; 
+// 교배 슬롯 상태
+let breedingSlots = { 1: null, 2: null };
 
-function openBreedingModal() {
-    selectedParents = { 1: null, 2: null };
-    updateParentSlots();
-    
-    const listDiv = document.getElementById('breeding-select-list');
-    if(listDiv) {
-        listDiv.classList.add('hidden');
-        listDiv.innerHTML = "";
-    }
+// 교배 모달 열기
+window.openBreedingModal = function() {
+    breedingSlots = { 1: null, 2: null };
+    updateBreedingSlots();
     
     const modal = document.getElementById('breeding-modal');
     modal.classList.remove('hidden');
-    modal.classList.add('active');
-}
+    // 드래곤 선택 리스트는 처음에 숨김
+    document.getElementById('breeding-select-list').classList.add('hidden');
+};
 
-function closeBreedingModal() {
+// 교배 모달 닫기
+window.closeBreedingModal = function() {
     const modal = document.getElementById('breeding-modal');
-    modal.classList.remove('active');
     modal.classList.add('hidden');
-}
+};
 
-function updateParentSlots() {
-    for(let i=1; i<=2; i++) {
-        const slotEl = document.getElementById(`parent-slot-${i}`);
-        const pUId = selectedParents[i];
+// 부모 선택하기 (리스트 표시)
+window.selectParent = function(slotNum) {
+    const list = document.getElementById('breeding-select-list');
+    list.innerHTML = "";
+    list.classList.remove('hidden'); // 리스트 보이기
+
+    // 교배 가능한 성체(stage >= 3) 필터링
+    const adults = player.myDragons.filter(d => d.stage >= 3);
+    
+    if (adults.length === 0) {
+        list.innerHTML = "<div style='color:#888; padding:10px;'>교배 가능한 성체(성룡)가 없습니다.</div>";
+        return;
+    }
+
+    adults.forEach(dragon => {
+        // 이미 다른 슬롯에 선택된 드래곤은 제외
+        if (slotNum === 1 && breedingSlots[2] && breedingSlots[2].uId === dragon.uId) return;
+        if (slotNum === 2 && breedingSlots[1] && breedingSlots[1].uId === dragon.uId) return;
+
+        const row = document.createElement('div');
+        row.style.cssText = "display:flex; align-items:center; background:rgba(255,255,255,0.1); margin-bottom:5px; padding:5px; border-radius:5px; cursor:pointer;";
         
-        slotEl.className = "new-slot-item"; 
-        slotEl.style.border = "none"; 
-
-        const dragon = pUId ? player.myDragons.find(d => d.uId === pUId) : null;
-
-        if (dragon) {
-            let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
-            slotEl.innerHTML = `
-                <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;" 
-                onerror="handleImgError(this)">
-                <div style="position:absolute; bottom:-20px; width:100%; text-align:center; font-size:0.7rem; color:#fff; text-shadow:1px 1px 1px #000; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
-                    ${dragon.name}
-                </div>
-            `;
-            slotEl.classList.add('active');
-        } else {
-            slotEl.innerHTML = `<span style="font-size:2rem; color:#555;">+</span>`;
-            slotEl.classList.remove('active');
-        }
-    }
-}
-
-function selectParent(slotNum) {
-    currentSelectingSlot = slotNum;
-    const listDiv = document.getElementById('breeding-select-list');
-    listDiv.innerHTML = "";
-    listDiv.classList.remove('hidden');
-
-    listDiv.style.display = "grid";
-    listDiv.style.gridTemplateColumns = "repeat(4, 1fr)";
-    listDiv.style.gap = "5px";
-
-    const otherSlot = slotNum === 1 ? 2 : 1;
-    const otherUId = selectedParents[otherSlot];
-
-    let count = 0;
-    player.myDragons.forEach((dragon) => {
-        if (dragon.uId === otherUId) return;
-
-        if (dragon.stage >= 3) {
-            const div = document.createElement('div');
-            div.className = "new-slot-item"; 
-            div.style.cursor = "pointer";
-            
-            let imgSrc = window.getDragonImage(dragon.id, dragon.stage);
-            div.innerHTML = `
-                <img src="${imgSrc}" style="width:70%; height:70%; object-fit:contain;"
-                onerror="handleImgError(this)">
-            `;
-            
-            div.onclick = () => {
-                selectedParents[slotNum] = dragon.uId; 
-                updateParentSlots();
-                listDiv.classList.add('hidden');
-            };
-            listDiv.appendChild(div);
-            count++;
-        }
-    });
-
-    if (count === 0) {
-        listDiv.style.display = "block"; 
-        listDiv.innerHTML = "<p style='padding:10px; text-align:center; color:#aaa; font-size:0.8rem;'>교배 가능한 성체가 없습니다.<br>(성장기까지 키운 후 시도하세요)</p>";
-    }
-}
-
-function tryBreeding() {
-    if (!selectedParents[1] || !selectedParents[2]) {
-        showAlert("두 마리의 부모 용을 모두 선택해주세요.");
-        return;
-    }
-
-    const cost = 500;
-    if (player.gold < cost) {
-        showAlert(`골드가 부족합니다. (${cost} 골드 필요)`);
-        return;
-    }
-
-    const p1 = player.myDragons.find(d => d.uId === selectedParents[1]);
-    const p2 = player.myDragons.find(d => d.uId === selectedParents[2]);
-
-    showConfirm(
-        `[${p1.name}]와(과) [${p2.name}]을(를)<br>교배하시겠습니까?\n(소모: ${cost} 골드)`,
-        () => {
-            player.gold -= cost;
-            processBreeding(p1, p2);
-            closeBreedingModal();
-            if(window.updateUI) window.updateUI(); 
-        }
-    );
-}
-
-function processBreeding(parent1, parent2) {
-    const targetType = Math.random() < 0.5 ? parent1.type : parent2.type;
-    const eggId = `egg_${targetType}`;
-    
-    addItem(eggId, 1, true); 
-
-    const eggName = (window.EGG_TYPE_NAMES && window.EGG_TYPE_NAMES[targetType]) ? window.EGG_TYPE_NAMES[targetType] : "알";
-    const eggImgSrc = `assets/images/dragon/egg_${targetType}.png`;
-
-    let msg = `
-        <div style="text-align:center;">
-            <h3 style="color:#f1c40f; margin-bottom:10px;">교배 성공!</h3>
-            <div style="display:inline-block; padding:10px; background:rgba(255,255,255,0.1); border-radius:10px;">
-                <img src="${eggImgSrc}" style="width:80px; height:80px; object-fit:contain;"
-                     onerror="handleImgError(this)">
+        let imgSrc = window.getDragonImage ? window.getDragonImage(dragon.id, dragon.stage) : "";
+        
+        row.innerHTML = `
+            <img src="${imgSrc}" style="width:40px; height:40px; margin-right:10px; object-fit:contain;">
+            <div style="text-align:left;">
+                <div style="font-weight:bold; color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</div>
+                <div style="font-size:0.8rem; color:#aaa;">${dragon.type} 타입</div>
             </div>
-            <br><br>사랑의 결실로 <b>[${eggName}]</b>을(를)<br>얻었습니다!
-        </div>
-    `;
-    
-    if (Math.random() < 0.1) {
-        player.gem += 1;
-        msg += `<br><br><b style="color:#3498db">✨ 보너스: 보석 1개 발견! ✨</b>`;
+        `;
+        
+        // 클릭 시 슬롯에 할당하고 리스트 닫기
+        row.onclick = () => {
+            breedingSlots[slotNum] = dragon;
+            updateBreedingSlots();
+            list.classList.add('hidden'); // 리스트 즉시 닫힘
+        };
+        
+        list.appendChild(row);
+    });
+};
+
+// 슬롯 UI 업데이트
+function updateBreedingSlots() {
+    for(let i=1; i<=2; i++) {
+        const el = document.getElementById(`parent-slot-${i}`);
+        if(breedingSlots[i]) {
+            let imgSrc = window.getDragonImage(breedingSlots[i].id, breedingSlots[i].stage);
+            el.innerHTML = `<img src="${imgSrc}" style="width:100%; height:100%; object-fit:contain;">`;
+            el.classList.add('active');
+        } else {
+            el.innerHTML = `<span style="font-size:2rem; color:#555;">+</span>`;
+            el.classList.remove('active');
+        }
+    }
+}
+
+// 교배 시도
+window.tryBreeding = function() {
+    if (!breedingSlots[1] || !breedingSlots[2]) {
+        showAlert("두 마리의 드래곤을 모두 선택해주세요.");
+        return;
     }
 
-    showAlert(msg);
-    saveGame();
-}
+    const p1 = breedingSlots[1];
+    const p2 = breedingSlots[2];
+
+    showConfirm(`[${p1.name}]와(과) [${p2.name}]<br>교배하시겠습니까?`, () => {
+        // 부모의 타입 중 하나를 랜덤으로 상속
+        const types = [p1.type, p2.type];
+        const targetType = types[Math.floor(Math.random() * types.length)];
+        
+        // 알 생성 (player.js의 hatchEggInternal 활용)
+        // isShinyEgg = false, targetType 지정
+        window.hatchEggInternal(false, targetType); 
+        
+        closeBreedingModal();
+        showAlert("축하합니다!<br>사랑의 결실로 알이 생겼습니다!", () => {
+            // 알이 있는 둥지 탭으로 이동
+            if(window.switchTab) window.switchTab('dragon');
+        });
+    });
+};
