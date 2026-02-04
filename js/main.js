@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (최종 수정: 문법 오류 해결)
+// js/main.js (완전판)
 // ==========================================
 
 let userNickname = "";
@@ -14,13 +14,13 @@ const UI_ASSETS = [
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
     "assets/images/ui_new/frame_tab_bar.png",
     "assets/images/ui_new/ui_popup_common.png", 
-    "assets/images/ui_new/ui_btn-default.png", // [수정] 파일명 하이픈(-)으로 변경
+    "assets/images/ui_new/ui_btn-default.png", // [확인] 이미지명 확인
     "assets/images/ui_new/ui_input_field.png", "assets/images/ui_new/ui_loading_frame.png",
     "assets/images/ui_new/ui_loading_bar.png", "assets/images/ui_new/ui_stat_panel.png",
     "assets/images/ui_new/ui_shop_slot_bg.png", "assets/images/ui_new/ui_hp_frame.png",
     "assets/images/ui_new/ui_hp_fill.png", "assets/images/ui_new/ui_battle_log_bg.png",
     "assets/images/ui_new/ui_popup_victory.png", "assets/images/ui_new/ui_popup_defeat.png",
-    "assets/images/ui/panel_vertical.png" // 세로형 패널 추가
+    "assets/images/ui/panel_vertical.png"
 ];
 
 window.onload = function() {
@@ -45,7 +45,7 @@ function preloadImages(urls, callback) {
             if (loaded >= total) callback();
         };
         img.onerror = () => {
-            console.warn("이미지 로드 실패:", url);
+            // console.warn("이미지 로드 실패:", url); // 필요시 주석 해제
             loaded++;
             updateLoadingBar(loaded, total);
             if (loaded >= total) callback();
@@ -235,7 +235,6 @@ function renderBookGrid() {
         
         let imgSrc = "assets/images/ui/icon_question.png";
         if(isDiscovered && window.getDragonImage) {
-            // 최대 성장 단계에 맞는 이미지 가져오기
             const maxStage = player.maxStages[dragon.id] || 0;
             imgSrc = window.getDragonImage(dragon.id, maxStage); 
         }
@@ -252,7 +251,6 @@ function showBookDetail(dragon, isDiscovered) {
         return;
     }
     
-    // [UI 개선] 도감 상세 전용 로직
     const modal = document.getElementById('common-modal');
     const panel = modal.querySelector('.abs-center-panel');
     const titleObj = document.getElementById('modal-title');
@@ -260,69 +258,68 @@ function showBookDetail(dragon, isDiscovered) {
     const btnAlert = document.getElementById('modal-btn-alert');
     const btnConfirm = document.getElementById('modal-btn-confirm');
 
-    // 1. 배경 이미지 변경 (세로형 패널)
+    // 1. 도감 전용 패널 클래스 추가 (세로형 배경, 글씨 색상 등 적용)
     panel.classList.add('panel-vertical');
 
-    // 2. 타이틀 설정 (이름 & 등급별 색상)
+    // 2. 타이틀: 드래곤 이름 및 등급별 색상 (검은 테두리는 CSS에서 처리됨)
     const rarityInfo = RARITY_DATA[dragon.rarity];
     titleObj.innerText = dragon.name;
     titleObj.style.color = rarityInfo.color;
-    titleObj.style.textShadow = "1px 1px 2px #000";
 
-    // 3. 내용 구성 (이미지 -> 설명 -> 도움말)
+    // 3. 내용 구성
     const maxStage = (player.maxStages && player.maxStages[dragon.id]) ? player.maxStages[dragon.id] : 0;
     const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
     const loopLimit = isHighTier ? 4 : 3;
 
-    // 슬라이더 HTML
-    const sliderHtml = `<div class="detail-slider-container"><div class="detail-slider-track" id="detail-track"></div></div>`;
+    // [수정] 구조 단순화: inner-track 제거하고 container에 직접 items 추가
+    const sliderHtml = `<div class="detail-slider-container" id="detail-slider-view"></div>`;
 
     const content = `
-        <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:15px; width:100%;">
             ${sliderHtml}
-            <div style="text-align:center">
-                <p style="color:#ddd; font-size:0.9rem; margin:5px 0;">${dragon.desc}</p>
-                <div style="font-size:0.8rem; color:#888;">최대 성장 기록: ${getStageName(maxStage)}</div>
-                <div style="font-size:0.75rem; color:#aaa; margin-top:5px;">(좌우로 스크롤하여 확인하세요)</div>
+            <div style="text-align:center; width:100%;">
+                <p style="font-size:0.9rem; margin:5px 0; word-break:keep-all;">${dragon.desc}</p>
+                <div style="font-size:0.8rem; margin-top:10px;">최대 성장 기록: ${getStageName(maxStage)}</div>
+                <div style="font-size:0.7rem; opacity:0.7; margin-top:5px;">(좌우로 스크롤하여 확인하세요)</div>
             </div>
         </div>
     `;
 
     textObj.innerHTML = content;
 
-    // 버튼 설정
     btnAlert.classList.remove('hidden');
     btnConfirm.classList.add('hidden');
-
-    // 모달 표시
     modal.classList.remove('hidden');
     modal.classList.add('active');
 
-    // 슬라이더 이미지 생성
+    // 슬라이더 아이템 생성
     setTimeout(() => {
-        const track = document.getElementById('detail-track');
-        if(track) {
+        const container = document.getElementById('detail-slider-view');
+        if(container) {
             for(let i=0; i<=loopLimit; i++) {
                 const dDiv = document.createElement('div');
                 dDiv.className = 'detail-stage-view';
+                
+                let innerHTML = "";
                 if(i <= maxStage) {
                     const src = window.getDragonImage(dragon.id, i);
-                    dDiv.innerHTML = `<img src="${src}" class="detail-img-large"><div class="stage-label">${getStageName(i)}</div>`;
+                    innerHTML = `<img src="${src}" class="detail-img-large"><div class="stage-label">${getStageName(i)}</div>`;
                 } else {
-                    dDiv.innerHTML = `<img src="assets/images/ui/icon_question.png" style="opacity:0.3; width:64px;"><div class="stage-label">???</div>`;
+                    innerHTML = `<img src="assets/images/ui/icon_question.png" style="opacity:0.3; width:64px;"><div class="stage-label">???</div>`;
                 }
-                track.appendChild(dDiv);
+                dDiv.innerHTML = innerHTML;
+                container.appendChild(dDiv);
             }
         }
     }, 50);
 
-    // [중요] 닫기 버튼 커스텀 처리 (원상복구)
+    // 닫기 버튼: 원래 상태로 복구
     const btn = btnAlert.querySelector('button');
     btn.onclick = function() {
         closeModal('common-modal');
-        // 배경 및 스타일 초기화
         panel.classList.remove('panel-vertical');
-        titleObj.style.color = '#f1c40f'; // 기본 노란색 복구
+        titleObj.style.color = '#f1c40f'; // 기본색(노랑) 복구
+        titleObj.style.textShadow = ''; // 테두리 제거
     };
 }
 
