@@ -1,5 +1,5 @@
 // ==========================================
-// js/hatchery.js (수정됨: 동굴 인벤토리 필터링)
+// js/hatchery.js (완전판)
 // ==========================================
 
 const dragonDisplay = document.getElementById('dragon-display');
@@ -7,6 +7,7 @@ const progressBar = document.getElementById('progress-fill');
 const dragonNameUI = document.getElementById('dragon-name-ui');
 const eggListArea = document.getElementById('my-egg-list');
 
+// 둥지 탭 전체 UI 렌더링
 window.renderCaveUI = function() {
     syncBookData(); 
     renderEggList();     
@@ -14,6 +15,7 @@ window.renderCaveUI = function() {
     renderCaveInventory(); 
 };
 
+// 도감 데이터 동기화
 function syncBookData() {
     if (!player.myDragons) return;
     if (!player.discovered) player.discovered = [];
@@ -21,10 +23,12 @@ function syncBookData() {
 
     let isUpdated = false;
     player.myDragons.forEach(dragon => {
+        // 발견 처리
         if (dragon.stage > 0 && !player.discovered.includes(dragon.id)) {
             player.discovered.push(dragon.id);
             isUpdated = true;
         }
+        // 최대 성장 단계 기록
         const currentRec = player.maxStages[dragon.id] || 0;
         if (dragon.stage > currentRec) {
             player.maxStages[dragon.id] = dragon.stage;
@@ -37,6 +41,7 @@ function syncBookData() {
     }
 }
 
+// 왼쪽 알 목록 렌더링
 function renderEggList() {
     if(!eggListArea) return;
     eggListArea.innerHTML = "";
@@ -58,6 +63,7 @@ function renderEggList() {
     });
 }
 
+// 중앙 둥지 화면 렌더링
 function renderNest() {
     const dragonData = player.myDragons.find(d => d.uId === player.currentDragonUId);
     
@@ -72,6 +78,7 @@ function renderNest() {
         return;
     }
 
+    // 이름 및 별 등급 표시
     let displayName = dragonData.name;
     const starLv = window.getDragonStarLevel ? window.getDragonStarLevel(dragonData.id) : 0;
     const starStr = "★".repeat(starLv);
@@ -84,9 +91,13 @@ function renderNest() {
 
     if(dragonNameUI) dragonNameUI.innerHTML = displayName;
 
+    // 게이지 표시
     const max = DRAGON_DATA.reqClicks[dragonData.stage] || 9999;
+    
+    // [수정] 성장 한계치 설정 (에픽/전설만 4단계 고룡 가능, 나머지는 3단계 성룡이 끝)
     const isHighTier = (dragonData.rarity === 'epic' || dragonData.rarity === 'legend');
     const maxStageLimit = isHighTier ? 4 : 3; 
+    
     const isMaxLevel = dragonData.stage >= maxStageLimit;
     
     let percent = 0;
@@ -104,6 +115,7 @@ function renderNest() {
         gaugeText.innerText = isMaxLevel ? "MAX" : `${Math.floor(dragonData.clicks)} / ${max}`;
     }
 
+    // 이미지 표시
     let imgSrc = "assets/images/dragon/stage_egg.png"; 
     if (window.getDragonImage) {
         imgSrc = window.getDragonImage(dragonData.id, dragonData.stage);
@@ -114,6 +126,7 @@ function renderNest() {
         
         const imgEl = dragonDisplay.querySelector('img');
         if(dragonData.isShiny && imgEl) {
+            // 이로치(Shiny) 필터 효과
             imgEl.style.filter = "hue-rotate(150deg) brightness(1.2) drop-shadow(0 0 5px #f1c40f)";
         }
 
@@ -122,6 +135,7 @@ function renderNest() {
                 imgEl.style.cursor = "pointer";
                 imgEl.onclick = () => handleDragonClick(dragonData, imgEl);
             } else {
+                // 만렙이면 귀속/관리 버튼으로 동작
                 imgEl.style.cursor = "pointer";
                 imgEl.onclick = () => checkAndBindDragon(dragonData);
             }
@@ -129,6 +143,7 @@ function renderNest() {
     }
 }
 
+// 터치 버튼 핸들러
 window.handleTouchBtn = function() {
     const dragonData = player.myDragons.find(d => d.uId === player.currentDragonUId);
     if (!dragonData) return;
@@ -144,13 +159,16 @@ window.handleTouchBtn = function() {
     }
 };
 
+// 드래곤 클릭(성장) 로직
 function handleDragonClick(dragon, imgEl) {
     if(imgEl) {
+        // 클릭 애니메이션 리셋
         imgEl.classList.remove('click-anim');
         void imgEl.offsetWidth; 
         imgEl.classList.add('click-anim');
     }
 
+    // [수정] 성장 한계 체크 (한계에 도달하면 클릭해도 성장하지 않음)
     const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
     const maxStageLimit = isHighTier ? 4 : 3;
 
@@ -165,23 +183,27 @@ function handleDragonClick(dragon, imgEl) {
     const gaugeText = document.querySelector('.gauge-text');
     if(gaugeText) gaugeText.innerText = `${Math.floor(dragon.clicks)} / ${max}`;
 
+    // 성장 완료 시
     if (dragon.clicks >= max) {
         const oldStage = dragon.stage;
         dragon.stage++;
         dragon.clicks = 0;
         
         if (oldStage === 0 && dragon.stage === 1) {
+            // 부화
             if(!player.discovered.includes(dragon.id)) player.discovered.push(dragon.id);
             if(!player.dragonCounts) player.dragonCounts = {};
             if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
             
             showAlert(`알을 깨고 <b style="color:${RARITY_DATA[dragon.rarity].color}">${dragon.name}</b>이(가) 태어났습니다!`);
         } else if (dragon.stage >= maxStageLimit) {
+            // 최종 성장 달성
             if(!player.dragonCounts) player.dragonCounts = {};
             if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
 
             showAlert(`축하합니다!<br>[${dragon.name}]이(가) 최종 단계까지 성장했습니다!<br>(한 번 더 터치하여 관리할 수 있습니다)`);
         } else {
+            // 일반 성장
             showAlert(`축하합니다!<br>[${dragon.name}]이(가) 성장했습니다!`);
         }
 
@@ -197,8 +219,10 @@ function handleDragonClick(dragon, imgEl) {
     }
 }
 
+// 만렙 드래곤 귀속(별 등급 상승) 시스템
 function checkAndBindDragon(dragon) {
     const maxLimit = (dragon.rarity === 'epic' || dragon.rarity === 'legend') ? 4 : 3;
+    // 같은 종류의 만렙 드래곤이 존재하는지 확인
     const adultDragons = player.myDragons.filter(d => d.id === dragon.id && d.stage >= maxLimit);
     
     if (adultDragons.length > 1) {
@@ -222,6 +246,7 @@ function checkAndBindDragon(dragon) {
     }
 }
 
+// 귀속 실행
 function performBind(dragon) {
     if(!player.dragonCounts[dragon.id]) player.dragonCounts[dragon.id] = 1;
     player.dragonCounts[dragon.id]++;
@@ -229,9 +254,11 @@ function performBind(dragon) {
     const newCount = player.dragonCounts[dragon.id];
     const starLv = window.getDragonStarLevel(dragon.id);
     
+    // 현재 드래곤 삭제
     const idx = player.myDragons.findIndex(d => d.uId === dragon.uId);
     if (idx > -1) {
         player.myDragons.splice(idx, 1);
+        // 다음 드래곤 선택
         if (player.myDragons.length > 0) {
             player.currentDragonUId = player.myDragons[Math.max(0, idx - 1)].uId;
         } else {
@@ -255,7 +282,7 @@ function performBind(dragon) {
     );
 }
 
-// [수정] 동굴 인벤토리: 장비 제외하고 표시
+// 동굴 인벤토리 렌더링 (장비 제외)
 function renderCaveInventory() {
     const grid = document.getElementById('cave-inventory-grid');
     if(!grid) return;
@@ -281,79 +308,3 @@ function renderCaveInventory() {
         }
     });
 }
-
-function generateUID() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-
-function hatchEggInternal(isShinyEgg = false, targetType = null) {
-    const lv = player.level || 1;
-    const bonusProb = lv * 0.05; 
-
-    let pLegend = RARITY_DATA.legend.prob + (bonusProb * 0.5); 
-    let pEpic = RARITY_DATA.epic.prob + bonusProb;
-    let pHeroic = RARITY_DATA.heroic.prob;
-    let pRare = RARITY_DATA.rare.prob;
-    
-    if(isShinyEgg) { pLegend += 2; pEpic += 5; pHeroic += 20; }
-
-    const rand = Math.random() * 100;
-    let rarity = 'common';
-
-    if (rand < pLegend) rarity = 'legend';
-    else if (rand < pLegend + pEpic) rarity = 'epic';
-    else if (rand < pLegend + pEpic + pHeroic) rarity = 'heroic';
-    else if (rand < pLegend + pEpic + pHeroic + pRare) rarity = 'rare';
-    else rarity = 'common';
-
-    const candidates = [];
-    if(typeof DRAGON_DEX !== 'undefined') {
-        for (const key in DRAGON_DEX) {
-            const dragon = DRAGON_DEX[key];
-            if (dragon.rarity === rarity) {
-                if (targetType) {
-                    if (dragon.type === targetType) candidates.push({ ...dragon, id: key });
-                } else {
-                    candidates.push({ ...dragon, id: key });
-                }
-            }
-        }
-    }
-
-    if (candidates.length === 0 && targetType) {
-        for (const key in DRAGON_DEX) {
-            if (DRAGON_DEX[key].type === targetType) {
-                candidates.push({ ...DRAGON_DEX[key], id: key });
-                rarity = DRAGON_DEX[key].rarity; 
-                break; 
-            }
-        }
-    }
-    if (candidates.length === 0) candidates.push({ name: "불도마뱀", type: "fire", rarity: "common", desc: "기본 용", id: "fire_c1" });
-    
-    const resultDragon = candidates[Math.floor(Math.random() * candidates.length)];
-    const isShiny = Math.random() < (isShinyEgg ? 0.2 : 0.05);
-
-    const newDragon = {
-        uId: generateUID(), 
-        id: resultDragon.id,
-        type: resultDragon.type,
-        isShiny: isShiny,
-        rarity: rarity,
-        stage: 0, 
-        clicks: 0, 
-        name: resultDragon.name 
-    };
-
-    player.myDragons.push(newDragon);
-    player.currentDragonUId = newDragon.uId;
-
-    if(!player.maxStages) player.maxStages = {};
-    if(typeof player.maxStages[resultDragon.id] === 'undefined') {
-        player.maxStages[resultDragon.id] = 0;
-    }
-
-    syncBookData(); 
-    if(window.renderCaveUI) window.renderCaveUI();
-    if(window.saveGame) window.saveGame();
-}
-
-window.hatchEggInternal = hatchEggInternal;
