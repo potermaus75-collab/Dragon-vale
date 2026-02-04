@@ -1,27 +1,10 @@
 // ==========================================
-// js/main.js (수정됨: 이미지 에러 로깅 추가)
+// js/main.js (수정됨: 새 이미지 프리로드 추가)
 // ==========================================
 
-window.handleImgError = function(imgEl) {
-    // [보안/디버깅] 누락된 에셋 경로를 콘솔에 출력하여 개발자가 인지할 수 있게 함
-    console.warn(`[Image Missing] ${imgEl.getAttribute('src')}`);
-    
-    imgEl.onerror = null; 
-    imgEl.src = "assets/images/ui/icon_question.png"; 
-    imgEl.style.objectFit = "contain";
-};
+let userNickname = "";
 
-let userNickname = "Guest";
-let prologueIndex = 0;
-let currentTab = 'dragon'; 
-let currentBookPage = 0; 
-
-const BOOK_CATEGORIES = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
-const CATEGORY_ICONS = {
-    "fire": "icon_type_fire.png", "water": "icon_type_water.png", "forest": "icon_type_forest.png",
-    "electric": "icon_type_electric.png", "metal": "icon_type_metal.png", "light": "icon_type_light.png", "dark": "icon_type_dark.png"
-};
-
+// [이미지 에셋 리스트 업데이트]
 const UI_ASSETS = [
     "assets/images/ui/icon_question.png", "assets/images/ui_new/bg_cave.png",
     "assets/images/ui_new/frame_header.png", "assets/images/ui_new/frame_sidebar.png",
@@ -30,356 +13,311 @@ const UI_ASSETS = [
     "assets/images/ui_new/slot_box_default.png", "assets/images/ui_new/slot_box_active.png",
     "assets/images/ui_new/bar_bg.png", "assets/images/ui_new/bar_fill.png", "assets/images/ui_new/btn_touch.png",
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
-    "assets/images/ui_new/frame_tab_bar.png"
+    "assets/images/ui_new/frame_tab_bar.png",
+    // [신규 12종 추가]
+    "assets/images/ui_new/ui_popup_common.png", "assets/images/ui_new/ui_btn_default.png",
+    "assets/images/ui_new/ui_input_field.png", "assets/images/ui_new/ui_loading_frame.png",
+    "assets/images/ui_new/ui_loading_bar.png", "assets/images/ui_new/ui_stat_panel.png",
+    "assets/images/ui_new/ui_shop_slot_bg.png", "assets/images/ui_new/ui_hp_frame.png",
+    "assets/images/ui_new/ui_hp_fill.png", "assets/images/ui_new/ui_battle_log_bg.png",
+    "assets/images/ui_new/ui_popup_victory.png", "assets/images/ui_new/ui_popup_defeat.png"
 ];
 
-function preloadAssets() {
-    let loadedCount = 0;
-    const totalCount = UI_ASSETS.length;
-    const textEl = document.getElementById('loading-text');
-    const barEl = document.getElementById('loading-bar-fill');
-    const containerEl = document.getElementById('loading-container');
-    const startMsgEl = document.getElementById('start-msg');
-
-    if (totalCount === 0) { completeLoading(); return; }
-
-    function checkDone() {
-        loadedCount++;
-        const percent = Math.floor((loadedCount / totalCount) * 100);
-        if(textEl) textEl.innerText = `로딩 중... ${percent}%`;
-        if(barEl) barEl.style.width = `${percent}%`;
-        if (loadedCount >= totalCount) { setTimeout(completeLoading, 300); }
-    }
-
-    UI_ASSETS.forEach(src => {
-        const img = new Image();
-        img.onload = checkDone; img.onerror = checkDone; img.src = src;
+// 초기화
+window.onload = function() {
+    loadGame(); 
+    preloadImages(UI_ASSETS, () => {
+        document.getElementById('loading-text').innerText = "로딩 완료!";
+        document.getElementById('start-msg').classList.remove('hidden');
     });
+};
 
-    function completeLoading() {
-        if(textEl) textEl.innerText = "로딩 완료!";
-        setTimeout(() => {
-            if(containerEl) containerEl.classList.add('hidden'); 
-            if(startMsgEl) { startMsgEl.classList.remove('hidden'); startMsgEl.classList.add('active'); }
-        }, 200);
+function preloadImages(urls, callback) {
+    let loaded = 0;
+    const total = urls.length;
+    if (total === 0) { callback(); return; }
+
+    urls.forEach(url => {
+        const img = new Image();
+        img.src = url;
+        img.onload = () => {
+            loaded++;
+            updateLoadingBar(loaded, total);
+            if (loaded >= total) callback();
+        };
+        img.onerror = () => {
+            console.warn("이미지 로드 실패:", url);
+            loaded++;
+            updateLoadingBar(loaded, total);
+            if (loaded >= total) callback();
+        };
+    });
+}
+
+function updateLoadingBar(current, total) {
+    const fill = document.getElementById('loading-bar-fill');
+    if (fill) {
+        const percent = (current / total) * 100;
+        fill.style.width = `${percent}%`;
     }
 }
 
-window.onload = function() { preloadAssets(); };
-
-window.tryStartGame = function() {
-    const startScreen = document.getElementById('screen-start');
-    if(startScreen) startScreen.classList.add('hidden');
-    if (localStorage.getItem('dragonSaveData')) {
-        if(window.loadGame) window.loadGame();
+function tryStartGame() {
+    if(player.nickname && player.nickname !== "Guest") {
         startGame();
     } else {
+        document.getElementById('screen-start').classList.add('hidden');
         document.getElementById('screen-setup').classList.remove('hidden');
     }
-};
+}
 
 function submitName() {
     const input = document.getElementById('input-nickname');
-    if (input.value.trim() === "") return showAlert("이름을 입력해주세요!");
-    userNickname = input.value;
-    if(typeof player !== 'undefined') player.nickname = userNickname;
-    if(window.saveGame) window.saveGame();
-    document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
-    const prologue = document.getElementById('screen-prologue');
-    prologue.classList.remove('hidden'); prologue.classList.add('active');
-    renderPrologue();
+    const name = input.value.trim();
+    if (name.length < 1) { showAlert("이름을 입력해주세요."); return; }
+    
+    player.nickname = name;
+    userNickname = name;
+    saveGame(true);
+    
+    document.getElementById('screen-setup').classList.add('hidden');
+    // 프롤로그 시작
+    showPrologue();
 }
 
-function renderPrologue() {
-    const textEl = document.getElementById('prologue-text');
-    if(window.PROLOGUE_DATA) textEl.innerText = PROLOGUE_DATA[prologueIndex].text;
+// 프롤로그
+let prologueStep = 0;
+function showPrologue() {
+    document.getElementById('screen-prologue').classList.remove('hidden');
+    prologueStep = 0;
+    printPrologue();
 }
-
-function nextPrologueCut() {
-    prologueIndex++;
-    if (window.PROLOGUE_DATA && prologueIndex >= PROLOGUE_DATA.length) { startGame(); } else { renderPrologue(); }
+function printPrologue() {
+    if(prologueStep >= PROLOGUE_DATA.length) {
+        document.getElementById('screen-prologue').classList.add('hidden');
+        startGame();
+        return;
+    }
+    document.getElementById('prologue-text').innerText = PROLOGUE_DATA[prologueStep].text;
 }
+window.nextPrologueCut = function() {
+    prologueStep++;
+    printPrologue();
+};
 
 function startGame() {
-    document.querySelectorAll('.full-screen').forEach(el => el.classList.add('hidden'));
-    const gameScreen = document.getElementById('screen-game');
-    gameScreen.classList.remove('hidden'); gameScreen.classList.add('active');
-    gameScreen.style.display = "flex";
-    switchTab('dragon'); 
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('screen-setup').classList.add('hidden');
+    document.getElementById('screen-game').classList.remove('hidden');
+    
+    // UI 초기화
+    document.getElementById('ui-nickname').innerText = player.nickname;
+    updateCurrency(); 
+    switchTab('dragon');
+    window.renderCaveUI(); 
+    
+    // BGM 재생 등 (필요 시)
 }
 
 function switchTab(tabName) {
-    if (window.isExploreActive && tabName !== 'explore') { showAlert("탐험 중에는 이동할 수 없습니다."); return; }
-    currentTab = tabName; 
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.add('hidden'));
-    const selected = document.getElementById(`tab-${tabName}`);
-    if(selected) selected.classList.remove('hidden');
-    document.querySelectorAll('.nav-item').forEach(btn => btn.style.opacity = "0.5");
-    const navs = document.querySelectorAll('.nav-item');
-    const tabMap = {'info':0, 'book':1, 'dragon':2, 'explore':3, 'shop':4};
-    if(navs[tabMap[tabName]]) navs[tabMap[tabName]].style.opacity = "1";
-    updateUI();
-}
-
-window.updateUI = function() {
-    if(window.updateCurrency) updateCurrency(); 
-    if (currentTab === 'dragon' && window.renderCaveUI) window.renderCaveUI(); 
-    else if (currentTab === 'info' && typeof renderInventory === 'function') renderInventory();
-    else if (currentTab === 'shop' && typeof renderShop === 'function') renderShop();
-    else if (currentTab === 'book' && typeof renderBook === 'function') renderBook(); 
-    else if (currentTab === 'explore' && window.initExploreTab) window.initExploreTab();
-};
-
-function renderInventory() {
-    const grid = document.getElementById('inventory-grid');
-    if(!grid) return;
-    grid.innerHTML = "";
-
-    if(player.inventory) {
-        Object.keys(player.inventory).forEach(id => {
-            if(player.inventory[id] > 0) {
-                const item = ITEM_DB[id];
-                if(item) {
-                    const div = document.createElement('div');
-                    div.className = 'inven-slot';
-                    div.onclick = () => useItem(id); 
-                    div.innerHTML = `
-                        <img src="${item.img}" onerror="handleImgError(this)">
-                        <span class="item-count">${player.inventory[id]}</span>
-                    `;
-                    grid.appendChild(div);
-                }
-            }
-        });
-    }
-
-    updateEquipSlots();
-
-    // 공격력/방어력 표기 (전투력 합산 수치로 보여줄지 고민 필요, 일단 기본 스탯)
-    if(document.getElementById('stat-atk-display')) {
-        document.getElementById('stat-atk-display').innerText = player.stats.atk;
-    }
-    if(document.getElementById('stat-def-display')) {
-        document.getElementById('stat-def-display').innerText = player.stats.def;
+    const tabs = document.querySelectorAll('.tab-content');
+    tabs.forEach(t => t.classList.add('hidden'));
+    
+    document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+    
+    // 탭별 초기화 로직
+    if(tabName === 'dragon') {
+        window.renderCaveUI();
+    } else if(tabName === 'info') {
+        window.renderInventory(); 
+    } else if(tabName === 'book') {
+        initBookTab();
+    } else if(tabName === 'shop') {
+        renderShop();
+    } else if(tabName === 'explore') {
+        if(window.initExploreTab) window.initExploreTab();
     }
 }
 
-function updateEquipSlots() {
-    const slots = ['head', 'body', 'arm', 'leg'];
-    slots.forEach(slot => {
-        const displayId = `equip-display-${slot}`;
-        const container = document.getElementById(displayId);
-        if(!container) return;
-
-        container.innerHTML = ""; 
-        const itemId = player.equipment[slot];
-        
-        if(itemId && ITEM_DB[itemId]) {
-            const img = document.createElement('img');
-            img.src = ITEM_DB[itemId].img;
-            img.className = 'equipped-item-img';
-            img.onerror = function() { this.src = "assets/images/ui/icon_question.png"; };
-            container.appendChild(img);
-        }
-    });
-}
-
+// 상점
 function renderShop() {
     const list = document.getElementById('shop-list');
-    if(!list) return;
     list.innerHTML = "";
-    if (typeof SHOP_LIST === 'undefined') return;
-
+    
     SHOP_LIST.forEach(id => {
         const item = ITEM_DB[id];
         if(!item) return;
-        const costType = item.costType || 'gold';
-        const currencyIcon = costType === 'gem' ? 'assets/images/ui/icon_gem.png' : 'assets/images/ui/icon_gold.png';
-        const priceColor = costType === 'gem' ? '#3498db' : '#f1c40f'; 
         
         const div = document.createElement('div');
         div.className = 'shop-item';
+        
+        const costIcon = (item.costType === 'gem') ? 'assets/images/ui/icon_gem.png' : 'assets/images/ui/icon_gold.png';
+        const costColor = (item.costType === 'gem') ? '#3498db' : '#f1c40f';
+        
         div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
-                <img src="${item.img}" class="item-img-lg" onerror="this.src='assets/images/ui/icon_question.png'">
-                <div><b>${item.name}</b><br><small style="color:#aaa;">${item.desc}</small></div>
+            <div style="display:flex; align-items:center;">
+                <img src="${item.img}" class="item-img-lg" onerror="handleImgError(this)">
+                <div>
+                    <div style="font-weight:bold; font-size:0.9rem;">${item.name}</div>
+                    <div style="font-size:0.7rem; color:#aaa;">${item.desc}</div>
+                </div>
             </div>
-            <button class="btn-stone" style="width:90px; height:45px; font-size:0.9rem;" onclick="buyItem('${id}')">
-                <img src="${currencyIcon}" class="currency-icon"> <span style="color:${priceColor}">${item.price}</span>
+            <button class="btn-stone" style="width:80px; height:36px; font-size:0.75rem;" onclick="buyItem('${id}')">
+                <img src="${costIcon}" class="currency-icon"> ${item.price}
             </button>
         `;
         list.appendChild(div);
     });
 }
 
-function buyItem(id) {
+window.buyItem = function(id) {
     const item = ITEM_DB[id];
-    const costType = item.costType || 'gold'; 
-    const currencyName = costType === 'gem' ? '보석' : '골드';
-    const currentMoney = player[costType] || 0;
-
-    if (currentMoney >= item.price) {
-        showConfirm(`${item.name}을(를) 구매하시겠습니까?\n(가격: ${item.price} ${currencyName})`, () => {
-            if ((player[costType] || 0) < item.price) { showAlert(`${currencyName}이 부족합니다.`); return; }
-            player[costType] -= item.price;
-            addItem(id, 1);
-            updateCurrency();
-            showAlert("구매 완료!", () => { saveGame(); });
-        });
-    } else { showAlert(`${currencyName}이 부족합니다.`); }
-}
-
-function renderBook() {
-    const tabBar = document.getElementById('book-tab-bar');
-    if (tabBar) {
-        tabBar.innerHTML = "";
-        BOOK_CATEGORIES.forEach((cat, idx) => {
-            const div = document.createElement('div');
-            div.className = `tab-type-icon ${idx === currentBookPage ? 'active' : ''}`;
-            div.innerHTML = `<img src="assets/images/ui_new/${CATEGORY_ICONS[cat]}" onerror="this.src='assets/images/ui/icon_question.png'">`;
-            div.onclick = () => { currentBookPage = idx; renderBook(); };
-            tabBar.appendChild(div);
-        });
-    }
-
-    const gridArea = document.getElementById('book-grid-area');
-    if (gridArea) {
-        gridArea.innerHTML = "";
-        const currentCategory = BOOK_CATEGORIES[currentBookPage];
-        const dragonKeys = Object.keys(DRAGON_DEX).filter(key => DRAGON_DEX[key].type === currentCategory);
-        
-        dragonKeys.forEach(dragonId => {
-            const dragonInfo = DRAGON_DEX[dragonId];
-            const isFound = player.discovered && player.discovered.includes(dragonId);
-            const slot = document.createElement('div');
-            slot.className = `book-slot-item ${isFound ? '' : 'unknown'}`;
-            
-            if (isFound) {
-                const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
-                let displayImg = "assets/images/dragon/stage_egg.png";
-                if(window.getDragonImage) displayImg = window.getDragonImage(dragonId, maxStage); 
-                slot.innerHTML = `<img src="${displayImg}" onerror="handleImgError(this)">`;
-                slot.onclick = () => showDragonDetailModal(dragonId, dragonInfo);
-            } else {
-                slot.innerHTML = `<img src="assets/images/ui/icon_question.png">`;
-            }
-            gridArea.appendChild(slot);
-        });
-
-        if(dragonKeys.length === 0) {
-            gridArea.innerHTML = "<p style='grid-column:span 5; text-align:center; color:#555;'>데이터 없음</p>";
-        }
-    }
-
-    const bookContent = document.querySelector('.book-content-wrapper');
-    if(bookContent) {
-        addSwipeListener(bookContent, 
-            () => moveBookPage(1),  
-            () => moveBookPage(-1)  
-        );
-    }
-}
-
-function moveBookPage(dir) {
-    const next = currentBookPage + dir;
-    if (next >= 0 && next < BOOK_CATEGORIES.length) {
-        currentBookPage = next;
-        renderBook(); 
-    }
-}
-
-function showDragonDetailModal(dragonId, info) {
-    const maxStage = (player.maxStages && player.maxStages[dragonId] !== undefined) ? player.maxStages[dragonId] : 0;
-    const stageNames = ["알", "유아기", "성장기", "성룡", "고룡"];
-    const isHighTier = (info.rarity === 'epic' || info.rarity === 'legend');
-    const totalStages = isHighTier ? 5 : 4;
+    if(!item) return;
     
-    let slidesHtml = "";
-    for(let i=0; i < totalStages; i++) {
-        const isUnknown = i > maxStage;
-        const imgSrc = window.getDragonImage ? window.getDragonImage(dragonId, i) : "";
-        let contentHtml = "";
-        if (isUnknown) {
-            contentHtml = `<img src="${imgSrc}" class="detail-img-large" style="filter:brightness(0); opacity:0.3;" onerror="handleImgError(this)"><div class="detail-stage-name">??? (미발견)</div>`;
-        } else {
-            contentHtml = `<img src="${imgSrc}" class="detail-img-large" onerror="handleImgError(this)"><div class="detail-stage-name">${stageNames[i]}</div>`;
-        }
-        slidesHtml += `<div class="detail-stage-view">${contentHtml}</div>`;
+    if(item.costType === 'gem') {
+        if(player.gem < item.price) { showAlert("보석이 부족합니다."); return; }
+        showConfirm(`[${item.name}] 구매하시겠습니까?<br>💎 ${item.price}`, () => {
+            player.gem -= item.price;
+            addItem(id, 1);
+            showAlert("구매 완료!");
+            updateCurrency();
+        });
+    } else {
+        if(player.gold < item.price) { showAlert("골드가 부족합니다."); return; }
+        showConfirm(`[${item.name}] 구매하시겠습니까?<br>💰 ${item.price}`, () => {
+            player.gold -= item.price;
+            addItem(id, 1);
+            showAlert("구매 완료!");
+            updateCurrency();
+        });
     }
+};
 
-    const rarityColor = RARITY_DATA[info.rarity].color;
-    const modalContent = `
-        <div style="text-align:center; width:100%;">
-            <b style="font-size:1.4rem; color:${rarityColor};">${info.name}</b>
-            <br><span style="font-size:0.8rem; color:#aaa;">[${RARITY_DATA[info.rarity].name}]</span>
+// 도감
+let currentBookTab = 'fire';
+function initBookTab() {
+    const tabBar = document.getElementById('book-tab-bar');
+    tabBar.innerHTML = "";
+    
+    const types = ["fire", "water", "forest", "electric", "metal", "light", "dark"];
+    const icons = {
+        fire: "assets/images/ui_new/icon_type_fire.png",
+        water: "assets/images/ui_new/icon_type_water.png",
+        forest: "assets/images/ui_new/icon_type_forest.png",
+        electric: "assets/images/ui_new/icon_type_electric.png",
+        metal: "assets/images/ui_new/icon_type_metal.png",
+        light: "assets/images/ui_new/icon_type_light.png",
+        dark: "assets/images/ui_new/icon_type_dark.png"
+    };
+    
+    types.forEach(type => {
+        const div = document.createElement('div');
+        div.className = `tab-type-icon ${currentBookTab === type ? 'active' : ''}`;
+        div.innerHTML = `<img src="${icons[type]}">`;
+        div.onclick = () => {
+            currentBookTab = type;
+            initBookTab(); 
+        };
+        tabBar.appendChild(div);
+    });
+    
+    renderBookGrid();
+}
+
+function renderBookGrid() {
+    const grid = document.getElementById('book-grid-area');
+    grid.innerHTML = "";
+    
+    const list = [];
+    for(const key in DRAGON_DEX) {
+        if(DRAGON_DEX[key].type === currentBookTab) {
+            list.push({ id: key, ...DRAGON_DEX[key] });
+        }
+    }
+    
+    // 희귀도 정렬 (Common -> Legend)
+    const order = { "common":1, "rare":2, "heroic":3, "epic":4, "legend":5 };
+    list.sort((a,b) => order[a.rarity] - order[b.rarity]);
+    
+    list.forEach(dragon => {
+        const isDiscovered = player.discovered && player.discovered.includes(dragon.id);
+        const div = document.createElement('div');
+        div.className = `book-slot-item ${isDiscovered ? '' : 'unknown'}`;
+        
+        let imgSrc = "assets/images/ui/icon_question.png";
+        if(isDiscovered && window.getDragonImage) {
+            // 성체 이미지
+            imgSrc = window.getDragonImage(dragon.id, 3);
+        }
+        
+        div.innerHTML = `<img src="${imgSrc}" onerror="handleImgError(this)">`;
+        div.onclick = () => showBookDetail(dragon, isDiscovered);
+        grid.appendChild(div);
+    });
+}
+
+function showBookDetail(dragon, isDiscovered) {
+    if(!isDiscovered) {
+        showAlert("아직 발견하지 못한 드래곤입니다.");
+        return;
+    }
+    
+    const maxStage = (player.maxStages && player.maxStages[dragon.id]) ? player.maxStages[dragon.id] : 0;
+    const rarityInfo = RARITY_DATA[dragon.rarity];
+    
+    // 상세 정보 모달 (기존 common-modal 재활용하되 내용은 HTML로 구성)
+    const content = `
+        <div style="text-align:center">
+            <h2 style="color:${rarityInfo.color}; margin:5px 0;">${dragon.name}</h2>
+            <p style="color:#aaa; font-size:0.8rem;">[${rarityInfo.name}] ${dragon.desc}</p>
+            
             <div class="detail-slider-container">
-                <div class="detail-slider-track" id="detail-track" style="width:${totalStages * 100}%">
-                    ${slidesHtml}
-                </div>
+                <div class="detail-slider-track" id="detail-track">
+                    </div>
             </div>
-            <div style="text-align:center; background:rgba(0,0,0,0.3); padding:10px; border-radius:5px; font-size:0.9rem; margin-top:10px;">
-                ${info.desc}
-            </div>
+            <div style="font-size:0.8rem; color:#888;">최대 성장 기록: ${getStageName(maxStage)}</div>
         </div>
     `;
-    showAlert(modalContent);
+    
+    showAlert(content);
+    
+    // 모달 뜬 직후 슬라이더 구성
     setTimeout(() => {
         const track = document.getElementById('detail-track');
-        if (!track) return;
-        let currentStage = Math.min(maxStage, totalStages - 1); 
-        const updateDetailSlider = () => { track.style.transform = `translateX(-${currentStage * (100 / totalStages)}%)`; };
-        updateDetailSlider();
+        if(!track) return;
         
-        track.querySelectorAll('.detail-stage-view').forEach(v => { v.style.width = `${100 / totalStages}%`; });
+        // 0(알)~4(고룡) 까지 중 maxStage까지만 보여줄지, 전체 다 보여줄지? 
+        // -> 보통 도감은 발견한 단계까지만 보여주는 게 정석
+        for(let i=0; i<=4; i++) {
+            const dDiv = document.createElement('div');
+            dDiv.className = 'detail-stage-view';
+            if(i <= maxStage) {
+                const src = window.getDragonImage(dragon.id, i);
+                dDiv.innerHTML = `<img src="${src}" class="detail-img-large">`;
+            } else {
+                dDiv.innerHTML = `<img src="assets/images/ui/icon_question.png" style="opacity:0.3; width:64px;">`;
+            }
+            track.appendChild(dDiv);
+        }
         
-        const container = document.querySelector('.detail-slider-container');
-        addSwipeListener(container, 
-            () => { if(currentStage < totalStages - 1) { currentStage++; updateDetailSlider(); } },
-            () => { if(currentStage > 0) { currentStage--; updateDetailSlider(); } }
-        );
+        // 간단 오토 슬라이드 or 스크롤
+        track.style.overflowX = 'auto'; 
     }, 100);
 }
 
-let isSwipeCooldown = false;
-function addSwipeListener(el, onLeft, onRight) {
-    if(!el) return;
-    let startX = 0; let endX = 0;
-    el.addEventListener('touchstart', e => { startX = e.changedTouches[0].screenX; }, {passive: true});
-    el.addEventListener('touchend', e => { endX = e.changedTouches[0].screenX; if (isSwipeCooldown) return; handleGesture(); }, {passive: true});
-    function handleGesture() {
-        const threshold = 60; 
-        if (startX - endX > threshold) { if(onLeft) { onLeft(); triggerCooldown(); } }
-        else if (endX - startX > threshold) { if(onRight) { onRight(); triggerCooldown(); } }
-    }
-    function triggerCooldown() { isSwipeCooldown = true; setTimeout(() => { isSwipeCooldown = false; }, 500); }
+function getStageName(idx) {
+    const names = ["알", "유아기", "성장기", "성룡", "고룡"];
+    return names[idx] || "??";
 }
 
-window.showAlert = function(msg, callback) {
-    const modal = document.getElementById('common-modal');
-    document.getElementById('modal-title').innerText = "알림";
-    document.getElementById('modal-text').innerHTML = msg; 
-    document.getElementById('modal-btn-alert').classList.remove('hidden');
-    document.getElementById('modal-btn-confirm').classList.add('hidden');
-    modal.classList.remove('hidden');
-    modal.classList.add('active');
-    modal.querySelector('#modal-btn-alert button').onclick = function() {
-        closeModal(); if(callback) callback();
-    };
+window.handleImgError = function(img) {
+    img.onerror = null;
+    img.src = "assets/images/ui/icon_question.png";
 };
 
-window.showConfirm = function(msg, yesCallback, noCallback) {
-    const modal = document.getElementById('common-modal');
-    document.getElementById('modal-title').innerText = "확인";
-    document.getElementById('modal-text').innerHTML = msg; 
-    document.getElementById('modal-btn-alert').classList.add('hidden');
-    document.getElementById('modal-btn-confirm').classList.remove('hidden');
-    modal.classList.remove('hidden');
-    modal.classList.add('active');
-    document.getElementById('btn-confirm-yes').onclick = function() { closeModal(); if(yesCallback) yesCallback(); };
-    document.getElementById('btn-confirm-no').onclick = function() { closeModal(); if(noCallback) noCallback(); };
-};
-
-window.closeModal = function() {
-    document.getElementById('common-modal').classList.remove('active');
-    document.getElementById('common-modal').classList.add('hidden');
+window.updateUI = function() {
+    updateCurrency();
+    window.renderCaveUI();
+    window.renderInventory();
+    if(window.isExploreActive) window.updateMoveUI();
 };
