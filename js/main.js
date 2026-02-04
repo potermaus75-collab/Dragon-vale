@@ -1,10 +1,9 @@
 // ==========================================
-// js/main.js (완전판: 프리로드 & 메인 로직)
+// js/main.js (완전판)
 // ==========================================
 
 let userNickname = "";
 
-// [이미지 에셋 리스트 업데이트]
 const UI_ASSETS = [
     "assets/images/ui/icon_question.png", "assets/images/ui_new/bg_cave.png",
     "assets/images/ui_new/frame_header.png", "assets/images/ui_new/frame_sidebar.png",
@@ -14,7 +13,6 @@ const UI_ASSETS = [
     "assets/images/ui_new/bar_bg.png", "assets/images/ui_new/bar_fill.png", "assets/images/ui_new/btn_touch.png",
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
     "assets/images/ui_new/frame_tab_bar.png",
-    // [신규 12종 추가]
     "assets/images/ui_new/ui_popup_common.png", "assets/images/ui_new/ui_btn_default.png",
     "assets/images/ui_new/ui_input_field.png", "assets/images/ui_new/ui_loading_frame.png",
     "assets/images/ui_new/ui_loading_bar.png", "assets/images/ui_new/ui_stat_panel.png",
@@ -23,7 +21,6 @@ const UI_ASSETS = [
     "assets/images/ui_new/ui_popup_victory.png", "assets/images/ui_new/ui_popup_defeat.png"
 ];
 
-// 초기화
 window.onload = function() {
     loadGame(); 
     preloadImages(UI_ASSETS, () => {
@@ -81,11 +78,9 @@ function submitName() {
     saveGame(true);
     
     document.getElementById('screen-setup').classList.add('hidden');
-    // 프롤로그 시작
     showPrologue();
 }
 
-// 프롤로그
 let prologueStep = 0;
 function showPrologue() {
     document.getElementById('screen-prologue').classList.remove('hidden');
@@ -110,13 +105,10 @@ function startGame() {
     document.getElementById('screen-setup').classList.add('hidden');
     document.getElementById('screen-game').classList.remove('hidden');
     
-    // UI 초기화
     document.getElementById('ui-nickname').innerText = player.nickname;
     updateCurrency(); 
     switchTab('dragon');
     window.renderCaveUI(); 
-    
-    // BGM 재생 등 (필요 시)
 }
 
 function switchTab(tabName) {
@@ -125,7 +117,6 @@ function switchTab(tabName) {
     
     document.getElementById(`tab-${tabName}`).classList.remove('hidden');
     
-    // 탭별 초기화 로직
     if(tabName === 'dragon') {
         window.renderCaveUI();
     } else if(tabName === 'info') {
@@ -139,7 +130,6 @@ function switchTab(tabName) {
     }
 }
 
-// 상점
 function renderShop() {
     const list = document.getElementById('shop-list');
     list.innerHTML = "";
@@ -193,7 +183,6 @@ window.buyItem = function(id) {
     }
 };
 
-// 도감
 let currentBookTab = 'fire';
 function initBookTab() {
     const tabBar = document.getElementById('book-tab-bar');
@@ -235,7 +224,6 @@ function renderBookGrid() {
         }
     }
     
-    // 희귀도 정렬 (Common -> Legend)
     const order = { "common":1, "rare":2, "heroic":3, "epic":4, "legend":5 };
     list.sort((a,b) => order[a.rarity] - order[b.rarity]);
     
@@ -246,7 +234,6 @@ function renderBookGrid() {
         
         let imgSrc = "assets/images/ui/icon_question.png";
         if(isDiscovered && window.getDragonImage) {
-            // 성체 이미지
             imgSrc = window.getDragonImage(dragon.id, 3);
         }
         
@@ -265,7 +252,10 @@ function showBookDetail(dragon, isDiscovered) {
     const maxStage = (player.maxStages && player.maxStages[dragon.id]) ? player.maxStages[dragon.id] : 0;
     const rarityInfo = RARITY_DATA[dragon.rarity];
     
-    // 상세 정보 모달 (기존 common-modal 재활용하되 내용은 HTML로 구성)
+    // [수정] 도감 슬라이더: 에픽/전설만 4단계 표시, 그 외는 3단계까지만 표시
+    const isHighTier = (dragon.rarity === 'epic' || dragon.rarity === 'legend');
+    const loopLimit = isHighTier ? 4 : 3;
+
     const content = `
         <div style="text-align:center">
             <h2 style="color:${rarityInfo.color}; margin:5px 0;">${dragon.name}</h2>
@@ -281,15 +271,15 @@ function showBookDetail(dragon, isDiscovered) {
     
     showAlert(content);
     
-    // 모달 뜬 직후 슬라이더 구성
     setTimeout(() => {
         const track = document.getElementById('detail-track');
         if(!track) return;
         
-        // 0(알)~4(고룡)
-        for(let i=0; i<=4; i++) {
+        for(let i=0; i<=loopLimit; i++) {
             const dDiv = document.createElement('div');
             dDiv.className = 'detail-stage-view';
+            
+            // maxStage를 넘지 않은 단계만 이미지를 보여줌
             if(i <= maxStage) {
                 const src = window.getDragonImage(dragon.id, i);
                 dDiv.innerHTML = `<img src="${src}" class="detail-img-large">`;
@@ -299,7 +289,6 @@ function showBookDetail(dragon, isDiscovered) {
             track.appendChild(dDiv);
         }
         
-        // 간단 오토 슬라이드 or 스크롤
         track.style.overflowX = 'auto'; 
     }, 100);
 }
