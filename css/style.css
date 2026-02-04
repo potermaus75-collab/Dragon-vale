@@ -2,7 +2,6 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
 
-/* === [전체 레이아웃] === */
 body, html { 
     margin: 0; padding: 0; width: 100%; height: 100%; 
     background: #0d0814; font-family: 'Nanum Gothic', sans-serif; 
@@ -10,38 +9,23 @@ body, html {
     display: flex; justify-content: center; align-items: center; 
 }
 
-/* 게임 화면 (384x698 px 기준) */
 .full-screen { 
-    width: 384px; 
-    height: 698px; 
-    position: relative; background: #1a1025; 
-    box-shadow: 0 0 20px rgba(0,0,0,0.5); 
-    overflow: hidden; 
+    width: 384px; height: 698px; position: relative; background: #1a1025; 
+    box-shadow: 0 0 20px rgba(0,0,0,0.5); overflow: hidden; 
 }
 .hidden { display: none !important; }
 .relative-stage { position: relative; width: 384px; height: 698px; overflow: hidden; }
 
-/* === [1] 시작 화면 === */
+/* === 시작 화면 === */
 #screen-start { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
+.abs-start-title { position: absolute; top: 120px; left: 42px; width: 300px; height: 120px; text-align: center; }
+.abs-start-title h1 { font-size: 2.5rem; margin: 0; color: #f1c40f; text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; }
+.abs-start-bottom { position: absolute; bottom: 150px; left: 62px; width: 260px; height: 100px; text-align: center; }
 
-.abs-start-title {
-    position: absolute; top: 120px; left: 42px; width: 300px; height: 120px; text-align: center;
-}
-.abs-start-title h1 {
-    font-size: 2.5rem; margin: 0; color: #f1c40f; 
-    text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
-}
-
-.abs-start-bottom {
-    position: absolute; bottom: 150px; left: 62px; width: 260px; height: 100px; text-align: center;
-}
-
-/* [이미지 적용] 로딩바 */
 .loading-bar-bg { 
     width: 260px; height: 14px; margin: 0 auto;
     background: url('../assets/images/ui_new/ui_loading_frame.png') no-repeat center center; 
-    background-size: 100% 100%; 
-    padding: 2px; /* 내부 바 위치 조절 */
+    background-size: 100% 100%; padding: 2px; 
 }
 #loading-bar-fill { 
     width: 0%; height: 100%; 
@@ -53,60 +37,51 @@ body, html {
 .blink { animation: blinker 1.5s linear infinite; }
 @keyframes blinker { 50% { opacity: 0; } }
 
-/* === [공통] 팝업/패널 === */
+/* === 모달 & 팝업 === */
 .modal-overlay {
     background: rgba(0,0,0,0.8); z-index: 9000; 
     position: absolute; top:0; left:0; width: 100%; height: 100%;
 }
-
-/* [이미지 적용] 공통 팝업 배경 */
 .abs-center-panel {
-    position: absolute; 
-    top: 200px; left: 32px;
-    width: 320px; height: 250px;
+    position: absolute; top: 200px; left: 32px; width: 320px; height: 250px;
     background: url('../assets/images/ui_new/ui_popup_common.png') no-repeat center center;
     background-size: 100% 100%;
-    border: none; 
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
-    text-align: center; padding: 25px; /* 이미지 테두리 안쪽으로 내용 밀어넣기 */
+    border: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px;
+    text-align: center; padding: 25px;
 }
+.panel-battle-victory { background-image: url('../assets/images/ui_new/ui_popup_victory.png') !important; }
+.panel-battle-defeat { background-image: url('../assets/images/ui_new/ui_popup_defeat.png') !important; }
 
-/* [이미지 적용] 승리/패배 팝업 (JS에서 클래스 토글) */
-.panel-battle-victory {
-    background-image: url('../assets/images/ui_new/ui_popup_victory.png') !important;
-}
-.panel-battle-defeat {
-    background-image: url('../assets/images/ui_new/ui_popup_defeat.png') !important;
-}
+/* [수정] 전투 결과창의 불필요한 텍스트 숨김 처리 */
+#battle-result-title, #battle-result-msg, #battle-rewards, #battle-result-img { display: none !important; }
 
 .abs-bottom-text { position: absolute; bottom: 80px; left: 0; width: 384px; text-align: center; }
 .abs-center-modal { position: absolute; top: -20px; left: 40px; width: 300px; margin: 0; }
 
-/* [이미지 적용] 입력창 & 버튼 */
 #input-nickname { 
     width: 220px; height: 40px;
     background: url('../assets/images/ui_new/ui_input_field.png') no-repeat center;
     background-size: 100% 100%;
-    border: none; color: #fff; 
-    text-align: center; font-size: 1rem; font-family: inherit; outline: none;
+    border: none; color: #fff; text-align: center; font-size: 1rem; font-family: inherit; outline: none;
 }
+/* [수정] 버튼 이미지 강제 적용 */
 .btn-stone { 
     width: 120px; height: 45px; 
-    background: url('../assets/images/ui_new/ui_btn_default.png') no-repeat center;
-    background-size: 100% 100%;
-    border: none; color: #fff; cursor: pointer; 
+    background: url('../assets/images/ui_new/ui_btn_default.png') no-repeat center !important;
+    background-color: transparent !important;
+    background-size: 100% 100% !important;
+    border: none !important; color: #fff; cursor: pointer; 
     font-family: inherit; font-weight: bold; font-size: 0.95rem;
     text-shadow: 1px 1px 1px #000;
     display: flex; justify-content: center; align-items: center;
 }
 .btn-stone:active { transform: scale(0.95); }
 
-/* === [게임 뷰 공통] === */
+/* === 게임 뷰 === */
 #game-view { position: absolute; top: 0; width: 384px; height: 618px; overflow: hidden; }
 
-/* === [탭 1] 둥지 (드래곤) === */
+/* 둥지 탭 */
 #tab-dragon { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
-
 .abs-header-area {
     position: absolute; top: 5px; left: 0; width: 384px; height: 45px;
     background: url('../assets/images/ui_new/frame_header.png') no-repeat center top; background-size: 100% 100%; z-index: 20;
@@ -129,7 +104,6 @@ body, html {
     display: flex; justify-content: center; align-items: center;
     color: #00e5ff; font-weight: bold; font-size: 0.85rem; padding-bottom: 0px; z-index: 5;
 }
-
 .abs-dragon-visual {
     position: absolute; top: 65px; left: 130px; width: 240px; height: 333px;
     background: url('../assets/images/ui_new/altar_pedestal.png') no-repeat center bottom; background-size: 80%;
@@ -157,14 +131,9 @@ body, html {
 .material-scroll-row { display: flex; gap: 8px; overflow-x: auto; width: 100%; justify-content: flex-start; }
 .material-scroll-row::-webkit-scrollbar { display: none; }
 
-/* === [탭 2] 내 정보 === */
+/* 내 정보 탭 */
 #tab-info { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: cover; }
-
-.abs-stat-board {
-    position: absolute; top: 100px; left: 215px;
-    display: flex; flex-direction: column; gap: 5px; z-index: 10;
-}
-/* [이미지 적용] 스탯 패널 */
+.abs-stat-board { position: absolute; top: 100px; left: 215px; display: flex; flex-direction: column; gap: 5px; z-index: 10; }
 .stat-row { 
     width: 110px; height: 32px;
     background: url('../assets/images/ui_new/ui_stat_panel.png') no-repeat center;
@@ -173,13 +142,9 @@ body, html {
     color: #fff; font-size: 0.85rem; border: none;
 }
 .stat-icon { font-size: 0.9rem; margin-right: 5px; }
-
-.abs-char-visual {
-    position: absolute; top: 100px; left: 52px; width: 280px; height: 320px; z-index: 5;
-}
+.abs-char-visual { position: absolute; top: 100px; left: 52px; width: 280px; height: 320px; z-index: 5; }
 .char-pedestal { position: absolute; bottom: 45px; left: -52px; width: 200px; height: 80px; background: url('../assets/images/ui_new/ui_pedestal.png') no-repeat center bottom; background-size: contain; z-index: 1; }
 .char-body { position: absolute; bottom: 100px; left: -35px; width: 160px; height: 240px; background: url('../assets/images/ui_new/char_silhouette.png') no-repeat center bottom; background-size: contain; z-index: 2; }
-
 .equip-slot-round { 
     position: absolute; width: 56px; height: 56px; 
     background-repeat: no-repeat; background-position: center; background-size: contain; 
@@ -191,7 +156,6 @@ body, html {
 .slot-weapon { top: 70px; left: -50px; background-image: url('../assets/images/ui_new/slot_equip_weapon.png'); }
 .slot-shoes { top: 155px; left: 15px; background-image: url('../assets/images/ui_new/slot_equip_shoes.png'); }
 .equip-slot-round img, .equipped-item-img { width: auto !important; height: auto !important; max-width: 80%; max-height: 80%; object-fit: contain; position: static !important; }
-
 .abs-info-inventory {
     position: absolute; bottom: 85px; left: 12px; width: 360px; height: 200px;
     background: rgba(30, 20, 40, 0.85); border: 2px solid #5d4a6d; border-radius: 10px;
@@ -204,10 +168,9 @@ body, html {
 .inven-slot img { max-width: 85%; max-height: 85%; object-fit: contain; }
 .item-count { position: absolute; bottom: 1px; right: 3px; font-size: 0.6rem; color: #fff; text-shadow: 1px 1px 1px #000; }
 
-/* === [탭 3] 탐험 (Explore) === */
+/* 탐험 탭 */
 #tab-explore { background: url('../assets/images/ui_new/bg_cave.png') no-repeat center center; background-size: cover; }
 .abs-full-layer { position: absolute; width: 384px; height: 618px; top: 0; left: 0; }
-
 .abs-map-board {
     position: absolute; top: 130px; left: 32px; width: 320px; height: 320px;
     background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: contain;
@@ -223,11 +186,9 @@ body, html {
 .loc-light { top: 138px; left: 210px; background-image: url('../assets/images/ui_new/loc_light.png'); }
 .loc-metal { top: 200px; left: 70px; background-image: url('../assets/images/ui_new/loc_metal.png'); }
 .loc-dark { top: 210px; left: 210px; background-image: url('../assets/images/ui_new/loc_dark.png'); }
-
 .abs-map-btn { position: absolute; bottom: 80px; left: 82px; width: 220px; height: 50px; text-align: center; }
 .btn-enter-wide { width: 220px; height: 50px; background: url('../assets/images/ui_new/btn_enter_wide.png') no-repeat center center; background-size: contain; border: none; color: transparent; cursor: pointer; }
 .btn-enter-wide:disabled { filter: grayscale(1); opacity: 0.6; }
-
 .abs-run-frame {
     position: absolute; top: 180px; left: 17px; width: 350px; height: 250px;
     background: url('../assets/images/ui_new/panel_map_frame.png') no-repeat center center; background-size: 100% 100%;
@@ -236,8 +197,6 @@ body, html {
 .run-bg-area { width: 320px; height: 220px; border-radius: 8px; position: relative; background-size: cover; background-position: center; }
 .run-info-overlay { position: absolute; bottom: -18px; left: 0; width: 100%; background: rgba(0,0,0,0.6); color: #fff; padding: 10px; text-align: center; border-radius: 0 0 8px 8px; }
 .abs-run-controls { position: absolute; bottom: 120px; left: 52px; width: 280px; display: flex; gap: 15px; justify-content: center; }
-
-/* [이미지 적용] 전투 HP 바 */
 .my-dragon-status {
     position: absolute; top: 185px; left: 22px; width: 340px;
     display: flex; flex-direction: column; align-items: flex-start;
@@ -246,17 +205,14 @@ body, html {
 .hp-bar-bg { 
     width: 104px; height: 14px; 
     background: url('../assets/images/ui_new/ui_hp_frame.png') no-repeat center;
-    background-size: 100% 100%;
-    margin: 2px 0; padding: 2px;
+    background-size: 100% 100%; margin: 2px 0; padding: 2px;
 }
 .hp-bar-fill { 
     height: 100%; 
     background: url('../assets/images/ui_new/ui_hp_fill.png') no-repeat left center;
-    background-size: auto 100%; 
-    transition: width 0.3s; 
+    background-size: auto 100%; transition: width 0.3s; 
 }
 .status-text { font-size: 0.7rem; color: #fff; margin-left: 2px; }
-
 .battle-header {
     position: absolute; top: 50px; width: 100%; text-align: center;
     font-size: 1.5rem; color: #ff4444; font-weight: 800; text-shadow: 2px 2px 0 #000;
@@ -265,18 +221,15 @@ body, html {
 .battle-char-img { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 5px #fff); }
 .enemy-area { position: absolute; top: 120px; right: 40px; display: flex; flex-direction: column; align-items: flex-end; }
 .player-area { position: absolute; bottom: 220px; left: 40px; display: flex; flex-direction: column; align-items: flex-start; }
-
-/* [이미지 적용] 전투 로그창 */
 .battle-log-box {
     position: absolute; bottom: 100px; left: 22px; width: 340px; height: 80px;
     background: url('../assets/images/ui_new/ui_battle_log_bg.png') no-repeat center;
-    background-size: 100% 100%;
-    border: none;
+    background-size: 100% 100%; border: none;
     padding: 10px 15px; font-size: 0.8rem; overflow-y: auto; color: #ddd;
 }
 .battle-controls { position: absolute; bottom: 30px; left: 0; width: 384px; display: flex; justify-content: center; gap: 20px; }
 
-/* === [탭 4] 도감 === */
+/* 도감 탭 */
 #tab-book { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 .abs-book-title {
     position: absolute; top: 30px; left: 102px; width: 180px; height: 45px;
@@ -299,7 +252,7 @@ body, html {
 .book-slot-item img { width: 75%; height: 75%; object-fit: contain; }
 .book-slot-item.unknown img { opacity: 0.6; }
 
-/* === [탭 5] 상점 === */
+/* 상점 탭 */
 #tab-shop { background: url('../assets/images/ui_new/bg_book.png') no-repeat center center; background-size: 100% 100%; }
 .abs-shop-title {
     position: absolute; top: 30px; left: 102px; width: 180px; height: 45px;
@@ -311,17 +264,15 @@ body, html {
     position: absolute; top: 90px; left: 12px; width: 360px; height: 510px;
     overflow-y: auto; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 8px;
 }
-/* [이미지 적용] 상점 슬롯 */
 .shop-item { 
     display: flex; justify-content: space-between; align-items: center; 
     background: url('../assets/images/ui_new/ui_shop_slot_bg.png') no-repeat center;
-    background-size: 100% 100%;
-    padding: 6px 15px; margin-bottom: 6px; border: none; height: 70px;
+    background-size: 100% 100%; padding: 6px 15px; margin-bottom: 6px; border: none; height: 70px;
 }
 .shop-item .item-img-lg { width: 50px; height: 50px; object-fit: contain; margin-right: 10px; background: rgba(0,0,0,0.2); border-radius: 5px; }
 .currency-icon { width: 14px; height: 14px; vertical-align: middle; }
 
-/* === [공통] 하단 네비게이션 === */
+/* 네비게이션 */
 .new-bottom-nav { 
     position: absolute; bottom: 0; left: 0; width: 384px; height: 80px; 
     background: url('../assets/images/ui_new/frame_nav.png') no-repeat center bottom; background-size: 100% 100%; 
@@ -330,12 +281,22 @@ body, html {
 .nav-item { background: none; border: none; width: 45px; height: 45px; cursor: pointer; }
 .nav-item img { width: 100%; height: 135%; object-fit: contain; }
 
-/* 기타 공통 */
+/* 공통 기타 */
 .new-slot-item { width: 45px; height: 45px; flex-shrink: 0; background: url('../assets/images/ui_new/slot_box_default.png') no-repeat center; background-size: 100% 100%; display: flex; justify-content: center; align-items: center; position: relative; cursor: pointer;}
 .new-slot-item.active { background-image: url('../assets/images/ui_new/slot_box_active.png'); }
 .new-slot-item img { width: 70%; height: 70%; object-fit: contain; }
 .count-badge { position: absolute; bottom: 1px; right: 3px; font-size: 0.6rem; color: #fff; text-shadow: 1px 1px 1px #000; }
-.detail-slider-container { width: 100%; height: 150px; overflow: hidden; position: relative; margin: 8px 0; background: rgba(0,0,0,0.2); border-radius: 8px; }
+
+/* [수정] 도감 슬라이더 및 스크롤 스냅 */
+.detail-slider-container { 
+    width: 100%; height: 150px; overflow-x: auto; 
+    position: relative; margin: 8px 0; background: rgba(0,0,0,0.2); border-radius: 8px; 
+    scroll-snap-type: x mandatory; /* 스냅 기능 추가 */
+}
 .detail-slider-track { display: flex; height: 100%; transition: transform 0.3s ease-out; }
-.detail-stage-view { width: 100%; height: 100%; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.detail-stage-view { 
+    width: 100%; height: 100%; flex-shrink: 0; 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; 
+    scroll-snap-align: center; /* 자식 요소 스냅 정렬 */
+}
 .detail-img-large { width: 100px; height: 100px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,255,255,0.2)); }
