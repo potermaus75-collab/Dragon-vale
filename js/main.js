@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (완전판)
+// js/main.js (최종 수정: 문법 오류 해결)
 // ==========================================
 
 let userNickname = "";
@@ -13,12 +13,14 @@ const UI_ASSETS = [
     "assets/images/ui_new/bar_bg.png", "assets/images/ui_new/bar_fill.png", "assets/images/ui_new/btn_touch.png",
     "assets/images/ui_new/bg_book.png", "assets/images/ui_new/frame_book_title.png",
     "assets/images/ui_new/frame_tab_bar.png",
-    "assets/images/ui_new/ui_popup_common.png", "assets/images/ui_new/ui_btn_default.png",
+    "assets/images/ui_new/ui_popup_common.png", 
+    "assets/images/ui_new/ui_btn-default.png", // [수정] 파일명 하이픈(-)으로 변경
     "assets/images/ui_new/ui_input_field.png", "assets/images/ui_new/ui_loading_frame.png",
     "assets/images/ui_new/ui_loading_bar.png", "assets/images/ui_new/ui_stat_panel.png",
     "assets/images/ui_new/ui_shop_slot_bg.png", "assets/images/ui_new/ui_hp_frame.png",
     "assets/images/ui_new/ui_hp_fill.png", "assets/images/ui_new/ui_battle_log_bg.png",
-    "assets/images/ui_new/ui_popup_victory.png", "assets/images/ui_new/ui_popup_defeat.png"
+    "assets/images/ui_new/ui_popup_victory.png", "assets/images/ui_new/ui_popup_defeat.png",
+    "assets/images/ui/panel_vertical.png" // 세로형 패널 추가
 ];
 
 window.onload = function() {
@@ -142,7 +144,6 @@ function renderShop() {
         div.className = 'shop-item';
         
         const costIcon = (item.costType === 'gem') ? 'assets/images/ui/icon_gem.png' : 'assets/images/ui/icon_gold.png';
-        const costColor = (item.costType === 'gem') ? '#3498db' : '#f1c40f';
         
         div.innerHTML = `
             <div style="display:flex; align-items:center;">
@@ -234,7 +235,9 @@ function renderBookGrid() {
         
         let imgSrc = "assets/images/ui/icon_question.png";
         if(isDiscovered && window.getDragonImage) {
-            imgSrc = window.getDragonImage(dragon.id, 3);
+            // 최대 성장 단계에 맞는 이미지 가져오기
+            const maxStage = player.maxStages[dragon.id] || 0;
+            imgSrc = window.getDragonImage(dragon.id, maxStage); 
         }
         
         div.innerHTML = `<img src="${imgSrc}" onerror="handleImgError(this)">`;
@@ -339,5 +342,3 @@ window.updateUI = function() {
     window.renderInventory();
     if(window.isExploreActive) window.updateMoveUI();
 };
-
-}
