@@ -1,5 +1,5 @@
 // ==========================================
-// js/main.js (수정됨: 새 이미지 프리로드 추가)
+// js/main.js (완전판: 프리로드 & 메인 로직)
 // ==========================================
 
 let userNickname = "";
@@ -286,8 +286,7 @@ function showBookDetail(dragon, isDiscovered) {
         const track = document.getElementById('detail-track');
         if(!track) return;
         
-        // 0(알)~4(고룡) 까지 중 maxStage까지만 보여줄지, 전체 다 보여줄지? 
-        // -> 보통 도감은 발견한 단계까지만 보여주는 게 정석
+        // 0(알)~4(고룡)
         for(let i=0; i<=4; i++) {
             const dDiv = document.createElement('div');
             dDiv.className = 'detail-stage-view';
