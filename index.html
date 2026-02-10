@@ -2,248 +2,173 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Dragon Chronicles</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pocket Evolution: Soul Tamer</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body oncontextmenu="return false;" onselectstart="return false;">
+<body>
 
-    <div style="display:none;">
-        <span id="ui-level">1</span>
-        <span id="ui-nickname">Player</span>
-        <div id="ui-exp-fill"></div>
-        <span id="stat-atk">10</span>
-        <span id="stat-def">5</span>
-    </div>
-
-    <section id="screen-start" class="full-screen active relative-stage">
-        <div class="abs-start-title">
-            <h1>DRAGON<br>CHRONICLES</h1>
-        </div>
-        <div class="abs-start-bottom">
-            <div id="loading-container" style="width: 100%; display:flex; flex-direction:column; align-items:center;">
-                <div class="ui-bar-frame loading-bar-style">
-                    <div id="loading-bar-fill" class="ui-bar-fill loading-fill-style"></div>
-                </div>
-                <p id="loading-text" style="font-size:0.8rem; color:#aaa; margin-top:5px;">로딩 중...</p>
+    <div id="game-container">
+        
+        <header id="top-bar">
+            <div class="resource-group">
+                <span id="player-gold"><i class="fas fa-coins text-yellow"></i> 0</span>
+                <span id="player-stamina"><i class="fas fa-bolt text-blue"></i> 50/50</span>
             </div>
-            <p id="start-msg" class="blink hidden" onclick="tryStartGame()">터치하여 시작</p>
-        </div>
-    </section>
+            <button id="btn-save-menu" class="icon-btn"><i class="fas fa-cog"></i></button>
+        </header>
 
-    <section id="screen-setup" class="full-screen hidden relative-stage">
-        <div class="abs-center-panel">
-            <h2>이름을 알려주세요</h2>
-            <input type="text" id="input-nickname" maxlength="8">
-            <button class="btn-stone" onclick="submitName()">모험 시작</button>
-        </div>
-    </section>
-
-    <section id="screen-prologue" class="full-screen hidden relative-stage" onclick="nextPrologueCut()">
-        <div class="abs-center-panel" style="height: auto; min-height: 200px;">
-            <p id="prologue-text">...</p>
-            <p class="blink" style="font-size:0.8rem; margin-top:20px; color:#aaa;">터치하여 계속 >></p>
-        </div>
-    </section>
-
-    <section id="screen-game" class="full-screen hidden">
-        <main id="game-view">
+        <main id="screen-area">
             
-            <div id="tab-dragon" class="tab-content relative-stage">
-                <div class="abs-header-area">
-                    <div class="currency-slot gold-slot">💰 <span id="ui-gold">0</span></div>
-                    <div class="currency-slot gem-slot">💎 <span id="ui-gem">0</span></div>
-                </div>
-
-                <button class="btn-stone" style="position:absolute; top:55px; right:10px; width:80px; height:40px; z-index:25; font-size:0.8rem; border-radius:10px; border:2px solid #ff6b6b; color:#ff6b6b; background:rgba(0,0,0,0.8);" onclick="openBreedingModal()">
-                    💖 교배소
-                </button>
-
-                <div class="abs-sidebar-left">
-                    <div class="sidebar-header-text">알 목록</div>
-                    <div id="my-egg-list" class="sidebar-list-content"></div>
-                </div>
-                <div class="abs-dragon-name"><span id="dragon-name-ui">이름 없음</span></div>
-                <div class="abs-dragon-visual"><div id="dragon-display"></div></div>
-                <div class="abs-center-controls">
-                    <div class="ui-bar-frame exp-bar-style">
-                        <div id="progress-fill" class="ui-bar-fill exp-fill-style"></div>
-                        <span class="gauge-text">0 / 100</span>
+            <section id="screen-home" class="screen active">
+                <div class="monster-display">
+                    <div class="monster-info-badge">
+                        <span id="home-mon-name">이름없음</span>
+                        <span id="home-mon-rank" class="rank-badge">RANK F</span>
                     </div>
-                    <button class="btn-touch-img" onclick="handleTouchBtn()"></button>
-                </div>
-                <div class="abs-bottom-panel">
-                    <div class="panel-label">창고</div>
-                    <div class="panel-content-row"><div id="cave-inventory-grid" class="material-scroll-row"></div></div>
-                </div>
-            </div>
-
-            <div id="tab-info" class="tab-content hidden relative-stage">
-                <div class="abs-stat-board">
-                    <div class="stat-row"><span class="stat-icon">⚔️</span><span class="stat-val" id="stat-atk-display">10</span></div>
-                    <div class="stat-row"><span class="stat-icon">🛡️</span><span class="stat-val" id="stat-def-display">5</span></div>
-                </div>
-                
-                <div class="abs-char-visual">
-                    <div class="char-pedestal"></div>
-                    <div class="char-body"></div>
-                    <div class="equip-slot-round slot-head" onclick="unequipItem('head')"><div id="equip-display-head"></div></div>
-                    <div class="equip-slot-round slot-body" onclick="unequipItem('body')"><div id="equip-display-body"></div></div>
-                    <div class="equip-slot-round slot-weapon" onclick="unequipItem('arm')"><div id="equip-display-arm"></div></div>
-                    <div class="equip-slot-round slot-shoes" onclick="unequipItem('leg')"><div id="equip-display-leg"></div></div>
-                </div>
-
-                <div class="abs-info-inventory">
-                    <div class="inven-header">장비 가방</div>
-                    <div class="inven-scroll-view">
-                        <div id="inventory-grid" class="inven-grid"></div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-explore" class="tab-content hidden relative-stage">
-                <div id="explore-map-view" class="abs-full-layer">
-                    <div class="abs-header-area">
-                        <div class="currency-slot gold-slot">💰 <span id="ui-gold-map">0</span></div>
-                        <div class="currency-slot gem-slot">💎 <span id="ui-gem-map">0</span></div>
-                    </div>
-                    <div class="abs-map-board">
-                        <div id="map-icons-layer"></div>
-                    </div>
-                    <div class="abs-map-btn">
-                        <button id="btn-enter-region" class="btn-enter-wide" onclick="enterSelectedRegion()" disabled>지역을 선택하세요</button>
-                    </div>
-                </div>
-
-                <div id="explore-run-view" class="hidden abs-full-layer">
-                    <div class="abs-run-frame">
-                        <div class="run-bg-area" id="explore-bg">
-                            <div class="run-info-overlay">
-                                <h3 id="region-title">지역 이름</h3>
-                                <p id="move-counter">남은 이동: 10</p>
-                                <div id="event-msg">...</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="my-dragon-status">
-                        <div class="status-name" id="explore-my-name">내 용</div>
-                        <div class="ui-bar-frame hp-bar-style" style="width:100%;">
-                            <div id="explore-my-hp" class="ui-bar-fill hp-fill-style" style="width:100%"></div>
-                        </div>
-                        <div class="status-text" id="explore-my-hp-text">100/100</div>
-                    </div>
+                    <div id="home-mon-img" class="pixel-art">🥚</div>
                     
-                    <div class="abs-run-controls">
-                        <button id="btn-move" class="btn-stone" onclick="moveForward()">이동</button>
-                        <button id="btn-return" class="btn-stone" onclick="finishExplore(false)">포기</button>
-                    </div>
-                </div>
-
-                <div id="explore-battle-view" class="hidden abs-full-layer" style="background:rgba(0,0,0,0.85); z-index:50;">
-                    <div class="battle-header">BATTLE START!</div>
-                    
-                    <div class="enemy-area">
-                        <img id="enemy-img" src="" class="battle-char-img">
-                        <div class="enemy-info" style="display:flex; flex-direction:column; align-items:flex-end;">
-                            <div id="enemy-name" style="color:#ff6b6b; font-weight:bold;">몬스터</div>
-                            <div class="ui-bar-frame hp-bar-style">
-                                <div id="enemy-hp-bar" class="ui-bar-fill hp-fill-style" style="width:100%"></div>
-                            </div>
-                            <div id="enemy-hp-text" style="font-size:0.7rem;">???/???</div>
+                    <div class="status-bars">
+                        <div class="bar-container">
+                            <i class="fas fa-heart text-red"></i>
+                            <div class="bar-bg"><div id="bar-hp" class="bar-fill" style="width: 100%;"></div></div>
+                        </div>
+                        <div class="bar-container">
+                            <i class="fas fa-drumstick-bite text-orange"></i>
+                            <div class="bar-bg"><div id="bar-hunger" class="bar-fill" style="width: 80%;"></div></div>
+                        </div>
+                        <div class="bar-container">
+                            <i class="fas fa-broom text-blue"></i>
+                            <div class="bar-bg"><div id="bar-clean" class="bar-fill" style="width: 60%;"></div></div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="player-area">
-                        <div class="player-info">
-                            <div id="battle-my-name" style="color:#00e5ff; font-weight:bold;">내 용</div>
-                            <div class="ui-bar-frame hp-bar-style">
-                                <div id="battle-my-hp-bar" class="ui-bar-fill hp-fill-style" style="width:100%"></div>
-                            </div>
-                            <div id="battle-my-hp-text" style="font-size:0.7rem;">100/100</div>
-                        </div>
-                        <img id="battle-my-img" src="" class="battle-char-img">
+                <div class="interaction-menu">
+                    <button class="action-btn" onclick="game.action('feed')">
+                        <i class="fas fa-utensils"></i><br>밥주기
+                    </button>
+                    <button class="action-btn" onclick="game.action('clean')">
+                        <i class="fas fa-soap"></i><br>청소
+                    </button>
+                    <button class="action-btn" onclick="game.action('train')">
+                        <i class="fas fa-dumbbell"></i><br>훈련
+                    </button>
+                    <button class="action-btn" onclick="game.evolveCheck()">
+                        <i class="fas fa-dna"></i><br>진화
+                    </button>
+                </div>
+            </section>
+
+            <section id="screen-map" class="screen hidden">
+                <h2 class="screen-title">모험 지역 선택</h2>
+                <div class="map-list" id="map-list-container">
                     </div>
+            </section>
 
-                    <div id="battle-log" class="battle-log-box">적을 마주쳤습니다!</div>
+            <section id="screen-battle" class="screen hidden">
+                <div class="battle-zone enemy-zone">
+                    <div class="battle-hud">
+                        <span id="enemy-name">야생 슬라임</span>
+                        <div class="hp-bar-sm"><div id="enemy-hp-bar" style="width: 100%;"></div></div>
+                    </div>
+                    <div id="enemy-sprite" class="battle-sprite">👾</div>
+                </div>
 
-                    <div class="battle-controls">
-                        <button class="btn-stone" style="color:#ff6b6b;" onclick="battleAttack()">공격</button>
-                        <button class="btn-stone" onclick="battleFlee()">도망</button>
+                <div class="battle-zone player-zone">
+                    <div id="player-sprite" class="battle-sprite">🐉</div>
+                    <div class="battle-hud">
+                        <span id="battle-player-name">내 드래곤</span>
+                        <div class="hp-bar-sm"><div id="battle-player-hp-bar" style="width: 100%;"></div></div>
                     </div>
                 </div>
-            </div>
 
-            <div id="tab-book" class="tab-content hidden relative-stage">
-                <div class="abs-book-title">
-                    <span class="book-header-text">도감</span>
-                </div>
-                <div class="abs-book-tabs" id="book-tab-bar"></div>
-                <div class="abs-book-grid">
-                    <div id="book-grid-area"></div>
-                </div>
-            </div>
+                <div id="battle-log">야생 몬스터가 나타났다!</div>
 
-            <div id="tab-shop" class="tab-content hidden relative-stage">
-                <div class="abs-shop-title"><h3>상점</h3></div>
-                <div class="abs-shop-list">
-                    <div id="shop-list" class="list-row"></div>
+                <div class="battle-controls">
+                    <button class="battle-btn attack" onclick="battle.attack()">공격</button>
+                    <button class="battle-btn skill" onclick="battle.skill()">스킬</button>
+                    <button class="battle-btn catch" id="btn-catch" disabled onclick="battle.tryCatch()">포획</button>
+                    <button class="battle-btn run" onclick="battle.run()">도망</button>
                 </div>
-            </div>
+            </section>
+
+            <section id="screen-inventory" class="screen hidden">
+                <h2 class="screen-title">몬스터 보관함 (<span id="inven-count">1</span>/30)</h2>
+                <div class="inventory-grid" id="monster-list">
+                    </div>
+                <div id="selected-mon-detail" class="detail-panel hidden">
+                    <h3 id="detail-name">이름</h3>
+                    <p id="detail-stats">공: ? / 방: ? / 스피드: ?</p>
+                    <div class="detail-actions">
+                        <button class="btn-main" onclick="game.setMainMonster()">파트너 지정</button>
+                        <button class="btn-release" onclick="game.releaseMonster()">자연으로 방생</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="screen-shop" class="screen hidden">
+                <h2 class="screen-title">영혼석 상점</h2>
+                <div class="shop-grid">
+                    <div class="shop-item">
+                        <div class="icon">🔥</div>
+                        <span>불의 영혼석</span>
+                        <button onclick="shop.buy('fire_stone')">500G</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="icon">💧</div>
+                        <span>물의 영혼석</span>
+                        <button onclick="shop.buy('water_stone')">500G</button>
+                    </div>
+                    <div class="shop-item">
+                        <div class="icon">🌿</div>
+                        <span>풀의 영혼석</span>
+                        <button onclick="shop.buy('grass_stone')">500G</button>
+                    </div>
+                </div>
+            </section>
 
         </main>
 
-        <nav class="new-bottom-nav">
-            <button class="nav-item" onclick="switchTab('info')"><img src="assets/images/ui_new/icon_home.png"></button>
-            <button class="nav-item" onclick="switchTab('book')"><img src="assets/images/ui_new/icon_book.png"></button>
-            <button class="nav-item" onclick="switchTab('dragon')"><img src="assets/images/ui_new/icon_bag.png"></button>
-            <button class="nav-item" onclick="switchTab('explore')"><img src="assets/images/ui_new/icon_map.png"></button>
-            <button class="nav-item" onclick="switchTab('shop')"><img src="assets/images/ui_new/icon_shop.png"></button>
+        <nav id="nav-bar">
+            <button class="nav-btn active" onclick="ui.showScreen('home')">
+                <i class="fas fa-home"></i><br>홈
+            </button>
+            <button class="nav-btn" onclick="ui.showScreen('map')">
+                <i class="fas fa-map-marked-alt"></i><br>모험
+            </button>
+            <button class="nav-btn" onclick="ui.showScreen('inventory')">
+                <i class="fas fa-briefcase"></i><br>가방
+            </button>
+            <button class="nav-btn" onclick="ui.showScreen('shop')">
+                <i class="fas fa-store"></i><br>상점
+            </button>
         </nav>
-    </section>
 
-    <div id="common-modal" class="full-screen hidden modal-overlay">
-        <div class="panel-box abs-center-panel">
-            <h3 id="modal-title" style="color:#f1c40f;">알림</h3>
-            <div id="modal-text" style="text-align:center; margin:20px 0; white-space: pre-line;">내용</div>
-            <div id="modal-btn-alert" class="hidden"><button class="btn-stone" onclick="closeModal('common-modal')">확인</button></div>
-            <div id="modal-btn-confirm" class="hidden" style="display:flex; gap:10px; justify-content:center;">
-                <button class="btn-stone" id="btn-confirm-yes">예</button>
-                <button class="btn-stone" id="btn-confirm-no" onclick="closeModal('common-modal')">아니오</button>
-            </div>
-        </div>
     </div>
 
-    <div id="battle-result-modal" class="full-screen hidden modal-overlay">
-        <div class="panel-box abs-center-panel">
-            <h2 id="battle-result-title">VICTORY</h2>
-            <img id="battle-result-img" src="" style="width:80px; height:80px; object-fit:contain;">
-            <div id="battle-result-msg" style="margin:10px 0; font-size:0.9rem;"></div>
-            <div id="battle-rewards" style="margin-bottom:15px;"></div>
-            <button class="btn-stone" style="margin-top:140px;" onclick="closeBattleResult()">확인</button>
-        </div>
-    </div>
-
-    <div id="breeding-modal" class="full-screen hidden modal-overlay" style="z-index:9500;">
-        <div class="panel-box abs-center-panel">
-            <h3>교배</h3>
-            <div style="display:flex; justify-content:space-around; width:100%; margin:20px 0;">
-                <div id="parent-slot-1" class="new-slot-item" onclick="selectParent(1)"></div>
-                <div id="parent-slot-2" class="new-slot-item" onclick="selectParent(2)"></div>
+    <div id="modal-overlay" class="hidden">
+        <div class="modal-content">
+            <h3 id="modal-title">알림</h3>
+            <p id="modal-msg">내용</p>
+            <div class="modal-actions">
+                <button onclick="ui.closeModal()">확인</button>
             </div>
-            <div style="display:flex; gap:10px; justify-content:center;">
-                <button class="btn-stone" onclick="tryBreeding()">확인</button>
-                <button class="btn-stone" onclick="closeBreedingModal()">취소</button>
-            </div>
-             <div id="breeding-select-list" class="hidden" style="margin-top:10px; width:100%; max-height:100px; overflow-y:auto;"></div>
         </div>
     </div>
     
-    <script src="js/data.js"></script>
-    <script src="js/dragon.js"></script>
-    <script src="js/player.js"></script>
-    <script src="js/hatchery.js"></script>
-    <script src="js/breeding.js"></script>
-    <script src="js/explore.js"></script>
-    <script src="js/main.js"></script>
-</body>
+    <div id="save-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h3>데이터 관리</h3>
+            <button class="full-btn" onclick="dataManager.saveToFile()">코드 내보내기 (저장)</button>
+            <button class="full-btn" onclick="dataManager.loadFromFile()">코드 불러오기 (로드)</button>
+            <button class="full-btn close-btn" onclick="document.getElementById('save-modal').classList.add('hidden')">닫기</button>
+        </div>
+    </div>
+
+    <script src="data.js"></script> <script src="game.js"></script> </body>
 </html>
